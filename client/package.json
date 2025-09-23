@@ -9,7 +9,10 @@
     "@testing-library/user-event": "^13.5.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^0.0.0",
+    "stream-chat": "^9.20.0",
+    "stream-chat-react": "^13.7.0",
+    "universal-cookie": "^8.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
