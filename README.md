@@ -9,6 +9,8 @@ A simple real-time chat application built with React (frontend) and Node.js (bac
 - Responsive design
 
 ## Getting Started
+- Yeah, i'm just getting started. So please excuse the mid-ess for the current moment
+
 
 ### Prerequisites
 - Node.js (v14 or higher recommended)
