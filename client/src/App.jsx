@@ -22,7 +22,7 @@ if (authToken) {
     phoneNumber: cookies.get('phoneNumber'),
     avatarURL: cookies.get('avatarURL'),
     hashedPassword: cookies.get('hashedPassword')
-  }, authToken);
+  }, authToken)
 }
 
 const App = () => {
