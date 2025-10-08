@@ -11,24 +11,30 @@ const app_id = process.env.STREAM_APP_ID;
  
 const signup = async (req, res) => {
     try {
-        const { fullName, username, password, phoneNumber } = req.body;
+        const { fullName, username, password, phoneNumber, avatarURL } = req.body;
 
         const userID = crypto.randomBytes(16).toString('hex');
-
         const serverClient = connect(api_key, api_secret, app_id);
+        const client = StreamChat.getInstance(api_key, api_secret);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Actually create the user in Stream Chat
+        await client.upsertUser({
+            id: userID,
+            name: username,
+            fullName,
+            phoneNumber,
+            avatarURL,
+            hashedPassword
+        });
+
         const token = serverClient.createUserToken(userID);
 
-        res.status(200).json({ token, fullName, username, userID, hashedPassword, phoneNumber });
-
-
-
+        res.status(200).json({ token, fullName, username, userID, hashedPassword, phoneNumber, avatarURL });
     } catch (error) {
         console.log(error);
-
-        res.status(500).json({ message: error });
+        res.status(500).json({ message: error.message });
     }
 
 };
