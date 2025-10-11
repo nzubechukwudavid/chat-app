@@ -10,16 +10,11 @@ const ChannelInner = ({ setIsEditing }) => {
   const { sendMessage } = useChannelActionContext();
   
   const overrideSubmitHandler = (message) => {
-    let updatedMessage = {
-      attachments: message.attachments,
-      mentioned_users: message.mentioned_users,
-      parent_id: message.parent?.id,
-      parent: message.parent,
-      text: message.text,
-    };
-    
+    let updatedMessage = { ...message };
+  
     if (giphyState) {
-      updatedMessage = { ...updatedMessage, text: `/giphy ${message.text}` };
+      updatedMessage.text = `/giphy ${message.text}`;
+      updatedMessage.attachments = []; // Giphy command should not have attachments
     }
     
     if (sendMessage) {

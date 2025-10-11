@@ -9,7 +9,7 @@ import LogoutIcon from '../assets/logout.png';
 
 const cookies = new Cookies();
 
-const SideBar = ({logout}) => (
+const SideBar = ({ logout }) => (
   <div className="channel-list__sidebar">
     <div className="channel-list__sidebar__icon1">
       <div className='icon1__inner'>

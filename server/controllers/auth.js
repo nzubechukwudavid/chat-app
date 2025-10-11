@@ -11,6 +11,7 @@ const app_id = process.env.STREAM_APP_ID;
  
 const signup = async (req, res) => {
     try {
+        console.log('SIGNUP', req.body); // Log every signup request
         const { fullName, username, password, phoneNumber, avatarURL } = req.body;
 
         const userID = crypto.randomBytes(16).toString('hex');
