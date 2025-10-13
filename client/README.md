@@ -1,8 +1,6 @@
 # Rail Hub - Real-Time Chat Application
 
-A feature-rich, real-time chat application built with React and Stream Chat. This project provides a complete messaging experience, including user authentication, team channels, direct messaging, and more.
-
-
+A feature-rich, real-time chat application built with React and Stream Chat. This project provides a complete messaging experience, including user authentication, team channels, direct messaging, and more
 
 ---
 
@@ -11,8 +9,8 @@ A feature-rich, real-time chat application built with React and Stream Chat. Thi
 - **User Authentication**: Secure sign-up and sign-in functionality.
 - **Real-Time Messaging**: Instant message delivery and updates.
 - **Channel Management**:
-    - **Team Channels**: Public group conversations.
-    - **Direct Messages**: Private one-on-one or small group chats.
+  - **Team Channels**: Public group conversations.
+  - **Direct Messages**: Private one-on-one or small group chats.
 - **Giphy Integration**: Send GIFs directly in chat using the `/giphy` slash command.
 - **Channel Creation & Editing**: Users can create new channels and edit existing ones.
 - **Custom UI**: A unique green and yellow theme applied across the application.
@@ -23,13 +21,13 @@ A feature-rich, real-time chat application built with React and Stream Chat. Thi
 ## 🛠️ Tech Stack
 
 - **Frontend**:
-    - React
-    - Stream Chat React
-    - Axios for API requests
-    - universal-cookie for session management
+  - React
+  - Stream Chat React
+  - Axios for API requests
+  - universal-cookie for session management
 - **Backend**:
-    - Node.js & Express
-    - Stream Chat API
+  - Node.js & Express
+  - Stream Chat API
 
 ---
 
@@ -46,11 +44,15 @@ To get a local copy up and running, follow these simple steps.
 
 1. Navigate to the `client` directory.
 2. Install NPM packages:
+
    ```sh
    npm install
    ```
+
 3. Start the development server:
+
    ```sh
    npm start
    ```
+
 The application will open in your browser at `http://localhost:3000`.
