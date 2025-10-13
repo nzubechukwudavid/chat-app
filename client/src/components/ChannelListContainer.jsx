@@ -3,7 +3,7 @@ import { ChannelList, useChatContext } from 'stream-chat-react';
 import Cookies from 'universal-cookie';
 
 import { ChannelSearch, TeamChannelList, TeamChannelPreview } from './';
-import HospitalIcon from '../assets/hospital.png';
+import RailwayIcon from '../assets/railway.png';
 import LogoutIcon from '../assets/logout.png';
 
 
@@ -13,7 +13,7 @@ const SideBar = ({ logout }) => (
   <div className="channel-list__sidebar">
     <div className="channel-list__sidebar__icon1">
       <div className='icon1__inner'>
-        <img src={HospitalIcon} alt="Hospital" width = "30" />
+        <img src={RailwayIcon} alt="Hospital" width = "30" />
       </div>
     </div>
     <div className="channel-list__sidebar__icon2">
@@ -30,7 +30,13 @@ const CompanyHeader = () => (
   </div>
 )
 
-const ChannelListContainer = () => {
+const EmptyState = ({ type }) => (
+  <div className="team-channel-list__message">
+    No {type === 'team' ? 'channels' : 'messages'} found.
+  </div>
+);
+
+const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsEditing }) => {
   const logout = () => {
     cookies.remove('token');
     cookies.remove('username');
@@ -52,10 +58,15 @@ const ChannelListContainer = () => {
           <ChannelList 
             filters={{}}
             channelRenderFilterFn={() => {}}
+            EmptyStateIndicator={() => <EmptyState type="team" />}
             List={(listProps) => (
               <TeamChannelList
                 {...listProps}
                 type='team'
+                isCreating = {isCreating}
+                setIsCreating = {setIsCreating}
+                setCreateType = {setCreateType}
+                setIsEditing = {setIsEditing}
               />
             )}
             Preview={(previewProps) => (
@@ -68,10 +79,15 @@ const ChannelListContainer = () => {
           <ChannelList 
             filters={{}}
             channelRenderFilterFn={() => {}}
+            EmptyStateIndicator={() => <EmptyState type="messaging" />}
             List={(listProps) => (
               <TeamChannelList
                 {...listProps}
                 type='messaging'
+                isCreating = {isCreating}
+                setIsCreating = {setIsCreating}
+                setCreateType = {setCreateType}
+                setIsEditing = {setIsEditing}
               />
             )}
             Preview={(previewProps) => (

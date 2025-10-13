@@ -1,6 +1,7 @@
 :root {
-    --primary-color: #e5ff00;
-    --primary-color-alpha: #eeff00;
+    --primary-green: #25D366; /* A nice, vibrant green */
+    --primary-yellow: #e5ff00;
+    --primary-yellow-alpha: #eeff00;
   }
   
   html,
@@ -27,7 +28,7 @@
     justify-content: center;
   
     padding: 2rem;
-    background: #e5ff00;
+    background: var(--primary-yellow);
   }
   
   .auth__form-container_image {
@@ -56,7 +57,7 @@
   .auth__form-container_fields-content p {
     font-size: 1.5rem;
     font-family: Arial, Helvetica, sans-serif;
-    color: #025207;
+    color: #075E54; /* A darker green for text */
     font-weight: 900;
   }
   
@@ -101,8 +102,8 @@
   
   .auth__form-container_fields-content_input input:focus,
   .auth__form-container_fields-content_input input:active {
-    box-shadow: 0px 0px 0px 1.5px #005fff;
-    border-color: #005fff;
+    box-shadow: 0px 0px 0px 1.5px var(--primary-green);
+    border-color: var(--primary-green);
   }
   
   .auth__form-container_fields-content_input-password {
@@ -120,8 +121,8 @@
   
   .auth__form-container_fields-content_button button {
     border-radius: 4px;
-    background: #005fff;
-    border: 1px solid #005fff;
+    background: var(--primary-green);
+    border: 1px solid var(--primary-green);
     color: #fff;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 500;
@@ -132,7 +133,7 @@
   }
   
   .auth__form-container_fields-content_button button:hover {
-    background: #0066ff;
+    opacity: 0.9;
   }
   
   .auth__form-container_fields-account {
@@ -150,7 +151,7 @@
   }
   
   .auth__form-container_fields-account span {
-    color: #025207;
+    color: #075E54;
     cursor: pointer;
     font-weight: 700;
   }
@@ -220,7 +221,7 @@
   }
   
   .str-chat__message-notification {
-    background: var(--primary-color);
+    background: var(--primary-yellow);
     cursor: pointer;
   }
   
@@ -281,7 +282,7 @@
   }
   
   .channel-empty__first .channel-empty__user-name {
-    color: var(--primary-color);
+    color: var(--primary-green);
   }
   
   .channel-empty__second {
@@ -373,7 +374,7 @@
   .channel-list__sidebar {
     width: 72px;
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
-      var(--primary-color);
+      var(--primary-green);
     box-shadow: 1px 0px 0px rgba(0, 0, 0, 0.25);
     /* border-top-left-radius: 16px; */
     /* border-bottom-left-radius: 16px; */
@@ -396,7 +397,7 @@
   .channel-list__list__wrapper {
     display: flex;
     flex-direction: column;
-    background: var(--primary-color);
+    background: var(--primary-green);
     width: 240px;
   }
   
@@ -535,11 +536,11 @@
     height: 48px;
     display: flex;
     align-items: center;
-    background: var(--primary-color-alpha);
+    background: var(--primary-yellow-alpha);
   }
   
   .channel-search__result-container:hover {
-    background: var(--primary-color-alpha);
+    background: var(--primary-yellow-alpha);
     cursor: pointer;
   }
   
@@ -552,7 +553,7 @@
   .result-hashtag {
     height: 24px;
     width: 28px;
-    background: var(--primary-color);
+    background: var(--primary-yellow);
     border-radius: 24px;
     margin: 12px;
     display: flex;
@@ -632,7 +633,7 @@
   }
   
   .channel-name-input__wrapper input:focus {
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-yellow);
     outline: none;
   }
   
@@ -653,7 +654,7 @@
   }
   
   .create-channel__button-wrapper p {
-    background: var(--primary-color);
+    background: var(--primary-green);
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
     font-size: 18px;
@@ -809,7 +810,7 @@
   }
   
   .channel-name-input__wrapper input:focus {
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-yellow);
     outline: none;
   }
   
@@ -828,7 +829,7 @@
   }
   
   .edit-channel__button-wrapper p {
-    background: var(--primary-color);
+    background: var(--primary-green);
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
     font-size: 18px;
@@ -951,6 +952,7 @@
   
   .team-channel-list__header {
     padding: 0 16px;
+    background-color: #075E54; /* Darker green for header */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1147,7 +1149,7 @@
   }
   
   .str-chat__message-attachment-card--title {
-    color: var(--primary-color);
+    color: var(--primary-green);
   }
   
   .str-chat__message-team .str-chat__message-attachment-card {
@@ -1171,7 +1173,7 @@
   }
   
   ul.str-chat__simple-reactions-list:hover {
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-yellow);
   }
   
   .str-chat__simple-reactions-list-item span {
@@ -1204,7 +1206,7 @@
   }
   
   .str-chat__message-attachment-actions-button--primary {
-    background: var(--primary-color);
+    background: var(--primary-green);
     cursor: pointer;
   }
   
@@ -1220,7 +1222,7 @@
   
   .str-chat__message-attachment-actions-button:hover {
     font-weight: 700;
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-green);
   }
   
   .str-chat__message-team-status {
@@ -1228,21 +1230,21 @@
   }
   
   .str-chat__message-actions-list button:hover {
-    color: var(--primary-color);
+    color: var(--primary-green);
   }
   
   .emoji-mart-anchor-selected {
-    color: var(--primary-color) !important;
+    color: var(--primary-green) !important;
   }
   
   .emoji-mart-anchor-bar {
-    background: var(--primary-color) !important;
+    background: var(--primary-green) !important;
   }
   
   .str-chat__message-team--editing {
     background: #e9e9ea;
     box-shadow: 0 0 11px 0 rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 0 var(--primary-color), inset 0 -1px 0 0 var(--primary-color);
+      inset 0 1px 0 0 var(--primary-green), inset 0 -1px 0 0 var(--primary-green);
     padding: 15px 20px;
   }
   
@@ -1253,7 +1255,7 @@
   .str-chat__edit-message-form
     .str-chat__message-team-form-footer
     button[type="submit"] {
-    color: var(--primary-color);
+    color: var(--primary-green);
   }
   
   .str-chat__edit-message-form .str-chat__message-team-form-footer button {
@@ -1268,12 +1270,12 @@
   }
   
   .str-chat__edit-message-form textarea {
-    box-shadow: 0 0 0 1px var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-green);
   }
   
   .str-chat__edit-message-form textarea:focus {
-    border: 1px solid var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color);
+    border: 1px solid var(--primary-green);
+    box-shadow: 0 0 0 1px var(--primary-green);
   }
   
   .str-chat__edit-message-form svg {
@@ -1281,7 +1283,7 @@
   }
   
   .str-chat__message-team-content p a {
-    color: var(--primary-color);
+    color: var(--primary-green);
   }
   
   .pinned-message {
@@ -1352,7 +1354,7 @@
   }
   
   .team-message-input__input:focus-within {
-    border-color: var(--primary-color);
+    border-color: var(--primary-green);
   }
   
   .team-message-input__top {
@@ -1371,7 +1373,7 @@
     justify-content: space-evenly;
     height: 24px;
     width: 63px;
-    background: var(--primary-color);
+    background: var(--primary-green);
     border-radius: 12px;
     margin-left: 8px;
   }
@@ -1402,7 +1404,7 @@
   }
   
   .team-message-input__input:focus-within .team-message-input__button path {
-    fill: var(--primary-color);
+    fill: var(--primary-green);
     fill-opacity: 1;
   }
   
@@ -1449,7 +1451,7 @@
   }
   
   .team-message-input__icons svg:hover path {
-    fill: var(--primary-color);
+    fill: var(--primary-green);
     fill-opacity: 1;
   }
   
@@ -1499,11 +1501,11 @@
   }
   
   .rta__entity--selected {
-    background: var(--primary-color);
+    background: var(--primary-yellow);
   }
   
   .str-chat__slash-command:hover {
-    background: var(--primary-color);
+    background: var(--primary-yellow);
     cursor: pointer;
   }
   
@@ -1560,11 +1562,11 @@
   }
   
   .str-chat__square-button svg {
-    fill: var(--primary-color);
+    fill: var(--primary-green);
   }
   
   .str-chat__square-button:hover {
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-green);
     cursor: pointer;
   }
   
@@ -1611,7 +1613,7 @@
     justify-content: space-evenly;
     height: 24px;
     width: 63px;
-    background: var(--primary-color);
+    background: var(--primary-green);
     border-radius: 12px;
     margin-left: 8px;
   }
@@ -1634,7 +1636,7 @@
   }
   
   .thread-message-input__input:focus-within {
-    border-color: var(--primary-color);
+    border-color: var(--primary-green);
   }
   
   .thread-message-input__button {
@@ -1650,7 +1652,7 @@
   }
   
   .thread-message-input__input:focus-within .thread-message-input__button path {
-    fill: var(--primary-color);
+    fill: var(--primary-green);
     fill-opacity: 1;
   }
   
@@ -1685,7 +1687,7 @@
   }
   
   .thread-message-input__icons svg:hover path {
-    fill: var(--primary-color);
+    fill: var(--primary-green);
     fill-opacity: 1;
   }
   
