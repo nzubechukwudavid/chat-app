@@ -13,7 +13,7 @@ const SideBar = ({ logout }) => (
   <div className="channel-list__sidebar">
     <div className="channel-list__sidebar__icon1">
       <div className='icon1__inner'>
-        <img src={RailwayIcon} alt="Hospital" width = "30" />
+        <img src={RailwayIcon} alt="Rail Hub" width = "30" />
       </div>
     </div>
     <div className="channel-list__sidebar__icon2">
@@ -26,7 +26,7 @@ const SideBar = ({ logout }) => (
 
 const CompanyHeader = () => (
   <div className="channel-list__header">
-      <p className="channel-list__header__text">Medical Pager</p>
+      <p className="channel-list__header__text">Rail Hub</p>
   </div>
 )
 

@@ -1,15 +1,12 @@
-# Chat App
+# Rail Hub
 
-A simple real-time chat application built with React (frontend) and Node.js (backend).
+A real-time chat application for departmental communication, built with React (frontend) and Node.js (backend).
 
 ## Features
 - Real-time messaging
 - Channel creation and management
 - User authentication (optional)
 - Responsive design
-
-## Getting Started
-- Yeah, i'm just getting started. So please excuse the mid-ess for the current moment
 
 
 ### Prerequisites
