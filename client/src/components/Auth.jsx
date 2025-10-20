@@ -28,21 +28,27 @@ const Auth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    const { fullName, username, password, phoneNumber, avatarURL } = form;
+    const { username, password, confirmPassword } = form;
     const URL = 'http://localhost:5000/auth';
 
-    const { data: { token, userID, hashedPassword } } = await axios.post(`${URL}/${isSignup ? 'signup' : 'login'}`, {
-      username, password, fullName, phoneNumber, avatarURL
-    });
+    if(isSignup && password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+    }
+
+    // Conditionally build the payload
+    const payload = isSignup ? form : { username, password };
+
+    const { data: { token, userID, hashedPassword, fullName, username: responseUsername } } = await axios.post(`${URL}/${isSignup ? 'signup' : 'login'}`, payload);
 
     cookies.set('token', token);
-    cookies.set('username', username);
+    cookies.set('username', responseUsername); // Use username from server response
     cookies.set('userID', userID);
     cookies.set('fullName', fullName);
 
     if (isSignup) {
-      cookies.set('phoneNumber', phoneNumber);
-      cookies.set('avatarURL', avatarURL);
+      cookies.set('phoneNumber', form.phoneNumber);
+      cookies.set('avatarURL', form.avatarURL);
       cookies.set('hashedPassword', hashedPassword);
     }
 

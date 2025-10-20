@@ -716,9 +716,8 @@
   
   .user-item__name-wrapper {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    flex: 2;
-    text-align: left;
   }
   
   .user-item__wrapper p {
@@ -1136,9 +1135,6 @@
     font-weight: normal;
   }
   
-  .str-chat__avatar-image img.str-chat__avatar-image--loaded {
-    display: none;
-  }
   
   .str-chat__message-attachment {
     margin-bottom: 0;
