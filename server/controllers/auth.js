@@ -26,7 +26,7 @@ const signup = async (req, res) => {
             name: username,
             fullName,
             phoneNumber,
-            avatarURL,
+            image: avatarURL,
             hashedPassword
         });
 
