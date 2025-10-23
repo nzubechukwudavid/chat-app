@@ -1,6 +1,14 @@
 :root {
-    --primary-color: #005fff;
-    --primary-color-alpha: #005fff1a;
+    /* NRC Theme Palette */
+    --nrc-green: #00733E;
+    --nrc-yellow: #FFD700;
+    --surface-white: #FFFFFF;
+    --text-black: #000000;
+    --inbound-grey: #F0F0F0;
+    --subtext-grey: #666666;
+  
+    --primary-color: var(--nrc-green);
+    --primary-color-alpha: #00733e2a; /* Green with ~16% opacity */
   }
   
   html,
@@ -13,13 +21,15 @@
   #root {
     height: 100%;
   }
-  
+  .str-chat__channel-list-react {
+    background-color: var(--primary-color); /* Changed to primary green */
+  }
   .str-chat__avatar{
     display:flex;
     align-items:center;
     justify-content:center;
     border-radius: 50%;
-    background:blue;
+    background: var(--primary-color);
     color:white;
   }
 
@@ -36,7 +46,7 @@
     justify-content: center;
   
     padding: 2rem;
-    background: #005fff;
+    background: var(--primary-color);
   }
   
   .auth__form-container_image {
@@ -58,14 +68,15 @@
     padding: 2rem;
     box-shadow: 0px 1px 5px rgb(0 0 0 / 10%);
     border-radius: 5px;
-    transition: 0.8s ease;
+    transition: 0.3s ease;
     background: #fff;
+    background: var(--surface-white);
   }
   
   .auth__form-container_fields-content p {
     font-size: 1.5rem;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #05245a;
+    font-family: Helvetica Neue, sans-serif;
+    color: var(--text-black);
     font-weight: 900;
   }
   
@@ -79,7 +90,7 @@
   
   .auth__form-container_fields-content_input label {
     margin-bottom: 0.45rem;
-    color: rgb(61, 79, 88);
+    color: var(--text-black); /* Changed to text-black for consistency */
     font-size: 12px;
     font-family: Arial, Helvetica, sans-serif;
     letter-spacing: 0.7px;
@@ -94,7 +105,7 @@
     outline: none;
     transition: all 150ms ease-in-out 0s;
     width: 85%;
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
   }
   
   .auth__form-container_fields-content_input input::placeholder {
@@ -110,8 +121,8 @@
   
   .auth__form-container_fields-content_input input:focus,
   .auth__form-container_fields-content_input input:active {
-    box-shadow: 0px 0px 0px 1.5px #005fff;
-    border-color: #005fff;
+    box-shadow: 0px 0px 0px 1.5px var(--primary-color);
+    border-color: var(--primary-color);
   }
   
   .auth__form-container_fields-content_input-password {
@@ -129,10 +140,10 @@
   
   .auth__form-container_fields-content_button button {
     border-radius: 4px;
-    background: #005fff;
-    border: 1px solid #005fff;
-    color: #fff;
-    font-family: Arial, Helvetica, sans-serif;
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    color: var(--surface-white);
+    font-family: Helvetica Neue, sans-serif; /* Consistent font */
     font-weight: 500;
     padding: 0.7rem 1.2rem;
     outline: none;
@@ -141,7 +152,12 @@
   }
   
   .auth__form-container_fields-content_button button:hover {
-    background: #0066ff;
+    background: var(--nrc-yellow);
+    color: var(--text-black);
+    border-color: var(--nrc-yellow);
+    background: var(--nrc-yellow); /* Use yellow accent on hover */
+    color: var(--text-black); /* Ensure text is readable on yellow */
+    border-color: var(--nrc-yellow); /* Match border to background */
   }
   
   .auth__form-container_fields-account {
@@ -154,12 +170,14 @@
   
   .auth__form-container_fields-account p {
     font-size: 14px;
-    color: #000;
+    color: var(--text-black);
+    color: var(--text-black); /* Already text-black */
     font-weight: 500;
   }
   
   .auth__form-container_fields-account span {
-    color: #05245a;
+    color: var(--primary-color);
+    color: var(--primary-color); /* Already primary-color */
     cursor: pointer;
     font-weight: 700;
   }
@@ -284,8 +302,9 @@
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
     font-size: 18px;
+    line-height: 1.2; /* Already 1.2 */
     line-height: 120%;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
     margin-bottom: 10px;
   }
   
@@ -296,14 +315,22 @@
   .channel-empty__second {
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
-    line-height: 120%;
+    line-height: 1.2;
     margin: 0;
-    color: #858688;
+    color: var(--subtext-grey);
   }
   
   .channel__container {
     height: 100%;
     width: 100%;
+  }
+  
+  .str-chat__main { /* Target the main chat window container */
+    background-color: var(--surface-white);
+  }
+  
+  .str-chat__list {
+    background-color: var(--primary-color);
   }
   
   .str-chat__thread {
@@ -348,15 +375,16 @@
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
     font-size: 18px;
+    line-height: 1.2; /* Already 1.2 */
     line-height: 22px;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
     margin-right: 10px;
   }
   
   .custom-thread-header__left-count {
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
-    color: #858688;
+    color: var(--subtext-grey);
   }
   
   .close-thread-icon {
@@ -449,9 +477,9 @@
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
     font-weight: bold;
-    font-size: 18px;
-    line-height: 28px;
-    color: #ffffff;
+    font-size: 1.125rem;
+    line-height: 1.2;
+    color: var(--surface-white);
   }
   
   .channel-search__container {
@@ -476,7 +504,7 @@
   }
   
   .channel-search__input__wrapper:focus-within {
-    border: 1px solid #fff;
+    border: 1px solid var(--surface-white);
   }
   
   .channel-search__input__icon {
@@ -486,9 +514,9 @@
   }
   
   .channel-search__input__text {
-    background: none;
+    background: transparent; /* Ensure it's transparent to show wrapper background */
     border: none;
-    color: #fff;
+    color: var(--surface-white);
     font-family: Helvetica Neue, sans-serif;
     font-size: 16px;
     outline: none;
@@ -504,7 +532,7 @@
     position: absolute;
     height: fit-content;
     width: 300px;
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
     border: 1px solid #e9e9ea;
     box-sizing: border-box;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.06);
@@ -522,8 +550,8 @@
     font-style: normal;
     font-weight: 500;
     font-size: 14px;
-    line-height: 120%;
-    color: #858688;
+    line-height: 1.2; /* Already 1.2 */
+    color: var(--subtext-grey); /* Use subtext-grey */
     margin-left: 12px;
   }
   
@@ -570,7 +598,7 @@
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
     font-size: 14px;
-    line-height: 120%;
+    line-height: 1.2;
     color: #ffffff;
   }
   
@@ -579,8 +607,8 @@
     font-family: Helvetica Neue, sans-serif;
     font-weight: 500;
     font-size: 14px;
-    line-height: 120%;
-    color: #2c2c30;
+    line-height: 1.2;
+    color: var(--text-black);
   }
   
   .create-channel__container {
@@ -601,9 +629,10 @@
   .create-channel__header p {
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
+    font-size: 1.125rem;
     font-size: 18px;
-    line-height: 22px;
-    color: #2c2c30;
+    line-height: 1.2; /* Already 1.2 */
+    color: var(--text-black); /* Already text-black */
     margin-left: 20px;
   }
   
@@ -622,8 +651,9 @@
   .channel-name-input__wrapper p {
     font-family: Helvetica Neue, sans-serif;
     font-size: 16px;
+    line-height: 1.2; /* Already 1.2 */
     line-height: 120%;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
     margin-top: 30px;
   }
   
@@ -631,9 +661,10 @@
     font-family: Helvetica Neue, sans-serif;
     font-size: 18px;
     color: rgba(0, 0, 0, 0.5);
-    height: 50px;
+    height: 50px; /* Already 50px */
     width: 540px;
     background: #f7f6f8;
+    background: var(--inbound-grey);
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
     border-radius: 8px;
@@ -647,11 +678,14 @@
   
   .channel-name-input__wrapper input::placeholder {
     font-weight: 300;
+    color: var(--subtext-grey); /* Use subtext-grey for placeholder */
+    font-weight: 300; /* Already 300 */
     color: rgba(0, 0, 0, 0.5);
   }
   
   .create-channel__button-wrapper {
     height: 82px;
+    height: 82px; /* Already 82px */
     background: #f7f6f8;
     display: flex;
     align-items: center;
@@ -667,7 +701,7 @@
     font-weight: bold;
     font-size: 18px;
     padding: 10px 20px;
-    color: #ffffff;
+    color: var(--surface-white); /* Use surface-white */
     border-radius: 8px;
     cursor: pointer;
   }
@@ -688,8 +722,9 @@
   .user-list__header p {
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
+    line-height: 1.2; /* Already 1.2 */
     line-height: 17px;
-    color: #858688;
+    color: var(--subtext-grey); /* Already subtext-grey */
     margin-top: 16px;
   }
   
@@ -705,8 +740,8 @@
   
   .user-list__message {
     font-family: Helvetica Neue, sans-serif;
-    font-size: 16px;
-    color: #2c2c30;
+    font-size: 1rem; /* Use rem for consistency */
+    color: var(--text-black); /* Already text-black */
     margin: 20px;
   }
   
@@ -719,6 +754,7 @@
   
   .user-item__wrapper:hover {
     background: #f7f6f8;
+    background: var(--inbound-grey);
     cursor: pointer;
   }
   
@@ -742,7 +778,7 @@
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
     line-height: 17px;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
     word-break: break-all;
   }
   
@@ -763,6 +799,7 @@
     height: 28px;
     width: 28px;
     background: #f7f6f8;
+    background: var(--inbound-grey);
     border: 1px solid #dedddf;
     border-radius: 14px;
     box-sizing: border-box;
@@ -787,9 +824,10 @@
   .edit-channel__header p {
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
+    font-size: 1.125rem;
     font-size: 18px;
-    line-height: 22px;
-    color: #2c2c30;
+    line-height: 1.2; /* Already 1.2 */
+    color: var(--text-black); /* Already text-black */
     margin-left: 20px;
   }
   
@@ -808,8 +846,9 @@
   .channel-name-input__wrapper p {
     font-family: Helvetica Neue, sans-serif;
     font-size: 16px;
+    line-height: 1.2; /* Already 1.2 */
     line-height: 120%;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
     margin-top: 30px;
   }
   
@@ -817,9 +856,10 @@
     font-family: Helvetica Neue, sans-serif;
     font-size: 18px;
     color: rgba(0, 0, 0);
-    height: 50px;
+    height: 50px; /* Already 50px */
     width: 90%;
     background: #f7f6f8;
+    background: var(--inbound-grey);
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
     border-radius: 8px;
@@ -833,6 +873,8 @@
   
   .channel-name-input__wrapper input::placeholder {
     font-weight: 300;
+    color: var(--subtext-grey); /* Use subtext-grey for placeholder */
+    font-weight: 300; /* Already 300 */
     color: rgba(0, 0, 0, 0.5);
   }
   
@@ -851,7 +893,7 @@
     font-weight: bold;
     font-size: 18px;
     padding: 10px 20px;
-    color: #ffffff;
+    color: var(--surface-white); /* Use surface-white */
     margin-right: 30px;
     border-radius: 8px;
     cursor: pointer;
@@ -864,7 +906,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    background: #ffffff;
+    background: var(--surface-white); /* Use surface-white */
     box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.1);
     border-top-right-radius: 16px;
     z-index: 1;
@@ -882,8 +924,9 @@
   .team-channel-header__name {
     font-family: Helvetica Neue, sans-serif;
     font-weight: bold;
+    font-size: 1.125rem; /* Already 1.125rem */
     font-size: 18px;
-    color: #2c2c30;
+    color: var(--text-black);
     margin-right: 8px;
   }
   
@@ -949,19 +992,25 @@
   .team-channel-header__right-text {
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
-    color: #858688;
+    color: var(--subtext-grey);
   }
   
   .team-channel-list {
     width: 100%;
     display: flex;
+    background-color: var(--primary-color); /* Ensure the list itself is green */
     flex-direction: column;
+  }
+
+  /* This is the key fix: Target the virtualized list from the SDK */
+  .channel-list__list__wrapper .str-chat__list {
+    background-color: var(--primary-color);
   }
   
   .team-channel-list__message {
     color: #ffffff;
     padding: 0 16px;
-  }
+  } /* This is correct as it's on the green sidebar */
   
   .team-channel-list__message.loading {
     height: 115px;
@@ -1020,7 +1069,7 @@
     align-items: center;
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
-    color: #ffffff;
+    color: var(--surface-white);
     padding: 0px 20px;
     height: 100%;
     width: 100%;
@@ -1060,23 +1109,31 @@
   }
   
   .str-chat__message-team:hover {
-    background: #e9e9ea;
+    background: var(--inbound-grey); /* Use inbound-grey for hover */
   }
   
   .str-chat__message-team-group {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    justify-content: center; /* Already center */
   }
   
   .str-chat__message-team-content p {
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--text-black);
     font-weight: normal;
     line-height: 120%;
     color: #000000;
     margin: 0;
     background: none;
+  }
+  
+  .str-chat__message-team--sent .str-chat__message-team-content p {
+    color: var(--surface-white);
   }
   
   .str-chat__message-team:hover .str-chat__message-team-content {
@@ -1103,7 +1160,7 @@
     font-style: normal;
     font-weight: normal;
     font-size: 10px;
-    color: #858688;
+    color: var(--subtext-grey);
     margin-top: 4px;
   }
   
@@ -1112,8 +1169,9 @@
     font-style: normal;
     font-weight: 500;
     font-size: 11px;
-    line-height: 120%;
-    color: #858688;
+    font-size: 0.6875rem;
+    line-height: 1.2; /* Already 1.2 */
+    color: var(--subtext-grey);
     margin: 0;
     margin-right: 8px;
   }
@@ -1124,6 +1182,16 @@
   
   .str-chat__message-team--received {
     padding-left: 20px;
+  }
+  
+  .str-chat__message-team--received .str-chat__message-team-content {
+    background: var(--inbound-grey) !important;
+    background: var(--inbound-grey) !important; /* Use inbound-grey for received messages */
+  }
+  
+  .str-chat__message-team--sent .str-chat__message-team-content {
+    background: var(--primary-color) !important;
+    background: var(--primary-color) !important; /* Use primary-color for sent messages */
   }
   
   .str-chat__message-replies-count-button {
@@ -1146,7 +1214,7 @@
   }
   
   .str-chat__date-separator-date {
-    color: #858688;
+    color: var(--subtext-grey); /* Already subtext-grey */
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
     font-weight: normal;
@@ -1173,7 +1241,7 @@
   }
   
   .str-chat__message-team .str-chat__message-attachment-card--content {
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
   }
   
   ul.str-chat__simple-reactions-list {
@@ -1181,7 +1249,8 @@
     align-items: center;
     width: fit-content;
     background: #ffffff;
-    border: 1px solid #e9e9ea;
+    background: var(--surface-white);
+    border: 1px solid var(--inbound-grey); /* Use inbound-grey */
     box-sizing: border-box;
     border-radius: 50vw;
     padding: 6px 6px 4px 6px;
@@ -1208,10 +1277,12 @@
   
   .str-chat__simple-reactions-list-item--last-number {
     font-family: Helvetica Neue, sans-serif;
-    font-style: normal;
+    font-style: normal; /* Already normal */
+    font-weight: normal; /* Already normal */
+    font-size: 0.6875rem; /* Use rem for consistency */
     font-weight: normal;
     font-size: 11px;
-    color: #2c2c30;
+    color: var(--text-black); /* Already text-black */
   }
   
   .str-chat__message-attachment-actions-form {
@@ -1227,7 +1298,7 @@
   }
   
   .str-chat__message-attachment-actions-button--default {
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
     cursor: pointer;
   }
   
@@ -1258,7 +1329,7 @@
   }
   
   .str-chat__message-team--editing {
-    background: #e9e9ea;
+    background: var(--inbound-grey); /* Use inbound-grey */
     box-shadow: 0 0 11px 0 rgba(0, 0, 0, 0.06),
       inset 0 1px 0 0 var(--primary-color), inset 0 -1px 0 0 var(--primary-color);
     padding: 15px 20px;
@@ -1299,7 +1370,7 @@
   }
   
   .str-chat__message-team-content p a {
-    color: var(--primary-color);
+    color: var(--primary-color); /* Already primary-color */
   }
   
   .pinned-message {
@@ -1318,14 +1389,16 @@
   }
   
   .str-chat__message-team-pin-indicator div svg {
+    fill: var(--subtext-grey); /* Use subtext-grey */
     fill: #858688;
-    font-size: 10px !important;
+    font-size: 0.625rem !important;
   }
   
   .str-chat__message-team-pin-indicator div div {
     font-family: Helvetica Neue, sans-serif;
-    font-size: 10px !important;
-    line-height: 120%;
+    font-size: 0.625rem !important;
+    line-height: 1.2; /* Already 1.2 */
+    color: var(--subtext-grey); /* Use subtext-grey */
     color: #858688;
     margin-left: 4px;
   }
@@ -1355,7 +1428,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background: #f7f6f8;
+    background: var(--inbound-grey); /* Use inbound-grey for input background */
     padding: 15px 20px 28px;
     width: 100%;
   }
@@ -1398,7 +1471,8 @@
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
     font-weight: bold;
-    font-size: 11px;
+    font-weight: bold; /* Already bold */
+    font-size: 1.125rem; /* Already 1.125rem */
     line-height: 8px;
     color: #ffffff;
   }
@@ -1409,6 +1483,7 @@
     justify-content: flex-start;
     width: 100%;
     height: 40px;
+    height: 40px; /* Already 40px */
     background: rgba(0, 0, 0, 0.05);
   }
   
@@ -1427,6 +1502,7 @@
   .team-message-input__wrapper .str-chat__textarea textarea {
     display: flex;
     background: #fff;
+    background: var(--surface-white);
     border: none;
     outline: none;
     font-family: Helvetica Neue, sans-serif;
@@ -1442,6 +1518,7 @@
     outline: none;
     box-shadow: none;
     background: #fff;
+    background: var(--surface-white);
   }
   
   .team-message-input__wrapper .str-chat__textarea textarea::placeholder {
@@ -1510,7 +1587,7 @@
     z-index: 10;
     position: relative;
     width: 100%;
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
     margin: 0;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
@@ -1528,14 +1605,14 @@
   .rta__list-header {
     font-family: Helvetica Neue, sans-serif;
     font-size: 14px;
-    line-height: 16px;
-    color: #2c2c30;
+    line-height: 1.2; /* Use 1.2 for consistency */
+    color: var(--text-black);
     mix-blend-mode: normal;
     opacity: 0.9;
   }
   
   .str-chat__thread {
-    background: #fff;
+    background: var(--surface-white); /* Use surface-white */
     box-shadow: inset 1px 0px 0px rgba(0, 0, 0, 0.1);
     border-top-right-radius: 16px;
     border-bottom-right-radius: 16px;
@@ -1555,10 +1632,11 @@
   .str-chat__thread-header-details strong {
     font-family: Helvetica, sans-serif;
     font-style: normal;
+    font-weight: bold; /* Already bold */
     font-weight: bold;
-    font-size: 18px;
-    line-height: 22px;
-    color: #2c2c30;
+    font-size: 1.125rem;
+    line-height: 1.2;
+    color: var(--text-black);
     margin-right: 10px;
   }
   
@@ -1566,15 +1644,16 @@
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
     font-weight: normal;
+    font-size: 14px; /* Already 14px */
     font-size: 14px;
-    line-height: 17px;
-    color: #858688;
+    line-height: 1.2;
+    color: var(--subtext-grey);
   }
   
   .str-chat__thread .str-chat__square-button {
     border-radius: 20px;
-    height: 35px;
-    width: 35px;
+    height: 2.1875rem;
+    width: 2.1875rem;
   }
   
   .str-chat__square-button svg {
@@ -1638,6 +1717,7 @@
     font-family: Helvetica Neue, sans-serif;
     font-style: normal;
     font-weight: bold;
+    font-size: 1.125rem; /* Consistent rem unit */
     font-size: 11px;
     line-height: 8px;
     color: #ffffff;
@@ -1675,7 +1755,7 @@
   .thread-message-input__wrapper .str-chat__textarea textarea {
     display: flex;
     align-items: center;
-    background: #fff;
+    background: var(--surface-white);
     border: none;
     outline: none;
     font-family: Helvetica Neue, sans-serif;
@@ -1688,6 +1768,7 @@
     outline: none;
     box-shadow: none;
     background: #fff;
+    background: var(--surface-white);
   }
   
   .thread-message-input__wrapper .str-chat__textarea textarea::placeholder {
@@ -1729,7 +1810,7 @@
   .channerl-list__container-toggle {
     display: none;
     height: 50px;
-    width: 50px;
+    width: 50px; /* Already 50px */
     background: #005fff;
     position: absolute;
     right: -2%;
@@ -1842,4 +1923,3 @@
       display: none;
     }
   }
-  
