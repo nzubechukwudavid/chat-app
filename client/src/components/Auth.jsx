@@ -28,31 +28,34 @@ const Auth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    const { username, password, confirmPassword } = form;
+    const { username, password, phoneNumber, avatarURL, confirmPassword } = form;
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
     if(isSignup && password !== confirmPassword) {
         alert("Passwords do not match");
         return;
     }
-
-    // Conditionally build the payload
-    const payload = isSignup ? form : { username, password };
-
-    const { data: { token, userID, hashedPassword, fullName, username: responseUsername } } = await axios.post(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, payload);
-
-    cookies.set('token', token);
-    cookies.set('username', responseUsername); // Use username from server response
-    cookies.set('userID', userID);
-    cookies.set('fullName', fullName);
-
-    if (isSignup) {
-      cookies.set('phoneNumber', form.phoneNumber);
-      cookies.set('avatarURL', form.avatarURL);
-      cookies.set('hashedPassword', hashedPassword);
+    
+    try {
+      const { data: { token, userID, fullName, username: responseUsername } } = await axios.post(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, {
+        username, password, fullName: form.fullName, phoneNumber, avatarURL,
+      });
+  
+      cookies.set('token', token);
+      cookies.set('username', responseUsername);
+      cookies.set('fullName', fullName);
+      cookies.set('userID', userID);
+  
+      if (isSignup) {
+        cookies.set('phoneNumber', phoneNumber);
+        cookies.set('avatarURL', avatarURL);
+      }
+  
+      window.location.reload();
+    } catch (error) {
+      // Display a user-friendly error message from the server if available
+      alert(error.response?.data?.message || 'An error occurred. Please try again.');
     }
-
-    window.location.reload();
   }
 
   const switchMode = () => {
