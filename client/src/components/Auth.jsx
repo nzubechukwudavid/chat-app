@@ -29,7 +29,7 @@ const Auth = () => {
     e.preventDefault();
   
     const { username, password, confirmPassword } = form;
-    const URL = 'http://localhost:5000/auth';
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
     if(isSignup && password !== confirmPassword) {
         alert("Passwords do not match");
@@ -39,7 +39,7 @@ const Auth = () => {
     // Conditionally build the payload
     const payload = isSignup ? form : { username, password };
 
-    const { data: { token, userID, hashedPassword, fullName, username: responseUsername } } = await axios.post(`${URL}/${isSignup ? 'signup' : 'login'}`, payload);
+    const { data: { token, userID, hashedPassword, fullName, username: responseUsername } } = await axios.post(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, payload);
 
     cookies.set('token', token);
     cookies.set('username', responseUsername); // Use username from server response
