@@ -44,7 +44,7 @@ const EmptyState = ({ type }) => (
   </div>
 );
 
-const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setToggleContainer }) => {
+const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setToggleContainer, setAuthToken }) => {
 
   const { client } = useChatContext();
 
@@ -57,7 +57,8 @@ const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEdi
     cookies.remove('avatarURL');
     cookies.remove('hashedPassword');
 
-    window.location.reload();
+    // This will update the state in App.jsx, causing a re-render to the Auth component without a full page reload.
+    setAuthToken(null);
   }
 
   const filters = { members: { $in: [client.userID] } };
@@ -123,7 +124,7 @@ const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEdi
   );
 }
 
-const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsEditing }) => {
+const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setAuthToken }) => {
   const [toggleContainer, setToggleContainer] = useState(false);
 
   return (
@@ -133,6 +134,7 @@ const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsE
           setIsCreating={setIsCreating}
           setCreateType={setCreateType}
           setIsEditing={setIsEditing}
+          setAuthToken={setAuthToken}
         />
       </div>
 
@@ -146,6 +148,7 @@ const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsE
           setCreateType={setCreateType}
           setIsEditing={setIsEditing}
           setToggleContainer={setToggleContainer}
+          setAuthToken={setAuthToken}
         />
       </div>
     </>

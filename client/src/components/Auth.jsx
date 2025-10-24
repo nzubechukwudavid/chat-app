@@ -16,7 +16,7 @@ const initialState = {
 }
 
 
-const Auth = () => {
+const Auth = ({ setAuthToken }) => {
   const [form, setForm] = useState(initialState);
   const [isSignup, setIsSignup] = useState(true);
 
@@ -51,7 +51,8 @@ const Auth = () => {
         cookies.set('avatarURL', avatarURL);
       }
   
-      window.location.reload();
+      // Update the auth state in App.jsx instead of reloading
+      setAuthToken(token);
     } catch (error) {
       // Display a user-friendly error message from the server if available
       alert(error.response?.data?.message || 'An error occurred. Please try again.');
