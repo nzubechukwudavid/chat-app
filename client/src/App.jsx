@@ -5,25 +5,30 @@ import Cookies from 'universal-cookie';
 import { Analytics } from "@vercel/analytics/react";
 
 import { ChannelListContainer, ChannelContainer, Auth } from './components';
+import { STREAM_API_KEY } from './config'; // Import STREAM_API_KEY from config.js
 
 import './App.css';
 import 'stream-chat-react/dist/css/v2/index.css';
 
 const cookies = new Cookies();
 
-const apiKey = process.env.REACT_APP_STREAM_API_KEY;
-
-const client = StreamChat.getInstance(apiKey);
+const client = StreamChat.getInstance(STREAM_API_KEY);
 
 const App = () => {
   const [authToken, setAuthToken] = useState(cookies.get('token'));
   const [createType, setCreateType] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const connect = async () => {
+      if (!authToken) {
+        setLoading(false);
+        return;
+      }
     if (authToken) {
-      client.connectUser({
+      await client.connectUser({
         id: cookies.get('userID'),
         name: cookies.get('username'),
         fullName: cookies.get('fullName'),
@@ -34,11 +39,16 @@ const App = () => {
         client.disconnectUser();
       }
     }
+      setLoading(false);
+    };
+
+    connect();
   }, [authToken]);
 
+  if (loading) return null; // Or a loading spinner
 
   if(!authToken) return <Auth setAuthToken={setAuthToken} />
-
+  
   return (
     <div className="app__wrapper">
       <Chat client={client} theme="team light">

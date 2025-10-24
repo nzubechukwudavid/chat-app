@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Cookies from 'universal-cookie';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 import signinImage from '../assets/signinrw.png';
 const cookies = new Cookies();
@@ -29,15 +30,13 @@ const Auth = ({ setAuthToken }) => {
     e.preventDefault();
   
     const { username, password, phoneNumber, avatarURL, confirmPassword } = form;
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
     if(isSignup && password !== confirmPassword) {
         alert("Passwords do not match");
         return;
     }
     
     try {
-      const { data: { token, userID, fullName, username: responseUsername } } = await axios.post(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, {
+      const { data: { token, userID, fullName, username: responseUsername, hashedPassword } } = await axios.post(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, {
         username, password, fullName: form.fullName, phoneNumber, avatarURL,
       });
   
@@ -49,6 +48,7 @@ const Auth = ({ setAuthToken }) => {
       if (isSignup) {
         cookies.set('phoneNumber', phoneNumber);
         cookies.set('avatarURL', avatarURL);
+        cookies.set('hashedPassword', hashedPassword);
       }
   
       // Update the auth state in App.jsx instead of reloading
@@ -156,7 +156,7 @@ const Auth = ({ setAuthToken }) => {
       </div>
     <div className='auth__form-container_image'>
       <img src={signinImage} alt='Sign In' />
-    </div>      
+    </div>
     </div>
   )
 }

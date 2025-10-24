@@ -1,4 +1,4 @@
-import { React, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ChannelList, useChatContext } from 'stream-chat-react';
 import Cookies from 'universal-cookie';
 
@@ -44,22 +44,18 @@ const EmptyState = ({ type }) => (
   </div>
 );
 
-const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setToggleContainer, setAuthToken }) => {
+const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setToggleContainer, setAuthToken, client }) => {
 
-  const { client } = useChatContext();
+  const logout = useCallback(() => {
+    const cookiesToRemove = ['token', 'username', 'userID', 'fullName', 'phoneNumber', 'avatarURL', 'hashedPassword'];
+    cookiesToRemove.forEach((cookie) => cookies.remove(cookie));
 
-  const logout = () => {
-    cookies.remove('token');
-    cookies.remove('username');
-    cookies.remove('userID');
-    cookies.remove('fullName');
-    cookies.remove('phoneNumber');
-    cookies.remove('avatarURL');
-    cookies.remove('hashedPassword');
+    if (client) {
+      client.disconnectUser();
+    }
 
-    // This will update the state in App.jsx, causing a re-render to the Auth component without a full page reload.
     setAuthToken(null);
-  }
+  }, [client, setAuthToken]);
 
   const filters = { members: { $in: [client.userID] } };
 
@@ -126,11 +122,15 @@ const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEdi
 
 const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setAuthToken }) => {
   const [toggleContainer, setToggleContainer] = useState(false);
+  const { client } = useChatContext();
+
+  if (!client || !client.userID) return null; // Or a loading spinner/placeholder
 
   return (
     <>
       <div className="channel-list__container">
         <ChannelListContent
+          client={client}
           setIsCreating={setIsCreating}
           setCreateType={setCreateType}
           setIsEditing={setIsEditing}
@@ -145,6 +145,7 @@ const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsE
         </div>
         <ChannelListContent
           setIsCreating={setIsCreating}
+          client={client}
           setCreateType={setCreateType}
           setIsEditing={setIsEditing}
           setToggleContainer={setToggleContainer}
