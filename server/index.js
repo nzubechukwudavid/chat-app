@@ -13,8 +13,14 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioClient = require('twilio')(accountSid, authToken);
 const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 
+const vercelFrontendURL = process.env.VERCEL_FRONTEND_URL;
+const corsOptions = {
+    origin: ['http://localhost:3000', vercelFrontendURL],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+};
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded());
 
