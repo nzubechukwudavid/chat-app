@@ -11,19 +11,16 @@ import 'stream-chat-react/dist/css/v2/index.css';
 
 const cookies = new Cookies();
 
-const apiKey = 'spz529r7wxmx';
+const apiKey = process.env.REACT_APP_STREAM_API_KEY;
 const authToken = cookies.get('token');
 
 const client = StreamChat.getInstance(apiKey);
 
 if (authToken) {
   client.connectUser({
-    name: cookies.get('username'),
     id: cookies.get('userID'),
+    name: cookies.get('username'),
     fullName: cookies.get('fullName'),
-    phoneNumber: cookies.get('phoneNumber'),
-    avatarURL: cookies.get('avatarURL'),
-    hashedPassword: cookies.get('hashedPassword')
   }, authToken)
 }
 
