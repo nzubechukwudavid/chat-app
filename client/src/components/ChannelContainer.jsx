@@ -24,9 +24,27 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
 
   if (!channel?.id) {
     return (
-      <div className='channel__container' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div
-          className='channel-empty__container'
+      <div className='channel__container' style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className='team-channel-header__container mobile-header-only'>
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            onClick={() => document.body.classList.toggle('mobile-menu-open')}
+            title="Toggle Navigation Menu"
+            aria-label="Toggle Navigation Menu"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>NRC Rail Hub</span>
+          <div style={{ width: '28px' }} />
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div
+            className='channel-empty__container'
           style={{
             maxWidth: '520px',
             padding: '40px 24px',
@@ -86,6 +104,7 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
               <span>New Channel</span>
             </button>
           </div>
+        </div>
         </div>
       </div>
     );

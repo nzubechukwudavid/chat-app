@@ -101,9 +101,12 @@ html, body {
 .app__wrapper {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   background-color: var(--bg-canvas);
+  position: fixed;
+  inset: 0;
 }
 
 /* ==========================================================================
@@ -449,10 +452,30 @@ html, body {
 .channel__container {
   flex: 1;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
   position: relative;
+  overflow: hidden;
+}
+
+.channel__container .str-chat {
+  height: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+
+.channel-inner__wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Top Channel Header */
@@ -512,16 +535,31 @@ html, body {
 }
 
 .str-chat__main-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  width: 100% !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
   padding: 0 !important;
-  background: var(--bg-canvas);
+  background: var(--bg-canvas) !important;
+  position: relative !important;
 }
 
 .str-chat__list {
   background: transparent !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
 }
 
 /* Message List Container */
 .str-chat__message-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
   padding: 18px 24px !important;
   background: var(--bg-canvas) !important;
 }
@@ -780,9 +818,14 @@ html, body {
    Message Composer & Send Button
    ========================================================================== */
 .str-chat__message-input {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
   background: var(--bg-surface) !important;
-  padding: 14px 24px 18px !important;
+  padding: 12px 20px 16px !important;
   border-top: 1px solid var(--border-subtle) !important;
+  position: relative !important;
+  bottom: 0 !important;
+  z-index: 20 !important;
 }
 
 .str-chat__message-input-inner {
@@ -1373,7 +1416,9 @@ html, body {
 }
 
 @media screen and (max-width: 900px) {
-  html, body, #root {
+  /* Only allow body scrolling on mobile if the auth container is displayed */
+  body:has(.auth__form-container),
+  body:has(.auth__form-container) #root {
     height: auto !important;
     min-height: 100% !important;
     overflow-y: auto !important;
@@ -1384,6 +1429,7 @@ html, body {
     flex-direction: column !important;
     height: auto !important;
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     overflow-y: visible !important;
     padding-bottom: 60px !important;
   }
@@ -1457,14 +1503,21 @@ html, body {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.7) !important;
   }
 
-  /* Frosted backdrop when drawer is open */
-  body.mobile-menu-open::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(4px);
-    z-index: 999;
+  /* Clickable frosted backdrop when drawer is open */
+  .mobile-drawer-backdrop {
+    display: none;
+  }
+
+  body.mobile-menu-open .mobile-drawer-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 999 !important;
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   /* Sidebar utility strip adjustments on mobile */
@@ -1480,6 +1533,8 @@ html, body {
   .channel__container {
     width: 100vw !important;
     min-width: 100vw !important;
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   /* Message bubbles on mobile can expand nicely */
@@ -1488,9 +1543,15 @@ html, body {
     max-width: 88% !important;
   }
 
-  /* Message input on mobile */
+  /* Message input on mobile: securely anchored to bottom with safe-area spacing */
   .str-chat__message-input {
-    padding: 10px 14px 14px !important;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 8px)) !important;
+    position: relative !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    background: var(--bg-surface) !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04) !important;
+    z-index: 20 !important;
   }
 
   .str-chat__message-list {
@@ -1499,6 +1560,12 @@ html, body {
 
   /* Header adjustments on mobile */
   .team-channel-header__container {
+    padding: 0 14px !important;
+    height: 56px !important;
+  }
+
+  .mobile-header-only {
+    display: flex !important;
     padding: 0 14px !important;
     height: 56px !important;
   }

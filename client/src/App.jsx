@@ -66,6 +66,11 @@ const App = () => {
   
   return (
     <div className="app__wrapper">
+      <div 
+        className="mobile-drawer-backdrop" 
+        onClick={() => document.body.classList.remove('mobile-menu-open')}
+        aria-hidden="true"
+      />
       <Chat client={client} theme="team light">
         <ChannelListContainer 
           isCreating={isCreating}
