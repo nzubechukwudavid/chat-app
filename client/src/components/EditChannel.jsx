@@ -46,6 +46,7 @@ const EditChannel = ({ setIsEditing }) => {
       }
 
       setIsEditing(false);
+      document.body.classList.remove('mobile-menu-open');
     } catch (err) {
       console.error('Error updating channel:', err);
       setErrorMessage(err.message || 'Failed to update channel.');

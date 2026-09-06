@@ -63,6 +63,7 @@ const CreateChannel = ({ createType, setIsCreating }) => {
       setSelectedUsers([client.userID]);
       setIsCreating(false);
       setActiveChannel(newChannel);
+      document.body.classList.remove('mobile-menu-open');
     } catch (error) {
       console.error('Failed to create channel:', error);
       setErrorMessage(error.message || 'Failed to create channel. Please try again.');
