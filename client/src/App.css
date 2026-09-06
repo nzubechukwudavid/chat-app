@@ -72,8 +72,8 @@ html, body {
 }
 
 #root {
+  min-height: 100%;
   height: 100%;
-  overflow: hidden;
 }
 
 /* Custom Sleek Scrollbar */
@@ -1097,11 +1097,14 @@ html, body {
    ========================================================================== */
 .auth__form-container {
   min-height: 100vh;
+  height: auto;
   display: flex;
-  width: 100vw;
+  width: 100%;
   background: linear-gradient(135deg, #071e14 0%, #0d3826 50%, #071e14 100%);
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Ambient glow background accents */
@@ -1370,28 +1373,63 @@ html, body {
 }
 
 @media screen and (max-width: 900px) {
+  html, body, #root {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
   .auth__form-container {
-    flex-direction: column;
-    overflow-y: auto;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: visible !important;
+    padding-bottom: 60px !important;
   }
 
   .auth__hero {
-    flex: none;
-    padding: 32px 24px;
-    text-align: center;
-    align-items: center;
+    flex: none !important;
+    padding: 24px 20px 8px !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+
+  .auth__hero-badge {
+    margin: 0 auto !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+  }
+
+  .auth__hero-title {
+    font-size: 26px !important;
+    margin: 10px 0 6px !important;
+    line-height: 1.2 !important;
   }
 
   .auth__hero-description {
-    margin-bottom: 16px;
+    font-size: 13.5px !important;
+    margin-bottom: 12px !important;
+    max-width: 360px !important;
   }
 
-  .auth__hero-features {
-    display: none;
+  .auth__hero-features,
+  .auth__hero-footer {
+    display: none !important;
   }
 
   .auth__form-container_fields {
-    padding: 20px 16px 40px;
+    padding: 8px 16px 100px !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .auth__form-container_fields-content {
+    padding: 24px 20px 32px !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    border-radius: 16px !important;
   }
 }
 
