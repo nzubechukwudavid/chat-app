@@ -7,8 +7,8 @@ import { Analytics } from "@vercel/analytics/react";
 import { ChannelListContainer, ChannelContainer, Auth } from './components';
 import { STREAM_API_KEY } from './config'; // Import STREAM_API_KEY from config.js
 
-import './App.css';
 import 'stream-chat-react/dist/css/v2/index.css';
+import './App.css';
 
 const cookies = new Cookies();
 
@@ -22,27 +22,42 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const connect = async () => {
       if (!authToken) {
-        setLoading(false);
+        if (client.userID) {
+          await client.disconnectUser();
+        }
+        if (isMounted) setLoading(false);
         return;
       }
-    if (authToken) {
-      await client.connectUser({
-        id: cookies.get('userID'),
-        name: cookies.get('username'),
-        fullName: cookies.get('fullName'),
-      }, authToken);
-    } else {
-      // Ensure the client is disconnected when there's no token
-      if (client.userID) {
-        client.disconnectUser();
+
+      try {
+        await client.connectUser(
+          {
+            id: cookies.get('userID'),
+            name: cookies.get('username'),
+            fullName: cookies.get('fullName'),
+            image: cookies.get('avatarURL') || undefined,
+          },
+          authToken
+        );
+      } catch (err) {
+        console.error('Failed to connect user to Stream Chat:', err);
+        const cookiesToRemove = ['token', 'username', 'userID', 'fullName', 'phoneNumber', 'avatarURL', 'hashedPassword'];
+        cookiesToRemove.forEach((c) => cookies.remove(c, { path: '/' }));
+        if (isMounted) setAuthToken(null);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    }
-      setLoading(false);
     };
 
     connect();
+
+    return () => {
+      isMounted = false;
+    };
   }, [authToken]);
 
   if (loading) return null; // Or a loading spinner
@@ -67,6 +82,7 @@ const App = () => {
           createType={createType}
         />
       </Chat>
+      <Analytics />
     </div>
   );
 }

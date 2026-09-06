@@ -4,59 +4,58 @@ import { ResultsDropdown } from './';
 import { SearchIcon } from '../assets';
 
 const ChannelSearch = ({ setToggleContainer }) => {
-
   const { client, setActiveChannel } = useChatContext();
   const [teamChannels, setTeamChannels] = useState([]);
   const [directChannels, setDirectChannels] = useState([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if(!query) {
+    if (!query.trim()) {
       setTeamChannels([]);
       setDirectChannels([]);
+      setLoading(false);
+      return;
     }
-  }, [query]);
-  
-  const getChannels = async (text) => {
-    try {
-      const channelResponse = client.queryChannels(
-        { 
-          type: 'team',
-          members: { $in: [client.userID] },
-          name: { $autocomplete: text }
-        },
-      );
-      const userResponse = client.queryUsers(
-        { 
-          id: { $ne: client.userID },
-          name: { $autocomplete: text }
-        },
-      );
-
-      const [channels, { users }] = await Promise.all([channelResponse, userResponse]);
-
-      if(channels.length) setTeamChannels(channels);
-      if(users.length) setDirectChannels(users);
-      
-    } catch (error) {
-      setQuery('')
-    }
-  }
-
-  const onSearch = (event) => {
-    event.preventDefault();
 
     setLoading(true);
-    setQuery(event.target.value);
-    getChannels(event.target.value)
+    const timeoutId = setTimeout(async () => {
+      try {
+        const channelPromise = client.queryChannels({
+          type: 'team',
+          members: { $in: [client.userID] },
+          name: { $autocomplete: query.trim() },
+        });
 
-  }
+        const userPromise = client.queryUsers({
+          id: { $ne: client.userID },
+          name: { $autocomplete: query.trim() },
+        });
+
+        const [channels, userResponse] = await Promise.all([channelPromise, userPromise]);
+
+        setTeamChannels(channels || []);
+        setDirectChannels(userResponse?.users || []);
+      } catch (error) {
+        console.error('Channel search error:', error);
+        setTeamChannels([]);
+        setDirectChannels([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [query, client]);
+
+  const onSearch = (event) => {
+    setQuery(event.target.value);
+  };
 
   const setChannel = (channel) => {
     setQuery('');
     setActiveChannel(channel);
-  }
+  };
 
   return (
     <div className='channel-search__container'>
@@ -64,26 +63,25 @@ const ChannelSearch = ({ setToggleContainer }) => {
         <div className='channel-search__input__icon'>
           <SearchIcon />
         </div>
-        <input 
+        <input
           className='channel-search__input__text'
-          placeholder='search' 
-          type='text' 
-          value={query} 
-          onChange={onSearch} 
+          placeholder='Search channels & users...'
+          type='text'
+          value={query}
+          onChange={onSearch}
         />
       </div>
-      { query && (
-        <ResultsDropdown 
-          teamChannels={teamChannels} 
+      {query.trim() && (
+        <ResultsDropdown
+          teamChannels={teamChannels}
           directChannels={directChannels}
           loading={loading}
           setChannel={setChannel}
-          setQuery={setQuery}
           setToggleContainer={setToggleContainer}
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ChannelSearch
+export default ChannelSearch;

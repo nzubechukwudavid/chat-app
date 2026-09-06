@@ -2,21 +2,31 @@ import React from 'react';
 import { Avatar, useChatContext } from 'stream-chat-react';
 
 const channelByUser = async ({ client, setActiveChannel, channel, setChannel }) => {
-  const filters = {
-    type: 'messaging',
-    member_count: 2,
-    members: { $eq: [client.user.id, client.userID] },
-  };
+  try {
+    const filters = {
+      type: 'messaging',
+      member_count: 2,
+      members: { $eq: [client.userID, channel.id] },
+    };
 
-  const [existingChannel] = await client.queryChannels(filters);
+    const [existingChannel] = await client.queryChannels(filters);
 
-  if (existingChannel) return setActiveChannel(existingChannel);
+    if (existingChannel) {
+      if (setChannel) setChannel(existingChannel);
+      return setActiveChannel(existingChannel);
+    }
 
-  const newChannel = client.channel('messaging', { members: [channel.id, client.userID] });
-  
-  setChannel(newChannel)
+    const newChannel = client.channel('messaging', {
+      members: [channel.id, client.userID],
+    });
 
-  return setActiveChannel(newChannel);
+    await newChannel.watch();
+
+    if (setChannel) setChannel(newChannel);
+    return setActiveChannel(newChannel);
+  } catch (err) {
+    console.error('Error opening DM channel:', err);
+  }
 };
 
 const SearchResult = ({ channel, focusedId, type, setChannel, setToggleContainer }) => {
@@ -26,15 +36,17 @@ const SearchResult = ({ channel, focusedId, type, setChannel, setToggleContainer
     return (
       <div
         onClick={() => {
-          setChannel(channel)
-          if(setToggleContainer) {
-            setToggleContainer((prevState) => !prevState)   
+          if (setChannel) setChannel(channel);
+          setActiveChannel(channel);
+          if (setToggleContainer) {
+            setToggleContainer((prevState) => !prevState);
           }
+          document.body.classList.remove('mobile-menu-open');
         }}
-        className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container' }
+        className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container'}
       >
         <div className='result-hashtag'>#</div>
-        <p className='channel-search__result-text'>{channel.data.name}</p>
+        <p className='channel-search__result-text'>{channel?.data?.name || channel?.id}</p>
       </div>
     );
   }
@@ -42,23 +54,30 @@ const SearchResult = ({ channel, focusedId, type, setChannel, setToggleContainer
   return (
     <div
       onClick={async () => {
-        channelByUser({ client, setActiveChannel, channel, setChannel })
-        if(setToggleContainer) {
-            setToggleContainer((prevState) => !prevState)   
+        await channelByUser({ client, setActiveChannel, channel, setChannel });
+        if (setToggleContainer) {
+          setToggleContainer((prevState) => !prevState);
         }
+        document.body.classList.remove('mobile-menu-open');
       }}
-      className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container' }
+      className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container'}
     >
       <div className='channel-search__result-user'>
-        <Avatar image={channel.image || undefined} name={channel.name} size={24} />
-        <p className='channel-search__result-text'>{channel.name}</p>
+        <Avatar image={channel.image || undefined} name={channel.fullName || channel.name} size={28} />
+        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+            {channel.fullName || channel.name}
+          </span>
+          {channel.name && channel.name !== channel.fullName && (
+            <span style={{ fontSize: '11px', color: '#64748b' }}>@{channel.name}</span>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-const ResultsDropdown = ({ teamChannels, directChannels, focusedId, loading, setChannel, setToggleContainer }) => {
-
+const ResultsDropdown = ({ teamChannels = [], directChannels = [], focusedId, loading, setChannel, setToggleContainer }) => {
   return (
     <div className='channel-search__results'>
       <p className='channel-search__results-header'>Channels</p>
@@ -72,17 +91,18 @@ const ResultsDropdown = ({ teamChannels, directChannels, focusedId, loading, set
           <i>No channels found</i>
         </p>
       ) : (
-        teamChannels?.map((channel, i) => (
+        teamChannels.map((channel, i) => (
           <SearchResult
             channel={channel}
             focusedId={focusedId}
-            key={i}
+            key={channel.id || i}
             setChannel={setChannel}
             type='channel'
             setToggleContainer={setToggleContainer}
           />
         ))
       )}
+
       <p className='channel-search__results-header'>Users</p>
       {loading && !directChannels.length && (
         <p className='channel-search__results-header'>
@@ -90,15 +110,15 @@ const ResultsDropdown = ({ teamChannels, directChannels, focusedId, loading, set
         </p>
       )}
       {!loading && !directChannels.length ? (
-        <p className='channel-search__res ults-header'>
+        <p className='channel-search__results-header'>
           <i>No direct messages found</i>
         </p>
       ) : (
-        directChannels?.map((channel, i) => (
+        directChannels.map((channel, i) => (
           <SearchResult
             channel={channel}
             focusedId={focusedId}
-            key={i}
+            key={channel.id || i}
             setChannel={setChannel}
             type='user'
             setToggleContainer={setToggleContainer}
