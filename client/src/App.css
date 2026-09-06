@@ -798,6 +798,168 @@ html, body {
   color: #64748b !important;
 }
 
+/* ==========================================================================
+   Modern Message Attachments & Image Galleries
+   ========================================================================== */
+/* When a message has attachments, strip the bubble's outer padding and enable border-radius clipping */
+.str-chat__message--has-attachment .str-chat__message-bubble {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* If a message has attachments and NO text caption, make the bubble completely transparent */
+.str-chat__message--has-attachment.has-no-text .str-chat__message-bubble {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* If a message has attachments AND a text caption, format the text with clean padding below the image */
+.str-chat__message--has-attachment.str-chat__message--has-text .str-chat__message-text {
+  padding: 10px 14px 12px !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+.str-chat__message--has-attachment.str-chat__message--has-text .str-chat__message-text p {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Attachment list and container resets */
+.str-chat__attachment-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+.str-chat__message-attachment {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+}
+
+.str-chat__message-attachment--image,
+.str-chat__gallery {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+}
+
+/* Buttons inside gallery */
+.str-chat__gallery-image,
+.str-chat__gallery-placeholder,
+.str-chat__gallery button {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* The actual image element */
+.str-chat__message-attachment--img,
+.str-chat__gallery-image img,
+.str-chat__gallery-placeholder img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 440px !important;
+  max-height: 380px !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  transition: transform var(--transition-fast) !important;
+}
+
+.str-chat__gallery-image:hover img,
+.str-chat__message-attachment--img:hover {
+  transform: scale(1.015);
+}
+
+/* Standalone image (no caption text): apply the full bubble border radius and subtle border directly to the image */
+.str-chat__message-simple--me.has-no-text .str-chat__message-attachment--img,
+.str-chat__message-simple--me.has-no-text .str-chat__gallery-image img {
+  border-radius: 16px 16px 4px 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.str-chat__message-simple:not(.str-chat__message-simple--me).has-no-text .str-chat__message-attachment--img,
+.str-chat__message-simple:not(.str-chat__message-simple--me).has-no-text .str-chat__gallery-image img {
+  border-radius: 16px 16px 16px 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Image with caption text: flush at the top with matching top corner radii */
+.str-chat__message-simple--me.str-chat__message--has-text .str-chat__message-attachment--img,
+.str-chat__message-simple--me.str-chat__message--has-text .str-chat__gallery-image img {
+  border-radius: 16px 16px 0 0 !important;
+}
+
+.str-chat__message-simple:not(.str-chat__message-simple--me).str-chat__message--has-text .str-chat__message-attachment--img,
+.str-chat__message-simple:not(.str-chat__message-simple--me).str-chat__message--has-text .str-chat__gallery-image img {
+  border-radius: 16px 16px 0 0 !important;
+}
+
+/* File Attachments (PDFs, docs, spreadsheets) */
+.str-chat__message-attachment-file--item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 14px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  margin: 4px 0 !important;
+  transition: background var(--transition-fast) !important;
+}
+
+.str-chat__message-attachment-file--item:hover {
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.str-chat__message-attachment-file--item-name {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.str-chat__message-attachment-file--item-size {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 11px !important;
+}
+
+/* Giphy & Rich Link Cards */
+.str-chat__message-attachment--card,
+.str-chat__message-attachment-card--giphy {
+  border: none !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+.str-chat__message-attachment-card--text {
+  padding: 8px 12px !important;
+  color: #f1f5f9 !important;
+}
+
 /* User Avatars - Vibrant classic blue fallback so users distinctly stand out */
 .str-chat__avatar {
   border-radius: 50%;
