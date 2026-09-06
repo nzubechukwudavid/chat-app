@@ -1571,20 +1571,30 @@ html, body {
    ========================================================================== */
 .mobile-menu-toggle {
   display: none;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 7px 9px;
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  color: var(--text-main);
+  color: #f1f5f9 !important;
   transition: all var(--transition-fast);
 }
 
 .mobile-menu-toggle:hover {
-  background: #e2e8f0;
-  color: var(--nrc-green-700);
+  background: #334155 !important;
+  color: var(--nrc-green-400) !important;
+  border-color: var(--nrc-green-500) !important;
+}
+
+.mobile-menu-toggle svg {
+  stroke: #f1f5f9 !important;
+  display: block;
+}
+
+.mobile-menu-toggle:hover svg {
+  stroke: var(--nrc-green-400) !important;
 }
 
 @media screen and (max-width: 900px) {
