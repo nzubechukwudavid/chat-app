@@ -4,7 +4,7 @@ import { Avatar, useChatContext } from 'stream-chat-react';
 const ListContainer = ({ children, searchTerm, setSearchTerm }) => {
   return (
     <div className="user-list__container">
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid #e2e8f0' }}>
+      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
         <input
           type="text"
           value={searchTerm}
@@ -13,7 +13,9 @@ const ListContainer = ({ children, searchTerm, setSearchTerm }) => {
           style={{
             width: '100%',
             padding: '8px 12px',
-            border: '1px solid #cbd5e1',
+            background: '#0b0f19',
+            color: '#f1f5f9',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             borderRadius: '6px',
             fontSize: '13px',
             outline: 'none',

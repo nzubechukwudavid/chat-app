@@ -97,12 +97,12 @@ const TeamChannelHeader = ({ setIsEditing }) => {
             )}
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
               {otherUser?.fullName || otherUser?.name || 'Direct Message'}
               {additionalMembers > 0 && ` +${additionalMembers} more`}
             </h3>
             {otherUser?.name && (
-              <span style={{ fontSize: '12px', color: '#64748b' }}>@{otherUser.name}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{otherUser.name}</span>
             )}
           </div>
         </div>
@@ -115,8 +115,8 @@ const TeamChannelHeader = ({ setIsEditing }) => {
           width: '32px',
           height: '32px',
           borderRadius: '8px',
-          background: 'var(--nrc-green-100)',
-          color: 'var(--nrc-green-700)',
+          background: 'rgba(16, 185, 129, 0.15)',
+          color: '#34d399',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -126,18 +126,18 @@ const TeamChannelHeader = ({ setIsEditing }) => {
           #
         </div>
         <div>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
             {channel?.data?.name || channel?.data?.id}
           </h3>
-          <span style={{ fontSize: '11.5px', color: '#64748b' }}>NRC Team Corridor</span>
+          <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>NRC Team Corridor</span>
         </div>
         <button
           type="button"
           onClick={() => setIsEditing(true)}
           title="Channel Settings"
           style={{
-            background: '#f1f5f9',
-            border: '1px solid #e2e8f0',
+            background: 'var(--bg-surface-elevated)',
+            border: '1px solid var(--border-subtle)',
             cursor: 'pointer',
             padding: '6px 8px',
             borderRadius: '6px',
@@ -145,10 +145,11 @@ const TeamChannelHeader = ({ setIsEditing }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            color: 'var(--text-muted)',
             transition: 'background 0.15s'
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#e2e8f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#334155')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-surface-elevated)')}
         >
           <ChannelInfo />
         </button>
@@ -187,11 +188,11 @@ const TeamChannelHeader = ({ setIsEditing }) => {
           gap: '6px',
           padding: '5px 12px',
           borderRadius: '9999px',
-          background: '#ecfdf5',
-          border: '1px solid #a7f3d0',
+          background: 'rgba(16, 185, 129, 0.14)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
           fontSize: '12px',
           fontWeight: 600,
-          color: '#047857'
+          color: '#34d399'
         }}>
           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
           {getWatcherText(watcher_count)}

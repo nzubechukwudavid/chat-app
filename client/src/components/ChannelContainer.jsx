@@ -39,7 +39,7 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
-          <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>NRC Rail Hub</span>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>NRC Rail Hub</span>
           <div style={{ width: '28px' }} />
         </div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -49,10 +49,10 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
             maxWidth: '520px',
             padding: '40px 24px',
             textAlign: 'center',
-            background: '#ffffff',
+            background: 'var(--bg-surface)',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-xl)',
           }}
         >
           <div
@@ -60,24 +60,24 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
               width: '72px',
               height: '72px',
               borderRadius: '20px',
-              backgroundColor: '#ecfdf5',
-              border: '2px solid #a7f3d0',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              border: '2px solid rgba(16, 185, 129, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px',
               fontSize: '36px',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)',
+              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)',
             }}
           >
             🚆
           </div>
 
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px', letterSpacing: '-0.3px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 10px', letterSpacing: '-0.3px' }}>
             NRC Rail Hub Operations
           </h2>
 
-          <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#64748b', margin: '0 0 24px' }}>
+          <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-muted)', margin: '0 0 24px' }}>
             Select a station channel or start a direct message with a railway colleague from the sidebar to begin coordinating activities.
           </p>
 
