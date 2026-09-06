@@ -158,9 +158,9 @@ const Auth = ({ setAuthToken }) => {
 
           {error && (
             <div style={{
-              backgroundColor: '#fee2e2',
-              color: '#dc2626',
-              border: '1px solid #f87171',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: '#fca5a5',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               padding: '10px 14px',
               borderRadius: '8px',
               marginBottom: '16px',
@@ -263,7 +263,7 @@ const Auth = ({ setAuthToken }) => {
           </form>
 
           <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>
+            <span style={{ fontSize: '13px', color: '#94a3b8' }}>
               {isSignup ? 'Already have an account?' : "Need a station account?"}{' '}
               <button
                 type="button"
@@ -271,7 +271,7 @@ const Auth = ({ setAuthToken }) => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--nrc-green-700)',
+                  color: '#34d399',
                   fontWeight: 600,
                   cursor: 'pointer',
                   padding: 0,
