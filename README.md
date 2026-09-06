@@ -1,124 +1,125 @@
-# NRC Rail Hub 🚆
+# Rail Hub 🚆
+### Real-Time Operations & Departmental Communications Suite
 
-**NRC Rail Hub** is a real-time, departmental communications and operations management platform designed for the **Nigerian Railway Corporation (NRC)**. Built with React and Node.js/Express, powered by Stream Chat Cloud and SQLite / PostgreSQL.
+![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=node.js)
+![Express](https://img.shields.io/badge/Express-4-lightgrey?logo=express)
+![Stream Chat](https://img.shields.io/badge/Stream%20Chat-SDK-006CFF?logo=stream)
+![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20SQLite-darkblue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
----
+**Rail Hub** is a full-stack real-time communications and operations management platform designed to coordinate station masters, dispatchers, engineers, and administrative staff across railway corridors for the **Nigerian Railway Corporation (NRC)**.
 
-## 🚀 Features
-
-- **Departmental Channels**: Organize communications across railway departments (Operations, Engineering, Station Masters, Ticketing, Administration).
-- **Direct Messaging**: 1-on-1 private messaging and group discussions between railway personnel.
-- **Persistent User Directory**: Instant search across all registered personnel with department filters.
-- **Enterprise-Grade Security**: Passwords securely hashed with bcrypt (salt rounds: 10), zero password leakage in cookies or chat metadata, duplicate username prevention.
-- **Zero-Cost Deployment**: Built specifically to run 100% free on **Vercel** (Frontend) and **Render** (Backend), with local SQLite or free serverless PostgreSQL (Neon / Supabase).
-- **Graceful SMS Integration**: Optional Twilio SMS webhook integration that works seamlessly without billing if Twilio is not configured.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 18, Stream Chat React SDK, CSS3 Design System (NRC Emerald Green & Gold).
-- **Backend**: Node.js, Express, Stream Chat Node SDK, bcrypt, node:sqlite / pg (PostgreSQL).
-- **Hosting**:
-  - Client: [Vercel](https://vercel.com) (Hobby Free Tier)
-  - Server: [Render](https://render.com) (Free Web Service Tier)
-  - Database: Local SQLite for dev / Neon or Supabase free PostgreSQL for production.
+Built with an executive dark-emerald design system, custom message status tracking, and resilient dual-database persistence.
 
 ---
 
-## 💻 Local Development Setup
+## ✨ Features
 
-### 1. Prerequisites
-- Node.js (v18 or higher recommended, Node v22 LTS tested)
-- npm (comes with Node)
-- A free [GetStream.io](https://getstream.io) account (Maker/Free tier)
+- **Corridor & Team Channels**: Dedicated discussion channels for railway corridors, train control, engineering, and station dispatch.
+- **Direct Messaging & Online Presence**: 1-on-1 and group direct messaging with real-time online status indicators.
+- **Debounced Directory Search**: Instant search across all registered personnel and stations with a 300ms debounce to prevent API flooding.
+- **Modern Message Experience**: Custom message bubble layout with delivered status ticks (`✓`), contextual timestamps, and an integrated circular send action button.
+- **Mobile-Responsive Off-Canvas Navigation**: Adaptive desktop two-column workspace with a sliding navigation drawer and header toggle on mobile devices.
+- **Robust Security & Identity**:
+  - Salted `bcrypt` password hashing (10 rounds).
+  - Zero password hash exposure in client cookies, local storage, or chat metadata.
+  - Conflict detection (`409 Conflict`) for unique station handles.
+- **Dual Database Persistence**: Automatic SQLite persistence for local development with zero setup, with seamless cloud-switching to PostgreSQL in production environments.
 
-### 2. Configure Backend (`server`)
+---
 
+## 🛠️ Architecture & Tech Stack
+
+```
+rail-hub/
+├── client/                     # React 18 Single Page Application
+│   ├── public/                 # Static assets, Inter web font & NRC metadata
+│   └── src/
+│       ├── components/         # Modals, channel previews, search, user directory
+│       ├── assets/             # Vector icons and company badges
+│       ├── App.css             # NRC design system, layout tokens, and media queries
+│       └── App.jsx             # Stream Chat provider & session lifecycle management
+└── server/                     # Node.js & Express REST API
+    ├── controllers/            # Authentication & credential validation logic
+    ├── routes/                 # Auth and webhook routes
+    ├── db.js                   # Universal database abstraction (PostgreSQL / SQLite)
+    └── index.js                # Express entry point & health check endpoints
+```
+
+| Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend** | React 18, Stream Chat React SDK, Vanilla CSS3 Design System, Inter Typography |
+| **Backend** | Node.js 22, Express, Stream Chat Node SDK, bcrypt |
+| **Database** | Node.js `node:sqlite` (local development) / PostgreSQL (production) |
+| **Deployment** | Vercel (Client SPA) & Render (Backend Service) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or yarn
+- Stream Chat API credentials ([getstream.io](https://getstream.io))
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/nzubechukwudavid/chat-app.git
+cd chat-app
+```
+
+### 2. Configure & Run Backend Server
 ```bash
 cd server
 cp .env.example .env
 ```
 
-Fill in your Stream Chat credentials in `server/.env`:
+Set your credentials in `server/.env`:
 ```env
 PORT=5000
 STREAM_API_KEY=your_stream_api_key
 STREAM_API_SECRET=your_stream_api_secret
 STREAM_APP_ID=your_stream_app_id
-VERCEL_FRONTEND_URL=http://localhost:3000
-# DATABASE_URL= (optional: defaults to local users.db SQLite)
+# DATABASE_URL= (optional: defaults to local SQLite users.db)
 ```
 
-Install dependencies and start the backend:
-```bash
-npm install
-npm run dev # or npm start
-```
-The server will initialize the SQLite database (`users.db`) and start on `http://localhost:5000`.
-
-### 3. Configure Frontend (`client`)
-
-```bash
-cd client
-cp .env.example .env
-```
-
-Configure `client/.env`:
-```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_STREAM_API_KEY=your_stream_api_key
-```
-
-Install dependencies and start the frontend:
+Install dependencies and start the service:
 ```bash
 npm install
 npm start
 ```
-The app will open on `http://localhost:3000`.
+The server will initialize the database and listen on `http://localhost:5000`.
+
+### 3. Configure & Run Client Application
+```bash
+cd ../client
+cp .env.example .env
+```
+
+Set your credentials in `client/.env`:
+```env
+REACT_APP_STREAM_API_KEY=your_stream_api_key
+REACT_APP_API_URL=http://localhost:5000
+```
+
+Install dependencies and start the React development server:
+```bash
+npm install
+npm start
+```
+The application will launch at `http://localhost:3000`.
 
 ---
 
-## 🌐 100% Free Production Deployment
+## 🔒 Security
 
-### 1. Backend on Render (Free Web Service)
-1. Fork or push your code to GitHub.
-2. Log into [Render.com](https://render.com) and click **New > Web Service**.
-3. Connect your repository.
-4. Set the following settings:
-   - **Root Directory**: `server`
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `node index.js`
-   - **Instance Type**: `Free`
-5. In **Environment Variables**, add:
-   - `STREAM_API_KEY`: Your Stream Chat API key
-   - `STREAM_API_SECRET`: Your Stream Chat Secret
-   - `STREAM_APP_ID`: Your Stream App ID
-   - `VERCEL_FRONTEND_URL`: `https://nrc-chat.vercel.app` (or your Vercel URL)
-   - *(Optional for persistent cloud DB)*: `DATABASE_URL` from a free [Neon.tech](https://neon.tech) or [Supabase](https://supabase.com) Postgres database.
-6. Click **Create Web Service**. Note down your Render backend URL (e.g. `https://nrc-chat-api.onrender.com`).
-
-### 2. Frontend on Vercel (Free Hobby Tier)
-1. Log into [Vercel.com](https://vercel.com) and click **Add New > Project**.
-2. Select your repository.
-3. In **Project Settings**:
-   - Set **Root Directory** to `client`.
-   - Framework Preset: `Create React App`.
-4. In **Environment Variables**, add:
-   - `REACT_APP_API_URL`: Your Render backend URL (e.g. `https://nrc-chat-api.onrender.com`)
-   - `REACT_APP_STREAM_API_KEY`: Your Stream Chat API key
-5. Click **Deploy**.
-
----
-
-## 🔒 Security & Data Privacy
-
-- **Password Protection**: Passwords are encrypted before storage and never returned in API payloads or cookies.
-- **Session Tokens**: JWT authentication tokens issued directly by Stream Chat with user-specific permissions.
-- **CORS Restricted**: Server only accepts requests from localhost and authorized frontend domains.
+- **Credential Isolation**: User passwords are encrypted with bcrypt before saving and are stripped from all API responses, tokens, and browser cookies.
+- **Scoped Tokens**: Client sessions use short-lived, user-scoped JWTs generated server-side by the Stream Chat Node SDK.
+- **Input Sanitization**: Handles and channel names are validated and normalized against regex patterns before stream registration.
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License.
+
+This project is open-source and available under the [MIT License](LICENSE).
