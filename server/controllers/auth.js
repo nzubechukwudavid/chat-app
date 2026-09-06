@@ -43,7 +43,7 @@ const signup = async (req, res) => {
       passwordHash: hashedPassword,
     });
 
-    // Create user in Stream Chat WITHOUT exposing the password hash in metadata
+    // Sync user to Stream Chat with hashedPassword to persist across ephemeral cloud restarts
     if (api_key && api_secret) {
       const client = StreamChat.getInstance(api_key, api_secret);
       await client.upsertUser({
@@ -52,6 +52,7 @@ const signup = async (req, res) => {
         fullName: (fullName || '').trim() || cleanUsername,
         phoneNumber: (phoneNumber || '').trim(),
         image: (avatarURL || '').trim() || undefined,
+        hashedPassword,
       });
 
       const serverClient = connect(api_key, api_secret, app_id);
@@ -87,30 +88,23 @@ const login = async (req, res) => {
     // Look up user in persistence layer
     let user = await db.findUserByUsername(cleanUsername);
 
-    // Backwards-compatibility: if user not in local DB, check legacy Stream Chat metadata
-    if (!user && api_key && api_secret) {
+    // If user not in local DB cache (e.g. Render ephemeral disk restarted), sync from Stream Chat
+    if ((!user || !user.password_hash) && api_key && api_secret) {
       const client = StreamChat.getInstance(api_key, api_secret);
       const { users } = await client.queryUsers({ name: cleanUsername });
 
       if (users && users.length > 0 && users[0].hashedPassword) {
-        // Automatically migrate legacy user to the database
-        user = await db.createUser({
-          id: users[0].id,
-          username: users[0].name || cleanUsername,
-          fullName: users[0].fullName || users[0].name || cleanUsername,
-          phoneNumber: users[0].phoneNumber || '',
-          avatarURL: users[0].image || '',
-          passwordHash: users[0].hashedPassword,
-        });
-
-        // Clean up legacy hashedPassword from Stream Chat metadata
-        try {
-          await client.partialUpdateUser({
+        if (!user) {
+          user = await db.createUser({
             id: users[0].id,
-            unset: ['hashedPassword'],
+            username: users[0].name || cleanUsername,
+            fullName: users[0].fullName || users[0].name || cleanUsername,
+            phoneNumber: users[0].phoneNumber || '',
+            avatarURL: users[0].image || '',
+            passwordHash: users[0].hashedPassword,
           });
-        } catch (cleanupErr) {
-          console.warn('Could not unset legacy hashedPassword in Stream Chat:', cleanupErr.message);
+        } else {
+          user.password_hash = users[0].hashedPassword;
         }
       }
     }

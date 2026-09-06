@@ -105,6 +105,7 @@ async function createUser({ id, username, fullName, phoneNumber, avatarURL, pass
     full_name: fullName,
     phone_number: phoneNumber,
     avatar_url: avatarURL,
+    password_hash: passwordHash,
   };
 }
 
