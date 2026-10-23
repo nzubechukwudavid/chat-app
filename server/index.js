@@ -98,6 +98,12 @@ const start = async () => {
 
   const server = app.listen(config.port, () => {
     console.log(`[server] Rail Hub API listening on port ${config.port} (${config.env})`);
+    // Presence only - never log the secret itself. Makes a misconfigured
+    // webhook immediately visible in the deploy logs.
+    console.log(
+      `[server] webhooks: secret ${config.streamWebhookSecret ? 'configured (auth_token enforced)' : 'NOT configured (unauthenticated)'}, ` +
+        `twilio ${config.hasTwilio ? 'configured' : 'disabled'}`
+    );
   });
 
   const shutdown = (signal) => async () => {
