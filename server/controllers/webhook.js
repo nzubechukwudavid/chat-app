@@ -33,27 +33,12 @@ const hasValidStreamSecret = (req) => {
 };
 
 /**
- * Verifies the `X-Twilio-Signature` header against the shared auth token.
- *
- * Without this check anybody who can reach the endpoint could trigger SMS
- * dispatches to arbitrary numbers on the account. Twilio's `validateRequest`
- * needs the exact public URL the request was made to, so it must be
- * configured explicitly via `TWILIO_WEBHOOK_URL`.
+ * Stream's webhook is authenticated by the shared secret above; the signature
+ * check that Twilio offers is for *inbound* Twilio callbacks (a different
+ * endpoint we do not expose). Stream never sends `X-Twilio-Signature`, so
+ * applying that check here would reject every genuine Stream event whenever
+ * Twilio credentials happen to be configured.
  */
-const isValidTwilioRequest = (req) => {
-  if (!config.hasTwilio) return true; // Twilio disabled - nothing to validate.
-
-  const signature = req.get('X-Twilio-Signature');
-  if (!signature) return false;
-
-  const client = getTwilioClient();
-  if (!client?.validateRequest) return false;
-
-  // `validateRequest` needs the form-encoded body. Express only populates
-  // `req.body` for JSON payloads, so rebuild it from the raw stream.
-  return client.validateRequest(config.twilio.authToken, signature, config.twilio.webhookUrl, req.body || {});
-};
-
 const dispatchOfflineSms = async ({ message, sender, members }) => {
   const client = getTwilioClient();
   if (!client || !config.twilio.messagingServiceSid) return;
@@ -85,11 +70,6 @@ const handleMessageNew = async (req, res) => {
     return res.status(403).json({ message: 'Invalid signature.' });
   }
 
-  if (!isValidTwilioRequest(req)) {
-    console.warn('[webhook] rejected request with invalid Twilio signature');
-    return res.status(403).json({ message: 'Invalid signature.' });
-  }
-
   const { message, user: sender, type, members } = req.body || {};
 
   if (type !== 'message.new') {
@@ -105,4 +85,4 @@ const handleMessageNew = async (req, res) => {
   return res.status(200).json({ message: 'Message event processed' });
 };
 
-module.exports = { handleMessageNew, isValidTwilioRequest, hasValidStreamSecret };
+module.exports = { handleMessageNew, hasValidStreamSecret };

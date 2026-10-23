@@ -50,8 +50,6 @@ const config = {
     accountSid: process.env.TWILIO_ACCOUNT_SID || '',
     authToken: process.env.TWILIO_AUTH_TOKEN || '',
     messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID || '',
-    /** Public URL the webhook is reached on - required to validate signatures. */
-    webhookUrl: process.env.TWILIO_WEBHOOK_URL || '',
   },
 
   databaseUrl: process.env.DATABASE_URL || '',
@@ -96,9 +94,6 @@ const assertUsable = () => {
   const problems = [];
   if (!config.hasStreamCredentials) {
     problems.push('STREAM_API_KEY and STREAM_API_SECRET are required');
-  }
-  if (config.hasTwilio && !config.twilio.webhookUrl) {
-    problems.push('TWILIO_WEBHOOK_URL is required when Twilio is enabled');
   }
   if (problems.length) {
     throw new Error(`[config] Invalid configuration:\n  - ${problems.join('\n  - ')}`);
