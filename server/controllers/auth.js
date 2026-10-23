@@ -41,22 +41,15 @@ const publicUser = (user) => ({
   avatarURL: user.avatar_url ?? user.avatarURL ?? '',
 });
 
-const upsertToStream = async ({ id, username, fullName, phoneNumber, avatarURL, passwordHash }) => {
+const upsertToStream = async ({ id, username, fullName, avatarURL }) => {
   const client = getStreamClient();
 
   const payload = {
     id,
     name: username,
     fullName,
-    phoneNumber,
     image: avatarURL || undefined,
   };
-
-  // Only mirror the hash when the operator has explicitly opted in, because
-  // this makes the credential readable to anyone holding the Stream secret.
-  if (config.stream.credentialFallback && passwordHash) {
-    payload.hashedPassword = passwordHash;
-  }
 
   await client.upsertUser(payload);
 };
@@ -90,7 +83,7 @@ const signup = async (req, res) => {
       passwordHash: hashedPassword,
     });
 
-    await upsertToStream({ id: userID, username, fullName, phoneNumber, avatarURL, passwordHash: hashedPassword });
+    await upsertToStream({ id: userID, username, fullName, avatarURL });
 
     const token = getServerClient().createUserToken(userID);
     setSessionCookie(res, token);
@@ -111,28 +104,7 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Username and password are required.' });
     }
 
-    let user = await db.findUserByUsername(username);
-
-    // The database may be non-durable (ephemeral disk). When the operator has
-    // opted into the Stream fallback, rehydrate the credential from Stream.
-    if ((!user || !user.password_hash) && config.hasStreamCredentials && config.stream.credentialFallback) {
-      const { users } = await getStreamClient().queryUsers({ name: username });
-
-      if (users && users.length > 0 && users[0].hashedPassword) {
-        if (!user) {
-          user = await db.createUser({
-            id: users[0].id,
-            username: users[0].name || username,
-            fullName: users[0].fullName || users[0].name || username,
-            phoneNumber: users[0].phoneNumber || '',
-            avatarURL: users[0].image || '',
-            passwordHash: users[0].hashedPassword,
-          });
-        } else {
-          user.password_hash = users[0].hashedPassword;
-        }
-      }
-    }
+    const user = await db.findUserByUsername(username);
 
     const hashToCompare = user?.password_hash || TIMING_EQUALIZER_HASH;
     const isMatch = await bcrypt.compare(password, hashToCompare);

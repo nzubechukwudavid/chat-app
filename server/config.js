@@ -36,14 +36,6 @@ const config = {
     apiKey: process.env.STREAM_API_KEY || '',
     apiSecret: process.env.STREAM_API_SECRET || '',
     appId: process.env.STREAM_APP_ID || '',
-    /**
-     * When enabled the bcrypt hash is mirrored into the Stream user record so
-     * credentials survive an ephemeral (disk-less) deployment restart.
-     * Off by default: it means the hash is readable by anyone holding the
-     * Stream API secret. Only turn it on when the primary database is
-     * genuinely non-durable.
-     */
-    credentialFallback: toBool(process.env.STREAM_CREDENTIAL_FALLBACK, false),
   },
 
   databaseUrl: process.env.DATABASE_URL || '',

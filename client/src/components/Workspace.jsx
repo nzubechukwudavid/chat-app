@@ -20,7 +20,6 @@ const StreamUser = (user) => ({
   name: user.username || user.fullName || user.id,
   fullName: user.fullName || user.username || user.id,
   image: user.avatarURL || undefined,
-  phoneNumber: user.phoneNumber || undefined,
 });
 
 /**
