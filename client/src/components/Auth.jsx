@@ -278,7 +278,7 @@ const Auth = ({ signIn, signUp }) => {
               <div className="auth__field">
                 <label className="auth__field-label" htmlFor="auth-phoneNumber">
                   <span>Phone number</span>
-                  <span className="auth__field-optional">Optional · SMS alerts</span>
+                  <span className="auth__field-optional">Optional</span>
                 </label>
                 <input
                   className="input"

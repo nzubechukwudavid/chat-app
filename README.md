@@ -42,7 +42,7 @@ rail-hub/
 │       └── App.jsx             # Stream Chat provider & session lifecycle management
 └── server/                     # Node.js & Express REST API
     ├── controllers/            # Authentication & credential validation logic
-    ├── routes/                 # Auth and webhook routes
+    ├── routes/                 # Auth routes
     ├── db.js                   # Universal database abstraction (PostgreSQL / SQLite)
     └── index.js                # Express entry point & health check endpoints
 ```
@@ -120,9 +120,13 @@ Keeping it same-origin means the `httpOnly` session cookie is first-party, so it
 works in Safari and needs no CORS preflight.
 
 Required on Render: `NODE_ENV=production`, `STREAM_API_KEY`, `STREAM_API_SECRET`,
-`VERCEL_FRONTEND_URL`, a durable `DATABASE_URL` (SQLite on a free instance is
-wiped on redeploy), and `STREAM_WEBHOOK_SECRET` (also append `?auth_token=<value>`
-to the webhook URL in the Stream dashboard).
+and `VERCEL_FRONTEND_URL`. Set `DATABASE_URL` to a durable PostgreSQL instance:
+without it the API falls back to SQLite on local disk, which a free Render
+instance wipes on every redeploy (accounts then fail to log in, though their
+Stream users and messages survive).
+
+SMS notifications via Twilio were removed; the API no longer exposes a webhook
+endpoint, so any webhook configured in the Stream dashboard can be deleted.
 
 Point the client at a different API by editing the rewrite destination in
 `client/vercel.json`; `REACT_APP_API_URL` only applies to local development.

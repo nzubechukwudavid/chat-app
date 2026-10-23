@@ -3,7 +3,6 @@ const cors = require('cors');
 
 const { config, assertUsable } = require('./config');
 const authRoutes = require('./routes/auth.js');
-const { handleMessageNew } = require('./controllers/webhook.js');
 const { securityHeaders } = require('./middleware/security.js');
 const { createRateLimiter } = require('./middleware/rateLimit');
 const { initDb, countUsers, closeDb } = require('./db.js');
@@ -12,7 +11,7 @@ const app = express();
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allow same-origin / non-browser callers (health checks, webhooks).
+    // Allow same-origin / non-browser callers (health checks, uptime monitors).
     if (!origin) return callback(null, true);
     if (config.cors.origins.includes(origin)) return callback(null, true);
     return callback(new Error(`Origin ${origin} is not allowed by CORS`));
@@ -58,7 +57,6 @@ app.get('/health', async (req, res) => {
     database: config.databaseUrl ? 'postgres' : 'sqlite',
     users,
     stream: config.hasStreamCredentials ? 'configured' : 'missing',
-    twilio: config.hasTwilio ? 'configured' : 'disabled',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
@@ -68,12 +66,9 @@ app.get('/', (req, res) => {
   res.json({
     name: 'Rail Hub API',
     version: '2.0.0',
-    endpoints: ['/health', '/auth/signup', '/auth/login', '/auth/session', '/auth/logout', '/webhooks/stream'],
+    endpoints: ['/health', '/auth/signup', '/auth/login', '/auth/session', '/auth/logout'],
   });
 });
-
-// Stream Chat webhook (also the Twilio SMS dispatch trigger).
-app.post('/webhooks/stream', apiLimiter, handleMessageNew);
 
 // Per-route throttling for the auth endpoints lives in `routes/auth.js`.
 app.use('/auth', authRoutes);
@@ -98,12 +93,6 @@ const start = async () => {
 
   const server = app.listen(config.port, () => {
     console.log(`[server] Rail Hub API listening on port ${config.port} (${config.env})`);
-    // Presence only - never log the secret itself. Makes a misconfigured
-    // webhook immediately visible in the deploy logs.
-    console.log(
-      `[server] webhooks: secret ${config.streamWebhookSecret ? 'configured (auth_token enforced)' : 'NOT configured (unauthenticated)'}, ` +
-        `twilio ${config.hasTwilio ? 'configured' : 'disabled'}`
-    );
   });
 
   const shutdown = (signal) => async () => {

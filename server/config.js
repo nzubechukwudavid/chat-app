@@ -46,20 +46,7 @@ const config = {
     credentialFallback: toBool(process.env.STREAM_CREDENTIAL_FALLBACK, false),
   },
 
-  twilio: {
-    accountSid: process.env.TWILIO_ACCOUNT_SID || '',
-    authToken: process.env.TWILIO_AUTH_TOKEN || '',
-    messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID || '',
-  },
-
   databaseUrl: process.env.DATABASE_URL || '',
-
-  /**
-   * Shared secret for the Stream webhook endpoint. Stream can be configured to
-   * append `?auth_token=...` to webhook calls; when set, the endpoint rejects
-   * anything that does not present the right value.
-   */
-  streamWebhookSecret: process.env.STREAM_WEBHOOK_SECRET || '',
 
   auth: {
     bcryptRounds: toInt(process.env.BCRYPT_ROUNDS, 12),
@@ -83,9 +70,6 @@ const config = {
 };
 
 config.hasStreamCredentials = Boolean(config.stream.apiKey && config.stream.apiSecret);
-config.hasTwilio = Boolean(
-  config.twilio.accountSid && config.twilio.authToken && config.twilio.messagingServiceSid,
-);
 
 /**
  * Fails fast on misconfiguration instead of surfacing confusing 500s later.
