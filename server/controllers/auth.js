@@ -2,103 +2,128 @@ const { connect } = require('getstream');
 const bcrypt = require('bcrypt');
 const StreamChat = require('stream-chat').StreamChat;
 const crypto = require('crypto');
+
+const { config } = require('../config');
 const db = require('../db');
+const { validateSignupPayload, sanitizeText } = require('../middleware/validate');
+const { setSessionCookie, clearSessionCookie, readSessionCookie } = require('../services/session');
+const { verifyUserToken } = require('../utils/token');
 
-require('dotenv').config();
+/**
+ * A valid bcrypt hash of a throwaway string. Comparing against it when the
+ * requested account does not exist keeps the response time of "unknown user"
+ * and "wrong password" indistinguishable, which closes a user-enumeration
+ * timing oracle.
+ */
+const TIMING_EQUALIZER_HASH = '$2b$12$S/PwA.EDR5tjfl72sKcF1eBzZYPbmUOK8Y/GKtEIq4c4ph30TGk3u';
 
-const api_key = process.env.STREAM_API_KEY;
-const api_secret = process.env.STREAM_API_SECRET;
-const app_id = process.env.STREAM_APP_ID;
+const GENERIC_LOGIN_FAILURE = 'Invalid username or password.';
+
+let streamClient = null;
+const getStreamClient = () => {
+  if (!streamClient) {
+    streamClient = StreamChat.getInstance(config.stream.apiKey, config.stream.apiSecret);
+  }
+  return streamClient;
+};
+
+const getServerClient = () => connect(config.stream.apiKey, config.stream.apiSecret, config.stream.appId);
+
+/**
+ * The public shape of a user. `password_hash` is never included - the field
+ * simply does not exist on this object.
+ */
+const publicUser = (user) => ({
+  id: user.id,
+  username: user.username,
+  fullName: user.full_name ?? user.fullName ?? user.username,
+  phoneNumber: user.phone_number ?? user.phoneNumber ?? '',
+  avatarURL: user.avatar_url ?? user.avatarURL ?? '',
+});
+
+const upsertToStream = async ({ id, username, fullName, phoneNumber, avatarURL, passwordHash }) => {
+  const client = getStreamClient();
+
+  const payload = {
+    id,
+    name: username,
+    fullName,
+    phoneNumber,
+    image: avatarURL || undefined,
+  };
+
+  // Only mirror the hash when the operator has explicitly opted in, because
+  // this makes the credential readable to anyone holding the Stream secret.
+  if (config.stream.credentialFallback && passwordHash) {
+    payload.hashedPassword = passwordHash;
+  }
+
+  await client.upsertUser(payload);
+};
 
 const signup = async (req, res) => {
   try {
-    const { fullName, username, password, phoneNumber, avatarURL } = req.body;
-
-    if (!username || !username.trim() || !password) {
-      return res.status(400).json({ message: 'Username and password are required.' });
+    const parsed = validateSignupPayload(req.body);
+    if (!parsed.ok) {
+      return res.status(400).json({ message: parsed.message });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    const { username, password, fullName, phoneNumber, avatarURL } = parsed.value;
+
+    if (await db.usernameExists(username)) {
+      return res.status(409).json({ message: 'That station handle is already taken. Please choose another.' });
     }
 
-    const cleanUsername = username.trim();
-
-    // Check if user already exists in persistence layer
-    const existingUser = await db.findUserByUsername(cleanUsername);
-    if (existingUser) {
-      return res.status(409).json({ message: 'Username is already taken. Please choose another.' });
+    if (!config.hasStreamCredentials) {
+      return res.status(503).json({ message: 'Chat service is not configured. Please try again later.' });
     }
 
     const userID = crypto.randomBytes(16).toString('hex');
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, config.auth.bcryptRounds);
 
-    // Save to persistence layer
     await db.createUser({
       id: userID,
-      username: cleanUsername,
-      fullName: (fullName || '').trim() || cleanUsername,
-      phoneNumber: (phoneNumber || '').trim(),
-      avatarURL: (avatarURL || '').trim(),
+      username,
+      fullName,
+      phoneNumber,
+      avatarURL,
       passwordHash: hashedPassword,
     });
 
-    // Sync user to Stream Chat with hashedPassword to persist across ephemeral cloud restarts
-    if (api_key && api_secret) {
-      const client = StreamChat.getInstance(api_key, api_secret);
-      await client.upsertUser({
-        id: userID,
-        name: cleanUsername,
-        fullName: (fullName || '').trim() || cleanUsername,
-        phoneNumber: (phoneNumber || '').trim(),
-        image: (avatarURL || '').trim() || undefined,
-        hashedPassword,
-      });
+    await upsertToStream({ id: userID, username, fullName, phoneNumber, avatarURL, passwordHash: hashedPassword });
 
-      const serverClient = connect(api_key, api_secret, app_id);
-      const token = serverClient.createUserToken(userID);
+    const token = getServerClient().createUserToken(userID);
+    setSessionCookie(res, token);
 
-      return res.status(201).json({
-        token,
-        userID,
-        username: cleanUsername,
-        fullName: (fullName || '').trim() || cleanUsername,
-        phoneNumber: (phoneNumber || '').trim(),
-        avatarURL: (avatarURL || '').trim(),
-      });
-    }
-
-    return res.status(500).json({ message: 'Stream Chat service is not properly configured.' });
+    return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: avatarURL }) });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ message: error.message || 'An error occurred during signup.' });
+    return res.status(500).json({ message: 'We could not create your account. Please try again.' });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = sanitizeText(req.body?.username, 64);
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password are required.' });
     }
 
-    const cleanUsername = username.trim();
+    let user = await db.findUserByUsername(username);
 
-    // Look up user in persistence layer
-    let user = await db.findUserByUsername(cleanUsername);
-
-    // If user not in local DB cache (e.g. Render ephemeral disk restarted), sync from Stream Chat
-    if ((!user || !user.password_hash) && api_key && api_secret) {
-      const client = StreamChat.getInstance(api_key, api_secret);
-      const { users } = await client.queryUsers({ name: cleanUsername });
+    // The database may be non-durable (ephemeral disk). When the operator has
+    // opted into the Stream fallback, rehydrate the credential from Stream.
+    if ((!user || !user.password_hash) && config.hasStreamCredentials && config.stream.credentialFallback) {
+      const { users } = await getStreamClient().queryUsers({ name: username });
 
       if (users && users.length > 0 && users[0].hashedPassword) {
         if (!user) {
           user = await db.createUser({
             id: users[0].id,
-            username: users[0].name || cleanUsername,
-            fullName: users[0].fullName || users[0].name || cleanUsername,
+            username: users[0].name || username,
+            fullName: users[0].fullName || users[0].name || username,
             phoneNumber: users[0].phoneNumber || '',
             avatarURL: users[0].image || '',
             passwordHash: users[0].hashedPassword,
@@ -109,30 +134,62 @@ const login = async (req, res) => {
       }
     }
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found. Please sign up.' });
+    const hashToCompare = user?.password_hash || TIMING_EQUALIZER_HASH;
+    const isMatch = await bcrypt.compare(password, hashToCompare);
+
+    if (!user || !user.password_hash || !isMatch) {
+      return res.status(401).json({ message: GENERIC_LOGIN_FAILURE });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Incorrect password. Please check your credentials.' });
-    }
+    const token = getServerClient().createUserToken(user.id);
+    setSessionCookie(res, token);
 
-    const serverClient = connect(api_key, api_secret, app_id);
-    const token = serverClient.createUserToken(user.id);
-
-    return res.status(200).json({
-      token,
-      userID: user.id,
-      username: user.username,
-      fullName: user.full_name,
-      phoneNumber: user.phone_number,
-      avatarURL: user.avatar_url,
-    });
+    return res.status(200).json({ user: publicUser(user) });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: error.message || 'An error occurred during login.' });
+    return res.status(500).json({ message: 'We could not sign you in right now. Please try again.' });
   }
 };
 
-module.exports = { signup, login };
+/**
+ * Exchanges the `httpOnly` session cookie for a fresh, short-lived chat token.
+ * This is what lets the browser restore a session after a reload without the
+ * long-lived credential ever being readable from JavaScript.
+ */
+const session = async (req, res) => {
+  try {
+    const token = readSessionCookie(req);
+    if (!token) {
+      return res.status(401).json({ message: 'No active session.' });
+    }
+
+    let userId = verifyUserToken(token);
+
+    if (!userId) {
+      clearSessionCookie(res);
+      return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+    }
+
+    const user = await db.findUserById(userId);
+    if (!user) {
+      clearSessionCookie(res);
+      return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+    }
+
+    const freshToken = getServerClient().createUserToken(user.id);
+    setSessionCookie(res, freshToken);
+
+    return res.status(200).json({ user: publicUser(user), token: freshToken });
+  } catch (error) {
+    console.error('Session error:', error);
+    clearSessionCookie(res);
+    return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+  }
+};
+
+const logout = async (req, res) => {
+  clearSessionCookie(res);
+  return res.status(200).json({ message: 'Signed out.' });
+};
+
+module.exports = { signup, login, session, logout, publicUser };

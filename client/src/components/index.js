@@ -1,12 +1,25 @@
-export { default as ChannelContainer } from './ChannelContainer';
-export { default as ChannelListContainer } from './ChannelListContainer';
-export { default as ChannelSearch } from './ChannelSearch';
-export { default as TeamChannelList } from './TeamChannelList';
-export { default as TeamChannelPreview } from './TeamChannelPreview';
-export { default as ChannelInner } from './ChannelInner';
-export { default as CreateChannel } from './CreateChannel';
-export { default as EditChannel } from './EditChannel';
-export { default as TeamMessage } from './TeamMessage';
-export { default as Auth } from './Auth';
-export { default as UserList } from './UserList';
-export { default as ResultsDropdown } from './ResultsDropdown';
+import { default as ChannelContainer } from './ChannelContainer';
+import { default as ChannelListContainer } from './ChannelListContainer';
+import { default as ChannelSearch } from './ChannelSearch';
+import { default as TeamChannelList } from './TeamChannelList';
+import { default as TeamChannelPreview } from './TeamChannelPreview';
+import { default as ChannelInner } from './ChannelInner';
+import { default as CreateChannel } from './CreateChannel';
+import { default as EditChannel } from './EditChannel';
+import { default as Auth } from './Auth';
+import { default as UserList } from './UserList';
+import { default as ResultsDropdown } from './ResultsDropdown';
+
+export {
+  ChannelContainer,
+  ChannelListContainer,
+  ChannelSearch,
+  TeamChannelList,
+  TeamChannelPreview,
+  ChannelInner,
+  CreateChannel,
+  EditChannel,
+  Auth,
+  UserList,
+  ResultsDropdown,
+};

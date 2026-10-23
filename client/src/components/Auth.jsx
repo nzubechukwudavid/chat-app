@@ -1,293 +1,417 @@
-import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
-import axios from 'axios';
-import { API_URL } from '../config';
+import React, { useMemo, useState } from 'react';
 
-const cookies = new Cookies();
+import { errorMessage } from '../lib/api';
+import { passwordLabel, passwordScore } from '../lib/format';
+import { AlertIcon, BoltIcon, ShieldIcon, TrainIcon } from './ui/icons';
+import PasswordField from './ui/PasswordField';
 
-
-const initialState = {
+const EMPTY = {
   fullName: '',
   username: '',
   password: '',
   confirmPassword: '',
   phoneNumber: '',
-  avatarURL: '', 
-}
+  avatarURL: '',
+};
 
+const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/;
 
-const Auth = ({ setAuthToken }) => {
-  const [form, setForm] = useState(initialState);
-  const [isSignup, setIsSignup] = useState(true);
+/** Client-side checks that mirror the server's rules, so most mistakes are caught before a round trip. */
+const validate = (form, isSignup) => {
+  const errors = {};
 
-  const [error, setError] = useState('');
+  const username = form.username.trim();
+  if (!username) {
+    errors.username = 'Enter your station handle.';
+  } else if (isSignup && !USERNAME_PATTERN.test(username)) {
+    errors.username = '3-32 characters: letters, numbers, dots, dashes or underscores.';
+  }
+
+  if (!form.password) {
+    errors.password = 'Enter your password.';
+  } else if (isSignup) {
+    if (form.password.length < 8) {
+      errors.password = 'Use at least 8 characters.';
+    } else if (!/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+      errors.password = 'Include at least one letter and one number.';
+    }
+  }
+
+  if (isSignup && form.password !== form.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match.';
+  }
+
+  if (isSignup && form.phoneNumber.trim() && !/^\+?[0-9]{7,15}$/.test(form.phoneNumber.trim())) {
+    errors.phoneNumber = 'Use 7-15 digits, optionally starting with +.';
+  }
+
+  if (isSignup && form.avatarURL.trim() && !/^https:\/\/\S+$/i.test(form.avatarURL.trim())) {
+    errors.avatarURL = 'Avatar must be a valid https:// URL.';
+  }
+
+  return errors;
+};
+
+const Auth = ({ signIn, signUp }) => {
+  const [isSignup, setIsSignup] = useState(false);
+  const [form, setForm] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setError('');
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const score = useMemo(() => passwordScore(form.password), [form.password]);
+
+  const update = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+    setErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
+    setServerError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-  
-    const { username, password, phoneNumber, avatarURL, confirmPassword } = form;
-    if (isSignup && password !== confirmPassword) {
-      setError('Passwords do not match.');
+  const switchMode = (nextIsSignup) => {
+    setErrors({});
+    setServerError('');
+    setIsSignup(nextIsSignup);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setServerError('');
+
+    const nextErrors = validate(form, isSignup);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      const firstField = Object.keys(nextErrors)[0];
+      document.getElementById(`auth-${firstField}`)?.focus();
       return;
     }
 
-    if (isSignup && password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
-    
     setIsSubmitting(true);
 
     try {
-      const endpoint = isSignup ? 'signup' : 'login';
-      const { data } = await axios.post(`${API_URL}/auth/${endpoint}`, {
-        username: username.trim(),
-        password,
-        fullName: form.fullName ? form.fullName.trim() : undefined,
-        phoneNumber: phoneNumber ? phoneNumber.trim() : undefined,
-        avatarURL: avatarURL ? avatarURL.trim() : undefined,
-      });
-
-      const { token, userID, fullName, username: responseUsername, avatarURL: responseAvatar, phoneNumber: responsePhone } = data;
-  
-      cookies.set('token', token, { path: '/' });
-      cookies.set('username', responseUsername || username, { path: '/' });
-      cookies.set('fullName', fullName || username, { path: '/' });
-      cookies.set('userID', userID, { path: '/' });
-  
-      if (responsePhone || phoneNumber) {
-        cookies.set('phoneNumber', responsePhone || phoneNumber, { path: '/' });
+      if (isSignup) {
+        await signUp({
+          username: form.username.trim(),
+          password: form.password,
+          fullName: form.fullName.trim() || undefined,
+          phoneNumber: form.phoneNumber.trim() || undefined,
+          avatarURL: form.avatarURL.trim() || undefined,
+        });
+      } else {
+        await signIn({ username: form.username.trim(), password: form.password });
       }
-      if (responseAvatar || avatarURL) {
-        cookies.set('avatarURL', responseAvatar || avatarURL, { path: '/' });
-      }
-  
-      // Update auth state in App.jsx
-      setAuthToken(token);
-    } catch (err) {
-      console.error('Auth error:', err);
-      const message = err.response?.data?.message || 'Authentication failed. Please check your credentials and try again.';
-      setError(message);
+    } catch (error) {
+      setServerError(errorMessage(error, 'Unable to sign you in. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const switchMode = () => {
-    setError('');
-    setIsSignup((previsSignup) => !previsSignup);
-  };
+  const fieldError = (name) =>
+    errors[name] ? (
+      <span className="auth__field-error" id={`auth-${name}-error`} role="alert">
+        {errors[name]}
+      </span>
+    ) : null;
 
   return (
-    <div className="auth__form-container">
-      {/* Left Hero Showcase */}
-      <div className="auth__hero">
-        <div>
-          <div className="auth__hero-badge">
-            <span>🚆</span>
-            <span>NRC Rail Hub • Official Comms</span>
+    <div className="auth">
+      {/* ---------------------------------------------------------------- */}
+      {/* Hero                                                              */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="auth__hero" aria-label="About Rail Hub">
+        <div className="auth__hero-top">
+          <div className="auth__brand">
+            <span className="auth__brand-mark">
+              <TrainIcon size={24} />
+            </span>
+            <span className="auth__brand-text">
+              <span className="auth__brand-name">Rail Hub</span>
+              <span className="auth__brand-caption">NRC Operations</span>
+            </span>
           </div>
 
+          <span className="auth__hero-badge">
+            <span className="auth__hero-badge-dot" aria-hidden="true" />
+            Nigeria Railway Corporation
+          </span>
+
           <h1 className="auth__hero-title">
-            Connected Rail Operations for <span>Nigeria</span>.
+            Connected rail operations for <span>Nigeria</span>.
           </h1>
 
           <p className="auth__hero-description">
-            Secure, real-time messaging and operational dispatch for Nigerian Railway Corporation engineers, station managers, and field staff.
+            Real-time dispatch, station coordination and secure messaging for engineers, station
+            managers and field staff across every corridor.
           </p>
 
-          <div className="auth__hero-features">
-            <div className="auth__hero-feature-item">
-              <div className="auth__hero-feature-icon">⚡</div>
-              <div>
-                <strong>Instant Dispatch & Alerts</strong> — Direct line of communication across rail corridors.
-              </div>
-            </div>
-            <div className="auth__hero-feature-item">
-              <div className="auth__hero-feature-icon">🛡️</div>
-              <div>
-                <strong>End-to-End Enterprise Auth</strong> — Isolated station credentials and secure channel persistence.
-              </div>
-            </div>
-            <div className="auth__hero-feature-item">
-              <div className="auth__hero-feature-icon">📡</div>
-              <div>
-                <strong>Low-Bandwidth Optimized</strong> — Reliable across varying network conditions nationwide.
-              </div>
-            </div>
-          </div>
+          <ul className="auth__hero-features">
+            <li className="auth__hero-feature-item">
+              <span className="auth__hero-feature-icon">
+                <BoltIcon size={16} />
+              </span>
+              <span className="auth__hero-feature-text">
+                <strong>Instant dispatch &amp; alerts</strong>
+                <span>A direct line across rail corridors, in real time.</span>
+              </span>
+            </li>
+
+            <li className="auth__hero-feature-item">
+              <span className="auth__hero-feature-icon">
+                <ShieldIcon size={16} />
+              </span>
+              <span className="auth__hero-feature-text">
+                <strong>Enterprise-grade authentication</strong>
+                <span>Isolated station credentials with hardened sessions.</span>
+              </span>
+            </li>
+
+            <li className="auth__hero-feature-item">
+              <span className="auth__hero-feature-icon">
+                <TrainIcon size={16} />
+              </span>
+              <span className="auth__hero-feature-text">
+                <strong>Built for low bandwidth</strong>
+                <span>Reliable on the network conditions our crews actually meet.</span>
+              </span>
+            </li>
+          </ul>
         </div>
 
-        <div className="auth__hero-footer">
-          © {new Date().getFullYear()} Nigerian Railway Corporation. Rail Hub Operations Suite.
-        </div>
-      </div>
+        <footer className="auth__hero-footer">
+          <span>© {new Date().getFullYear()} Nigerian Railway Corporation</span>
+          <span>Rail Hub Operations Suite · v2.0</span>
+        </footer>
+      </section>
 
-      {/* Right Form Card */}
-      <div className="auth__form-container_fields">
+      {/* ---------------------------------------------------------------- */}
+      {/* Form                                                              */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="auth__form-container_fields" aria-label="Sign in or create an account">
         <div className="auth__form-container_fields-content">
-          {/* Segmented Pill Mode Switch */}
-          <div className="auth__mode-switch">
+          <div className="auth__mode-switch" role="tablist" aria-label="Authentication mode">
             <button
               type="button"
+              role="tab"
+              aria-selected={!isSignup}
               className={`auth__mode-btn ${!isSignup ? 'active' : ''}`}
-              onClick={() => { setError(''); setIsSignup(false); }}
+              onClick={() => switchMode(false)}
             >
               Sign In
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={isSignup}
               className={`auth__mode-btn ${isSignup ? 'active' : ''}`}
-              onClick={() => { setError(''); setIsSignup(true); }}
+              onClick={() => switchMode(true)}
             >
               Create Account
             </button>
           </div>
 
           <div className="auth__form-header">
-            <h2>{isSignup ? 'Register Officer Profile' : 'Welcome to Rail Hub'}</h2>
-            <p>{isSignup ? 'Fill in your station details to join the network' : 'Enter your credentials to access operations'}</p>
+            <h2>{isSignup ? 'Register officer profile' : 'Welcome back'}</h2>
+            <p>
+              {isSignup
+                ? 'Set up your station identity to join the network.'
+                : 'Enter your credentials to access operations.'}
+            </p>
           </div>
 
-          {error && (
-            <div style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              color: '#fca5a5',
-              border: '1px solid rgba(239, 68, 68, 0.35)',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '13.5px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span>⚠️</span>
-              <span>{error}</span>
+          {serverError && (
+            <div className="alert alert--error" role="alert" style={{ marginBottom: 16 }}>
+              <span className="alert__icon">
+                <AlertIcon size={16} />
+              </span>
+              <span>{serverError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {isSignup && (
-              <div className='auth__form-container_fields-content_input'>
-                <label htmlFor='fullName'>Full Name</label>
+              <div className="auth__field">
+                <label className="auth__field-label" htmlFor="auth-fullName">
+                  <span>Full name</span>
+                  <span className="auth__field-optional">Optional</span>
+                </label>
                 <input
-                  name='fullName'
-                  type='text'
-                  placeholder='e.g. David Okafor'
-                  onChange={handleChange}
-                  required
+                  className="input"
+                  id="auth-fullName"
+                  name="fullName"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="e.g. David Okafor"
+                  value={form.fullName}
+                  onChange={update}
+                  maxLength={100}
                 />
               </div>
             )}
 
-            <div className='auth__form-container_fields-content_input'>
-              <label htmlFor='username'>Username / Station Handle</label>
+            <div className="auth__field">
+              <label className="auth__field-label" htmlFor="auth-username">
+                <span>Station handle</span>
+              </label>
               <input
-                name='username'
-                type='text'
-                placeholder='e.g. david_station'
-                onChange={handleChange}
+                className="input"
+                id="auth-username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                placeholder="e.g. david_station"
+                value={form.username}
+                onChange={update}
+                aria-invalid={Boolean(errors.username) || undefined}
+                aria-describedby={errors.username ? 'auth-username-error' : undefined}
+                maxLength={32}
                 required
               />
+              {fieldError('username')}
             </div>
 
             {isSignup && (
-              <div className='auth__form-container_fields-content_input'>
-                <label htmlFor='phoneNumber'>Official Phone Number (Optional)</label>
+              <div className="auth__field">
+                <label className="auth__field-label" htmlFor="auth-phoneNumber">
+                  <span>Phone number</span>
+                  <span className="auth__field-optional">Optional · SMS alerts</span>
+                </label>
                 <input
-                  name='phoneNumber'
-                  type='text'
-                  placeholder='+234...'
-                  onChange={handleChange}
+                  className="input"
+                  id="auth-phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="+234 800 000 0000"
+                  value={form.phoneNumber}
+                  onChange={update}
+                  aria-invalid={Boolean(errors.phoneNumber) || undefined}
+                  aria-describedby={errors.phoneNumber ? 'auth-phoneNumber-error' : undefined}
                 />
+                {fieldError('phoneNumber')}
               </div>
             )}
 
             {isSignup && (
-              <div className='auth__form-container_fields-content_input'>
-                <label htmlFor='avatarURL'>Avatar Image URL (Optional)</label>
+              <div className="auth__field">
+                <label className="auth__field-label" htmlFor="auth-avatarURL">
+                  <span>Avatar URL</span>
+                  <span className="auth__field-optional">Optional</span>
+                </label>
                 <input
-                  name='avatarURL'
-                  type='text'
-                  placeholder='https://...'
-                  onChange={handleChange}
+                  className="input"
+                  id="auth-avatarURL"
+                  name="avatarURL"
+                  type="url"
+                  autoComplete="photo"
+                  placeholder="https://…"
+                  value={form.avatarURL}
+                  onChange={update}
+                  aria-invalid={Boolean(errors.avatarURL) || undefined}
+                  aria-describedby={errors.avatarURL ? 'auth-avatarURL-error' : undefined}
                 />
+                {fieldError('avatarURL')}
               </div>
             )}
 
-            <div className='auth__form-container_fields-content_input'>
-              <label htmlFor='password'>Password</label>
-              <input
-                name='password'
-                type='password'
-                placeholder='••••••••'
-                onChange={handleChange}
+            <div className="auth__field">
+              <label className="auth__field-label" htmlFor="auth-password">
+                <span>Password</span>
+                {isSignup && <span className="auth__field-optional">8+ chars</span>}
+              </label>
+
+              <PasswordField
+                id="auth-password"
+                name="password"
+                value={form.password}
+                onChange={update}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                invalid={Boolean(errors.password)}
+                describedBy={errors.password ? 'auth-password-error' : undefined}
                 required
               />
+
+              {isSignup && form.password ? (
+                <>
+                  <div className="strength" aria-hidden="true">
+                    {[1, 2, 3, 4].map((segment) => {
+                      const tier =
+                        score >= 4 ? 'strong' : score === 3 ? 'good' : score === 2 ? 'fair' : 'weak';
+                      return (
+                        <span
+                          key={segment}
+                          className={`strength__segment ${
+                            segment <= score ? `strength__segment--${tier}` : ''
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="strength__label" aria-live="polite">
+                    Password strength: {passwordLabel(score)}
+                  </span>
+                </>
+              ) : null}
+
+              {fieldError('password')}
             </div>
 
             {isSignup && (
-              <div className='auth__form-container_fields-content_input'>
-                <label htmlFor='confirmPassword'>Confirm Password</label>
-                <input
-                  name='confirmPassword'
-                  type='password'
-                  placeholder='••••••••'
-                  onChange={handleChange}
+              <div className="auth__field">
+                <label className="auth__field-label" htmlFor="auth-confirmPassword">
+                  <span>Confirm password</span>
+                </label>
+                <PasswordField
+                  id="auth-confirmPassword"
+                  name="confirmPassword"
+                  value={form.confirmPassword}
+                  onChange={update}
+                  autoComplete="new-password"
+                  invalid={Boolean(errors.confirmPassword)}
+                  describedBy={errors.confirmPassword ? 'auth-confirmPassword-error' : undefined}
                   required
                 />
+                {fieldError('confirmPassword')}
               </div>
             )}
 
-            <div className='auth__form-container_fields-content_button'>
-              <button type="submit" disabled={isSubmitting}>
+            <div className="auth__submit-row">
+              <button type="submit" className="auth__submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
-                    <span>{isSignup ? 'Registering...' : 'Signing In...'}</span>
+                    <span className="btn__spinner" aria-hidden="true" />
+                    <span>{isSignup ? 'Registering…' : 'Signing in…'}</span>
                   </>
                 ) : (
-                  <span>{isSignup ? 'Create Station Account' : 'Sign In to Hub'}</span>
+                  <span>{isSignup ? 'Create station account' : 'Sign in to Rail Hub'}</span>
                 )}
               </button>
             </div>
           </form>
 
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-              {isSignup ? 'Already have an account?' : "Need a station account?"}{' '}
-              <button
-                type="button"
-                onClick={switchMode}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#34d399',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit',
-                  textDecoration: 'underline'
-                }}
-              >
-                {isSignup ? 'Sign in here' : 'Register now'}
-              </button>
-            </span>
-          </div>
+          <p className="auth__meta">
+            {isSignup ? 'Already have an account?' : 'Need a station account?'}{' '}
+            <button
+              type="button"
+              className="auth__meta-link"
+              onClick={() => switchMode(!isSignup)}
+            >
+              {isSignup ? 'Sign in instead' : 'Register now'}
+            </button>
+          </p>
+
+          <p className="auth__legal">
+            Access is restricted to authorised NRC personnel. Activity may be audited.
+          </p>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
 
-export default Auth
+export default Auth;

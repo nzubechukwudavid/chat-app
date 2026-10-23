@@ -1,144 +1,148 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Avatar, useChatContext } from 'stream-chat-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useChatContext } from 'stream-chat-react';
 
-const ListContainer = ({ children, searchTerm, setSearchTerm }) => {
-  return (
-    <div className="user-list__container">
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Filter team members..."
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            background: '#0b0f19',
-            color: '#f1f5f9',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '6px',
-            fontSize: '13px',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
-      </div>
-      <div className="user-list__header">
-        <p>User</p>
-        <p>Select</p>
-      </div>
-      {children}
-    </div>
-  );
-};
+import Avatar from './ui/Avatar';
+import { UserListSkeleton } from './ui/Skeleton';
+import { filterDirectory, loadDirectory } from '../lib/directory';
+import { CheckIcon, SearchIcon } from './ui/icons';
 
 const UserItem = ({ user, selected, onToggle }) => {
+  const name = user.fullName || user.name || user.id;
+
   return (
-    <div className='user-item__wrapper' onClick={onToggle}>
-      <div className='user-item__name-wrapper'>
-        <Avatar image={user.image} name={user.fullName || user.name || user.id} size={34} />
-        <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '8px' }}>
-          <p className="user-item__name">{user.fullName || user.name || user.id}</p>
+    <button
+      type="button"
+      className="user-item__wrapper"
+      aria-pressed={selected}
+      onClick={() => onToggle(user.id)}
+    >
+      <span className="user-item__name-wrapper">
+        <Avatar name={name} image={user.image} size={34} online={Boolean(user.online)} />
+        <span style={{ minWidth: 0 }}>
+          <span className="user-item__name truncate" style={{ display: 'block' }}>
+            {name}
+          </span>
           {user.name && user.name !== user.fullName && (
-            <span style={{ fontSize: '11.5px', color: '#64748b' }}>@{user.name}</span>
+            <span className="user-item__handle truncate" style={{ display: 'block' }}>
+              @{user.name}
+            </span>
           )}
-        </div>
-      </div>
-      <div className={`user-item__checkbox ${selected ? 'selected' : ''}`}>
-        {selected && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        )}
-      </div>
-    </div>
+        </span>
+      </span>
+
+      <span
+        className={`user-item__checkbox${selected ? ' selected' : ''}`}
+        aria-hidden="true"
+      >
+        {selected && <CheckIcon size={12} strokeWidth={3} />}
+      </span>
+    </button>
   );
 };
 
-const UserList = ({ setSelectedUsers, selectedUsers = [] }) => {
+/**
+ * Member picker used by the create/edit channel dialogs.
+ *
+ * The workspace directory is loaded once and filtered in memory, which makes
+ * typing instant and matches display names as well as handles.
+ */
+const UserList = ({ selectedUsers = [], setSelectedUsers, excludeIds = [] }) => {
   const { client } = useChatContext();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+
+  const [directory, setDirectory] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    let isMounted = true;
+    if (!client?.userID) return undefined;
 
-    const getUsers = async () => {
-      setLoading(true);
-      setError(false);
+    let cancelled = false;
 
-      try {
-        const response = await client.queryUsers(
-          { id: { $ne: client.userID } },
-          { id: 1 },
-          { limit: 50 }
-        );
+    setLoading(true);
+    setError('');
 
-        if (isMounted) {
-          setUsers(response.users || []);
-        }
-      } catch (err) {
-        console.error('Error fetching users:', err);
-        if (isMounted) setError(true);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    if (client) getUsers();
+    loadDirectory(client)
+      .then((users) => {
+        if (!cancelled) setDirectory(users);
+      })
+      .catch((queryError) => {
+        if (cancelled) return;
+        console.error('[RailHub] could not load directory:', queryError);
+        setError('Could not load team members. Please try again.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
   }, [client]);
 
-  const filteredUsers = useMemo(() => {
-    if (!searchTerm.trim()) return users;
-    const term = searchTerm.toLowerCase().trim();
-    return users.filter((u) => {
-      const name = (u.fullName || '').toLowerCase();
-      const username = (u.name || '').toLowerCase();
-      return name.includes(term) || username.includes(term);
-    });
-  }, [users, searchTerm]);
+  const visibleUsers = useMemo(() => {
+    const excluded = new Set(excludeIds);
+    return filterDirectory(directory, searchTerm).filter((user) => !excluded.has(user.id));
+  }, [directory, excludeIds, searchTerm]);
 
-  const handleToggleUser = (userId) => {
-    setSelectedUsers((prev) => {
-      if (prev.includes(userId)) {
-        return prev.filter((id) => id !== userId);
-      } else {
-        return [...prev, userId];
-      }
+  const toggleUser = (userId) => {
+    if (!setSelectedUsers) return;
+
+    setSelectedUsers((current) => {
+      const list = current || [];
+      return list.includes(userId)
+        ? list.filter((id) => id !== userId)
+        : [...list, userId];
     });
   };
 
-  if (error) {
-    return (
-      <ListContainer searchTerm={searchTerm} setSearchTerm={setSearchTerm}>
-        <div className='user-list__message'>Error loading users, please try again.</div>
-      </ListContainer>
-    );
-  }
-
   return (
-    <ListContainer searchTerm={searchTerm} setSearchTerm={setSearchTerm}>
-      {loading ? (
-        <div className='user-list__message'>Loading team members...</div>
-      ) : filteredUsers.length === 0 ? (
-        <div className='user-list__message'>No team members found.</div>
-      ) : (
-        filteredUsers.map((user) => (
-          <UserItem
-            key={user.id}
-            user={user}
-            selected={selectedUsers.includes(user.id)}
-            onToggle={() => handleToggleUser(user.id)}
+    <div className="user-list__container">
+      <div className="user-list__search">
+        <div className="input-group">
+          <span className="input-group__icon" aria-hidden="true">
+            <SearchIcon size={15} />
+          </span>
+          <input
+            type="search"
+            className="input"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search team members"
+            aria-label="Search team members"
+            autoComplete="off"
           />
-        ))
-      )}
-    </ListContainer>
+        </div>
+      </div>
+
+      <div className="user-list__header">
+        <span>Team member</span>
+        <span>{selectedUsers.length} selected</span>
+      </div>
+
+      <div className="user-list__scroll">
+        {loading ? (
+          <UserListSkeleton rows={5} />
+        ) : error ? (
+          <p className="user-list__message" role="alert">
+            {error}
+          </p>
+        ) : visibleUsers.length === 0 ? (
+          <p className="user-list__message">
+            {searchTerm.trim() ? `No one matches “${searchTerm.trim()}”.` : 'No other team members yet.'}
+          </p>
+        ) : (
+          visibleUsers.map((user) => (
+            <UserItem
+              key={user.id}
+              user={user}
+              selected={selectedUsers.includes(user.id)}
+              onToggle={toggleUser}
+            />
+          ))
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -1,85 +1,92 @@
-import React from 'react';
-import { Avatar, useChatContext } from 'stream-chat-react';
+import React, { useMemo } from 'react';
+import { useChatContext } from 'stream-chat-react';
 
-const TeamChannelPreview = ({ setActiveChannel, setIsCreating, setIsEditing, setToggleContainer, channel, type }) => {
-  const { channel: activeChannel, client } = useChatContext();
+import Avatar from './ui/Avatar';
+import { formatRelative } from '../lib/format';
 
-  const ChannelPreview = () => (
-    <div className='channel-preview__item'>
-      <span style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '20px',
-        height: '20px',
-        borderRadius: '5px',
-        background: 'rgba(255, 255, 255, 0.12)',
-        fontSize: '11px',
-        fontWeight: 700,
-        marginRight: '4px',
-        flexShrink: 0
-      }}>
-        #
-      </span>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {channel?.data?.name || channel?.data?.id}
-      </span>
-    </div>
-  );
+const displayName = (user) => user?.fullName || user?.name || user?.id || 'Unknown';
 
-  const DirectPreview = () => {
-    const members = channel.state?.members
-      ? Object.values(channel.state.members).filter(({ user }) => user?.id !== client.userID)
-      : [];
-    const otherUser = members[0]?.user;
+/**
+ * One row in the channel sidebar.
+ *
+ * Rendered from the SDK's `Preview` slot, so it receives the live `channel`
+ * object and re-renders on every relevant event (new message, presence,
+ * read state). A real `<button>` keeps keyboard and screen-reader behaviour
+ * correct without extra ARIA plumbing.
+ */
+const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
+  const { client, setActiveChannel } = useChatContext();
 
-    return (
-      <div className='channel-preview__item single'>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <Avatar
-            image={otherUser?.image}
-            name={otherUser?.fullName || otherUser?.name || 'User'}
-            size={24}
-          />
-          {otherUser?.online && (
-            <span style={{
-              position: 'absolute',
-              bottom: '-1px',
-              right: '-1px',
-              width: '7px',
-              height: '7px',
-              backgroundColor: '#22c55e',
-              borderRadius: '50%',
-              border: '1.5px solid #071f15'
-            }} />
-          )}
-        </div>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {otherUser?.fullName || otherUser?.name || 'Direct Message'}
-        </span>
-      </div>
-    );
+  const isDirect = type === 'messaging';
+
+  const { label, image, online, badge } = useMemo(() => {
+    const members = Object.values(channel?.state?.members || {})
+      .map((member) => member.user)
+      .filter((user) => user && user.id !== client?.userID);
+
+    const other = members[0];
+
+    if (!isDirect) {
+      return {
+        label: channel?.data?.name || channel?.id || 'Channel',
+        image: null,
+        online: false,
+        badge: members.length || channel?.state?.member_count || 0,
+      };
+    }
+
+    return {
+      label: displayName(other),
+      image: other?.image,
+      online: Boolean(other?.online),
+      badge: members.length,
+    };
+  }, [channel, client?.userID, isDirect]);
+
+  const unread = channel?.countUnread?.() || 0;
+  const lastAt = channel?.state?.last_message_at || channel?.data?.last_message_at;
+  const timestamp = formatRelative(lastAt);
+
+  const select = () => {
+    setActiveChannel(channel);
+    onCloseDrawer?.();
   };
 
   return (
-    <div
-      className={
-        channel?.id === activeChannel?.id
-          ? 'channel-preview__wrapper__selected'
-          : 'channel-preview__wrapper'
-      }
-      onClick={() => {
-        setIsCreating(false);
-        setIsEditing(false);
-        setActiveChannel(channel);
-        if (setToggleContainer) {
-          setToggleContainer((prevState) => !prevState);
-        }
-        document.body.classList.remove('mobile-menu-open');
-      }}
+    <button
+      type="button"
+      className={`channel-preview__wrapper${
+        active ? ' channel-preview__wrapper__selected' : ''
+      }`}
+      onClick={select}
+      aria-current={active ? 'true' : undefined}
+      aria-label={`${isDirect ? 'Direct message with' : 'Channel'} ${label}${
+        unread ? `, ${unread} unread` : ''
+      }`}
     >
-      {type === 'team' ? <ChannelPreview /> : <DirectPreview />}
-    </div>
+      <span className="channel-preview__item">
+        {isDirect ? (
+          <span className="channel-preview__identity">
+            <Avatar name={label} image={image} size={26} online={online} />
+          </span>
+        ) : (
+          <span className="channel-preview__hash" aria-hidden="true">
+            #
+          </span>
+        )}
+
+        <span className="channel-preview__label">{label}</span>
+
+        <span className="channel-preview__meta">
+          {timestamp && <span className="channel-preview__time">{timestamp}</span>}
+          {unread > 0 ? (
+            <span className="badge">{unread > 99 ? '99+' : unread}</span>
+          ) : isDirect && badge > 1 ? (
+            <span className="badge badge--muted">{badge}</span>
+          ) : null}
+        </span>
+      </span>
+    </button>
   );
 };
 

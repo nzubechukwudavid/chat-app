@@ -1,95 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { StreamChat } from 'stream-chat'; 
-import { Chat } from 'stream-chat-react';
-import Cookies from 'universal-cookie';
-import { Analytics } from "@vercel/analytics/react";
+import React, { lazy, Suspense, useCallback, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
-import { ChannelListContainer, ChannelContainer, Auth } from './components';
-import { STREAM_API_KEY } from './config'; // Import STREAM_API_KEY from config.js
-
+// Stream's base stylesheet must load *before* our layers so that every override
+// in `styles/stream.css` wins the cascade without piling on `!important`.
 import 'stream-chat-react/dist/css/v2/index.css';
-import './App.css';
+import './styles/index.css';
 
-const cookies = new Cookies();
+import Auth from './components/Auth';
+import SplashScreen from './components/ui/SplashScreen';
+import ThemeToggle from './components/ui/ThemeToggle';
+import { useToast } from './components/ui/Toast';
+import { useSession } from './hooks/useSession';
+import { useTheme } from './hooks/useTheme';
 
-const client = StreamChat.getInstance(STREAM_API_KEY);
+// The chat workspace drags in the whole Stream SDK, so it is split out of the
+// initial bundle. Unauthenticated visitors load only the sign-in screen.
+const Workspace = lazy(() => import('./components/Workspace'));
 
 const App = () => {
-  const [authToken, setAuthToken] = useState(cookies.get('token'));
-  const [createType, setCreateType] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user, token, isAuthenticated, isLoading, restore, signIn, signUp, signOut } = useSession();
+  const { notify } = useToast();
+  const { theme } = useTheme();
 
+  // Validate the httpOnly session cookie exactly once on boot.
   useEffect(() => {
-    let isMounted = true;
+    restore();
+  }, [restore]);
 
-    const connect = async () => {
-      if (!authToken) {
-        if (client.userID) {
-          await client.disconnectUser();
-        }
-        if (isMounted) setLoading(false);
-        return;
+  const handleSignOut = useCallback(
+    async (options = {}) => {
+      await signOut();
+      if (options.expired) {
+        notify({
+          variant: 'warning',
+          title: 'Session expired',
+          description: 'Please sign in again to continue.',
+          duration: 6000,
+        });
+      } else {
+        notify({ variant: 'success', title: 'Signed out', description: 'Stay safe out there.' });
       }
-
-      try {
-        await client.connectUser(
-          {
-            id: cookies.get('userID'),
-            name: cookies.get('username'),
-            fullName: cookies.get('fullName'),
-            image: cookies.get('avatarURL') || undefined,
-          },
-          authToken
-        );
-      } catch (err) {
-        console.error('Failed to connect user to Stream Chat:', err);
-        const cookiesToRemove = ['token', 'username', 'userID', 'fullName', 'phoneNumber', 'avatarURL', 'hashedPassword'];
-        cookiesToRemove.forEach((c) => cookies.remove(c, { path: '/' }));
-        if (isMounted) setAuthToken(null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    connect();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authToken]);
-
-  if (loading) return null; // Or a loading spinner
-
-  if(!authToken) return <Auth setAuthToken={setAuthToken} />
-  
-  return (
-    <div className="app__wrapper">
-      <div 
-        className="mobile-drawer-backdrop" 
-        onClick={() => document.body.classList.remove('mobile-menu-open')}
-        aria-hidden="true"
-      />
-      <Chat client={client} theme="team light">
-        <ChannelListContainer 
-          isCreating={isCreating}
-          setIsCreating={setIsCreating}
-          setCreateType={setCreateType}
-          setIsEditing={setIsEditing}
-          setAuthToken={setAuthToken}
-        />
-        <ChannelContainer
-          isCreating={isCreating}
-          setIsCreating={setIsCreating}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          createType={createType}
-        />
-      </Chat>
-      <Analytics />
-    </div>
+    },
+    [signOut, notify],
   );
-}
+
+  const handleSessionExpired = useCallback(() => {
+    handleSignOut({ expired: true });
+  }, [handleSignOut]);
+
+  if (isLoading) {
+    return (
+      <>
+        <ThemeToggle className="theme-toggle--floating" />
+        <SplashScreen />
+      </>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <ThemeToggle className="theme-toggle--floating" />
+        <Auth signIn={signIn} signUp={signUp} />
+        <Analytics />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Suspense fallback={<SplashScreen message="Loading your workspace" />}>
+        <Workspace
+          user={user}
+          token={token}
+          onSignOut={handleSignOut}
+          onSessionExpired={handleSessionExpired}
+          theme={theme}
+        />
+      </Suspense>
+      <Analytics />
+    </>
+  );
+};
 
 export default App;

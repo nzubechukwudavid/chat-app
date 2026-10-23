@@ -1,129 +1,110 @@
 import React from 'react';
-import { Avatar, useChatContext } from 'stream-chat-react';
 
-const channelByUser = async ({ client, setActiveChannel, channel, setChannel }) => {
-  try {
-    const filters = {
-      type: 'messaging',
-      member_count: 2,
-      members: { $eq: [client.userID, channel.id] },
-    };
+import Avatar from './ui/Avatar';
+import { Skeleton } from './ui/Skeleton';
+import { SearchIcon } from './ui/icons';
 
-    const [existingChannel] = await client.queryChannels(filters);
-
-    if (existingChannel) {
-      if (setChannel) setChannel(existingChannel);
-      return setActiveChannel(existingChannel);
-    }
-
-    const newChannel = client.channel('messaging', {
-      members: [channel.id, client.userID],
-    });
-
-    await newChannel.watch();
-
-    if (setChannel) setChannel(newChannel);
-    return setActiveChannel(newChannel);
-  } catch (err) {
-    console.error('Error opening DM channel:', err);
-  }
-};
-
-const SearchResult = ({ channel, focusedId, type, setChannel, setToggleContainer }) => {
-  const { client, setActiveChannel } = useChatContext();
-
-  if (type === 'channel') {
-    return (
-      <div
-        onClick={() => {
-          if (setChannel) setChannel(channel);
-          setActiveChannel(channel);
-          if (setToggleContainer) {
-            setToggleContainer((prevState) => !prevState);
-          }
-          document.body.classList.remove('mobile-menu-open');
-        }}
-        className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container'}
-      >
-        <div className='result-hashtag'>#</div>
-        <p className='channel-search__result-text'>{channel?.data?.name || channel?.id}</p>
-      </div>
-    );
-  }
+const ResultRow = ({ item, focused, onSelect, onHover }) => {
+  const id = `search-result-${item.key}`;
 
   return (
     <div
-      onClick={async () => {
-        await channelByUser({ client, setActiveChannel, channel, setChannel });
-        if (setToggleContainer) {
-          setToggleContainer((prevState) => !prevState);
-        }
-        document.body.classList.remove('mobile-menu-open');
+      id={id}
+      role="option"
+      aria-selected={focused}
+      className={`channel-search__result-container${
+        focused ? ' channel-search__result-container__focused' : ''
+      }`}
+      onMouseEnter={() => onHover?.(item.key)}
+      // `onMouseDown` rather than `onClick` so the input does not blur and
+      // close the dropdown before the selection registers.
+      onMouseDown={(event) => {
+        event.preventDefault();
+        onSelect?.(item);
       }}
-      className={focusedId === channel.id ? 'channel-search__result-container__focused' : 'channel-search__result-container'}
     >
-      <div className='channel-search__result-user'>
-        <Avatar image={channel.image || undefined} name={channel.fullName || channel.name} size={28} />
-        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-            {channel.fullName || channel.name}
-          </span>
-          {channel.name && channel.name !== channel.fullName && (
-            <span style={{ fontSize: '11px', color: '#64748b' }}>@{channel.name}</span>
-          )}
-        </div>
-      </div>
+      {item.kind === 'channel' ? (
+        <span className="result-hashtag" aria-hidden="true">
+          #
+        </span>
+      ) : (
+        <Avatar
+          name={item.label}
+          image={item.image}
+          size={28}
+          online={Boolean(item.online)}
+          className="channel-search__result-avatar"
+        />
+      )}
+
+      <span className="channel-search__result-user">
+        <span className="channel-search__result-name truncate">{item.label}</span>
+        {item.sublabel && (
+          <span className="channel-search__result-handle truncate">{item.sublabel}</span>
+        )}
+      </span>
     </div>
   );
 };
 
-const ResultsDropdown = ({ teamChannels = [], directChannels = [], focusedId, loading, setChannel, setToggleContainer }) => {
+/**
+ * Presentational search results.
+ *
+ * All keyboard handling lives in `ChannelSearch`; this component only renders
+ * the groups and marks the focused row so `aria-activedescendant` can point at
+ * it.
+ */
+const ResultsDropdown = ({ groups = [], focusedId, loading = false, onSelect, onHover, listId }) => {
+  const hasResults = groups.some((group) => group.items.length > 0);
+
   return (
-    <div className='channel-search__results'>
-      <p className='channel-search__results-header'>Channels</p>
-      {loading && !teamChannels.length && (
-        <p className='channel-search__results-header'>
-          <i>Loading...</i>
-        </p>
-      )}
-      {!loading && !teamChannels.length ? (
-        <p className='channel-search__results-header'>
-          <i>No channels found</i>
-        </p>
-      ) : (
-        teamChannels.map((channel, i) => (
-          <SearchResult
-            channel={channel}
-            focusedId={focusedId}
-            key={channel.id || i}
-            setChannel={setChannel}
-            type='channel'
-            setToggleContainer={setToggleContainer}
-          />
-        ))
+    <div className="channel-search__results" id={listId} role="listbox" aria-label="Search results">
+      {loading && !hasResults && (
+        <>
+          <div className="channel-search__results-header">
+            <span>Searching</span>
+          </div>
+          <div style={{ padding: '4px 10px 10px' }}>
+            <Skeleton height={34} radius={8} style={{ marginBottom: 6 }} />
+            <Skeleton height={34} radius={8} />
+          </div>
+        </>
       )}
 
-      <p className='channel-search__results-header'>Users</p>
-      {loading && !directChannels.length && (
-        <p className='channel-search__results-header'>
-          <i>Loading...</i>
+      {!loading && !hasResults && (
+        <p className="channel-search__empty">
+          <SearchIcon size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+          No channels or people match that search.
         </p>
       )}
-      {!loading && !directChannels.length ? (
-        <p className='channel-search__results-header'>
-          <i>No direct messages found</i>
+
+      {groups.map((group) =>
+        group.items.length === 0 ? null : (
+          <div key={group.id} role="group" aria-label={group.label}>
+            <p className="channel-search__results-header">{group.label}</p>
+            {group.items.map((item) => (
+              <ResultRow
+                key={item.key}
+                item={item}
+                focused={focusedId === item.key}
+                onSelect={onSelect}
+                onHover={onHover}
+              />
+            ))}
+          </div>
+        ),
+      )}
+
+      {hasResults && (
+        <p className="channel-search__hint" aria-hidden="true">
+          <span className="kbd">↑</span>
+          <span className="kbd">↓</span>
+          to move
+          <span className="kbd">Enter</span>
+          to open
+          <span className="kbd">Esc</span>
+          to close
         </p>
-      ) : (
-        directChannels.map((channel, i) => (
-          <SearchResult
-            channel={channel}
-            focusedId={focusedId}
-            key={channel.id || i}
-            setChannel={setChannel}
-            type='user'
-            setToggleContainer={setToggleContainer}
-          />
-        ))
       )}
     </div>
   );
