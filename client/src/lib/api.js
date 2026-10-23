@@ -13,7 +13,9 @@ import { API_URL } from '../config';
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  timeout: 20000,
+  // The API idles down when unused; a cold start can take the better part of a
+  // minute, so allow a long request rather than failing a first visit.
+  timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -22,7 +24,7 @@ export const errorMessage = (error, fallback = 'Something went wrong. Please try
   if (axios.isCancel(error)) return '';
 
   if (error?.code === 'ECONNABORTED') {
-    return 'The request timed out. Check your connection and try again.';
+    return 'Rail Hub is taking longer than usual to start up. Please try again in a moment.';
   }
 
   if (!error?.response) {
