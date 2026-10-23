@@ -14,4 +14,4 @@ const DEV_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export const API_URL = process.env.NODE_ENV === 'production' ? '/api' : DEV_API_URL;
 
-export const STREAM_API_KEY = process.env.REACT_APP_STREAM_API_KEY || 'spz529r7wxmx';
+export const STREAM_API_KEY = process.env.REACT_APP_STREAM_API_KEY || 'ye78kwjpxmh2';
