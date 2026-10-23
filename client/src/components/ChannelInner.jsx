@@ -1,205 +1,136 @@
-import React, { useState } from 'react';
-import { MessageList, MessageInput, Thread, Window, useChannelActionContext, Avatar, useChannelStateContext, useChatContext } from 'stream-chat-react';
+import React from 'react';
+import {
+  MessageInput,
+  MessageList,
+  Thread,
+  Window,
+  useChannelStateContext,
+  useChatContext,
+} from 'stream-chat-react';
 
-import { ChannelInfo } from '../assets';
+import Avatar from './ui/Avatar';
+import { MenuIcon, SendIcon, SettingsIcon } from './ui/icons';
 
-export const GiphyContext = React.createContext({});
-
+/**
+ * Circular send button matching the composer.
+ *
+ * The SDK's default icon is a small triangle; this version is deliberately
+ * larger and inherits the brand gradient from `.nrc-send-btn`.
+ */
 export const CustomSendButton = ({ sendMessage, disabled }) => (
   <button
     type="button"
     onClick={sendMessage}
     disabled={disabled}
     className="nrc-send-btn"
-    title="Send message"
+    title="Send message (Enter)"
     aria-label="Send message"
   >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M22 2L11 13"
-        stroke="#ffffff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M22 2L15 22L11 13L2 9L22 2Z"
-        fill="rgba(255, 255, 255, 0.25)"
-        stroke="#ffffff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <SendIcon size={18} strokeWidth={2.2} />
   </button>
 );
 
-const ChannelInner = ({ setIsEditing }) => {
-  const [giphyState, setGiphyState] = useState(false);
-  const { sendMessage } = useChannelActionContext();
-  
-  const overrideSubmitHandler = (message) => {
-    let updatedMessage = { ...message };
-  
-    if (giphyState) {
-      updatedMessage.text = `/giphy ${message.text}`;
-      updatedMessage.attachments = []; // Giphy command should not have attachments
-    }
-    
-    if (sendMessage) {
-      sendMessage(updatedMessage);
-      setGiphyState(false);
-    }
-  };
+const initialsName = (user) => user?.fullName || user?.name || user?.id || 'Rail staff';
 
-  return (
-    <GiphyContext.Provider value={{ giphyState, setGiphyState }}>
-      <div className="channel-inner__wrapper">
-        <Window>
-          <TeamChannelHeader setIsEditing={setIsEditing} />
-          <MessageList />
-          <MessageInput
-            overrideSubmitHandler={overrideSubmitHandler}
-            SendButton={CustomSendButton}
-          />
-        </Window>
-        <Thread />
-      </div>
-    </GiphyContext.Provider>
-  );
-};
-
-const TeamChannelHeader = ({ setIsEditing }) => {
-  const { channel, watcher_count } = useChannelStateContext();
+const TeamChannelHeader = ({ onOpenDrawer, onStartEdit }) => {
+  const { channel, watcher_count: watcherCount } = useChannelStateContext();
   const { client } = useChatContext();
 
-  const MessagingHeader = () => {
-    const members = Object.values(channel.state.members).filter(({ user }) => user?.id !== client.userID);
-    const otherUser = members[0]?.user;
-    const additionalMembers = members.length - 1;
+  const isDirect = channel?.type === 'messaging';
 
-    if (channel.type === 'messaging') {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ position: 'relative' }}>
-            <Avatar image={otherUser?.image} name={otherUser?.fullName || otherUser?.name || 'User'} size={38} />
-            {otherUser?.online && (
-              <span style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                width: '10px',
-                height: '10px',
-                backgroundColor: '#22c55e',
-                borderRadius: '50%',
-                border: '2px solid #ffffff'
-              }} />
-            )}
-          </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-              {otherUser?.fullName || otherUser?.name || 'Direct Message'}
-              {additionalMembers > 0 && ` +${additionalMembers} more`}
-            </h3>
-            {otherUser?.name && (
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>@{otherUser.name}</span>
-            )}
-          </div>
-        </div>
-      );
-    }
+  const others = Object.values(channel?.state?.members || {})
+    .map((member) => member.user)
+    .filter((user) => user && user.id !== client.userID);
 
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '8px',
-          background: 'rgba(16, 185, 129, 0.15)',
-          color: '#34d399',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 800,
-          fontSize: '15px'
-        }}>
-          #
-        </div>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-            {channel?.data?.name || channel?.data?.id}
-          </h3>
-          <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>NRC Team Corridor</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          title="Channel Settings"
-          style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            cursor: 'pointer',
-            padding: '6px 8px',
-            borderRadius: '6px',
-            marginLeft: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-muted)',
-            transition: 'background 0.15s'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#334155')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-surface-elevated)')}
-        >
-          <ChannelInfo />
-        </button>
-      </div>
-    );
-  };
+  const other = others[0];
+  const additional = Math.max(0, others.length - 1);
 
-  const getWatcherText = (watchers) => {
-    if (!watchers) return 'Offline';
-    if (watchers === 1) return '1 staff online';
-    return `${watchers} staff online`;
-  };
+  const onlineCount = watcherCount || 0;
+
+  const title = isDirect
+    ? initialsName(other)
+    : channel?.data?.name || channel?.data?.id || 'Channel';
+
+  const subtitle = isDirect
+    ? other?.online
+      ? 'Online now'
+      : 'Direct message'
+    : `${channel?.state?.member_count || 0} member${
+        (channel?.state?.member_count || 0) === 1 ? '' : 's'
+      }`;
 
   return (
-    <div className='team-channel-header__container'>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <header className="team-channel-header__container">
+      <div className="team-channel-header__left">
         <button
           type="button"
           className="mobile-menu-toggle"
-          onClick={() => document.body.classList.toggle('mobile-menu-open')}
-          title="Toggle Navigation Menu"
-          aria-label="Toggle Navigation Menu"
+          onClick={onOpenDrawer}
+          title="Open channels"
+          aria-label="Open channels and direct messages"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
+          <MenuIcon size={18} />
         </button>
-        <MessagingHeader />
-      </div>
-      <div className='team-channel-header__right'>
-        <span style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '5px 12px',
-          borderRadius: '9999px',
-          background: 'rgba(16, 185, 129, 0.14)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          fontSize: '12px',
-          fontWeight: 600,
-          color: '#34d399'
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-          {getWatcherText(watcher_count)}
+
+        {isDirect ? (
+          <span className="team-channel-header__icon" style={{ background: 'transparent', padding: 0 }}>
+            <Avatar
+              name={initialsName(other)}
+              image={other?.image}
+              size={36}
+              online={Boolean(other?.online)}
+            />
+          </span>
+        ) : (
+          <span className="team-channel-header__icon" aria-hidden="true">
+            #
+          </span>
+        )}
+
+        <span style={{ minWidth: 0 }}>
+          <h1 className="team-channel-header__name truncate">
+            {title}
+            {isDirect && additional > 0 && (
+              <span className="team-channel-header__subtitle"> +{additional}</span>
+            )}
+          </h1>
+          <span className="team-channel-header__subtitle">
+            {other?.name && isDirect ? `@${other.name}` : subtitle}
+          </span>
         </span>
       </div>
-    </div>
+
+      <div className="team-channel-header__right">
+        {onlineCount > 0 && (
+          <span className="pill" title={`${onlineCount} watching this channel`}>
+            <span className="pill__dot" aria-hidden="true" />
+            {onlineCount} online
+          </span>
+        )}
+
+        <button
+          type="button"
+          className="team-channel-header__settings"
+          onClick={onStartEdit}
+          title="Channel settings"
+          aria-label="Open channel settings"
+        >
+          <SettingsIcon size={16} />
+        </button>
+      </div>
+    </header>
   );
 };
+
+const ChannelInner = ({ onOpenDrawer, onStartEdit }) => (
+  <div className="channel-inner__wrapper">
+    <Window>
+      <TeamChannelHeader onOpenDrawer={onOpenDrawer} onStartEdit={onStartEdit} />
+      <MessageList />
+      <MessageInput SendButton={CustomSendButton} focus />
+    </Window>
+    <Thread />
+  </div>
+);
 
 export default ChannelInner;

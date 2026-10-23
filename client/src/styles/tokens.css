@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Rail Hub Design Tokens
+   Single source of truth for colour, type, spacing, elevation and motion.
+   Every component consumes these - never a raw hex value.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ------------------------------------------------------------------------
+     Brand palette - Nigerian Railway Corporation
+     ------------------------------------------------------------------------ */
+  --nrc-green-900: #061d13;
+  --nrc-green-800: #0a2e1e;
+  --nrc-green-700: #00733e;
+  --nrc-green-600: #059652;
+  --nrc-green-500: #10b981;
+  --nrc-green-400: #34d399;
+  --nrc-green-300: #6ee7b7;
+  --nrc-green-100: #d1fae5;
+  --nrc-green-50: #ecfdf5;
+
+  --nrc-gold: #f59e0b;
+  --nrc-gold-light: #fde68a;
+
+  --nrc-blue: #3b82f6;
+  --nrc-blue-soft: #93c5fd;
+
+  /* ------------------------------------------------------------------------
+     Surfaces
+     ------------------------------------------------------------------------ */
+  --bg-canvas: #0b0f19;
+  --bg-surface: #111827;
+  --bg-surface-elevated: #1e293b;
+  --bg-surface-raised: #24314a;
+  --bg-sidebar: #061109;
+  --bg-sidebar-mid: #0a1f16;
+  --bg-rail: #040d09;
+  --bg-input: #0b0f19;
+  --bg-input-focus: #0d1322;
+  --bg-hover: rgba(255, 255, 255, 0.07);
+  --bg-hover-strong: rgba(255, 255, 255, 0.13);
+  --bg-active: rgba(16, 185, 129, 0.16);
+  --bg-overlay: rgba(11, 15, 25, 0.72);
+  --bg-glass: rgba(17, 24, 39, 0.88);
+  --bg-glass-strong: rgba(11, 15, 25, 0.94);
+  --bg-on-accent: #ffffff;
+
+  /* ------------------------------------------------------------------------
+     Text
+     ------------------------------------------------------------------------ */
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  --text-faint: #475569;
+  --text-inverse: #0b0f19;
+  --text-accent: var(--nrc-green-400);
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: rgba(248, 250, 252, 0.72);
+  --text-on-dark-faint: rgba(248, 250, 252, 0.5);
+
+  /* ------------------------------------------------------------------------
+     Borders
+     ------------------------------------------------------------------------ */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --border-focus: var(--nrc-green-500);
+  --border-glass: rgba(255, 255, 255, 0.12);
+
+  /* ------------------------------------------------------------------------
+     Status
+     ------------------------------------------------------------------------ */
+  --success: #22c55e;
+  --success-text: #4ade80;
+  --success-bg: rgba(34, 197, 94, 0.14);
+  --success-border: rgba(34, 197, 94, 0.34);
+
+  --warning: #f59e0b;
+  --warning-text: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.14);
+  --warning-border: rgba(245, 158, 11, 0.34);
+
+  --danger: #ef4444;
+  --danger-text: #fca5a5;
+  --danger-bg: rgba(239, 68, 68, 0.14);
+  --danger-border: rgba(239, 68, 68, 0.36);
+
+  --info: #38bdf8;
+  --info-text: #7dd3fc;
+  --info-bg: rgba(56, 189, 248, 0.14);
+  --info-border: rgba(56, 189, 248, 0.34);
+
+  --accent-bg: rgba(16, 185, 129, 0.14);
+  --accent-border: rgba(16, 185, 129, 0.32);
+
+  /* ------------------------------------------------------------------------
+     Typography
+     ------------------------------------------------------------------------ */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  --font-size-2xs: 10px;
+  --font-size-xs: 11.5px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  --font-size-4xl: 42px;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.4;
+  --line-height-normal: 1.6;
+  --line-height-relaxed: 1.75;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --tracking-tight: -0.3px;
+  --tracking-tight-lg: -0.8px;
+  --tracking-wide: 0.5px;
+  --tracking-wider: 0.9px;
+
+  /* ------------------------------------------------------------------------
+     Spacing scale
+     ------------------------------------------------------------------------ */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* ------------------------------------------------------------------------
+     Radii
+     ------------------------------------------------------------------------ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ------------------------------------------------------------------------
+     Elevation
+     ------------------------------------------------------------------------ */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 4px 12px rgba(0, 115, 62, 0.25);
+  --shadow-accent-strong: 0 6px 18px rgba(0, 115, 62, 0.35);
+
+  /* ------------------------------------------------------------------------
+     Motion
+     ------------------------------------------------------------------------ */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --transition-fast: 140ms var(--ease-standard);
+  --transition-normal: 220ms var(--ease-standard);
+  --transition-slow: 360ms var(--ease-out);
+
+  /* ------------------------------------------------------------------------
+     Layout
+     ------------------------------------------------------------------------ */
+  --sidebar-rail-width: 68px;
+  --sidebar-width: 272px;
+  --header-height: 64px;
+  --header-height-mobile: 56px;
+
+  /* ------------------------------------------------------------------------
+     Z-index
+     ------------------------------------------------------------------------ */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-drawer: 900;
+  --z-backdrop: 950;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-splash: 1200;
+
+  --focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.35);
+  --focus-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.35);
+}
+
+/* ==========================================================================
+   Light theme - "Day Operations"
+   Enabled by setting `data-theme="light"` on <html>.
+   ========================================================================== */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-canvas: #f4f7f6;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f1f5f4;
+  --bg-surface-raised: #e6ecea;
+  --bg-sidebar: #062b1c;
+  --bg-sidebar-mid: #073d27;
+  --bg-rail: #042016;
+  --bg-input: #ffffff;
+  --bg-input-focus: #ffffff;
+  --bg-hover: rgba(15, 23, 42, 0.05);
+  --bg-hover-strong: rgba(15, 23, 42, 0.09);
+  --bg-active: rgba(0, 115, 62, 0.12);
+  --bg-overlay: rgba(15, 23, 42, 0.42);
+  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bg-glass-strong: rgba(255, 255, 255, 0.97);
+
+  --text-main: #0f172a;
+  --text-muted: #55637a;
+  --text-subtle: #7c8899;
+  --text-faint: #94a3b8;
+  --text-inverse: #ffffff;
+  --text-accent: var(--nrc-green-700);
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: rgba(248, 250, 252, 0.78);
+  --text-on-dark-faint: rgba(248, 250, 252, 0.55);
+
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-default: rgba(15, 23, 42, 0.14);
+  --border-strong: rgba(15, 23, 42, 0.26);
+  --border-glass: rgba(255, 255, 255, 0.16);
+
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-text: #b91c1c;
+  --danger-border: rgba(239, 68, 68, 0.3);
+  --info-bg: rgba(56, 189, 248, 0.12);
+  --accent-bg: rgba(0, 115, 62, 0.1);
+  --accent-border: rgba(0, 115, 62, 0.26);
+
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.14), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+}

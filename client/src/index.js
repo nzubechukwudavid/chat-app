@@ -2,10 +2,21 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import { ToastProvider } from './components/ui/Toast';
 
 const container = document.getElementById('root');
 const root = createRoot(container);
-root.render(<App />);
+
+root.render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </ErrorBoundary>
+  </React.StrictMode>,
+);
 
 // Register Service Worker for PWA (Install as Chrome app on Android/iOS/Desktop)
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
@@ -20,4 +31,5 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       });
   });
 }
+
  

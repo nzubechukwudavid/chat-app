@@ -1,0 +1,70 @@
+import axios from 'axios';
+
+import { API_URL } from '../config';
+
+/**
+ * The single HTTP client for the Rail Hub API.
+ *
+ * `withCredentials` is required because the session lives in an `httpOnly`
+ * cookie - JavaScript never sees it, so every request has to carry it
+ * automatically. The chat token returned by `/auth/session` is kept in
+ * memory by `useSession` and never persisted.
+ */
+export const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  timeout: 20000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+/** Normalises an axios failure into a human-readable message. */
+export const errorMessage = (error, fallback = 'Something went wrong. Please try again.') => {
+  if (axios.isCancel(error)) return '';
+
+  if (error?.code === 'ECONNABORTED') {
+    return 'The request timed out. Check your connection and try again.';
+  }
+
+  if (!error?.response) {
+    return 'Cannot reach Rail Hub. Check your network connection and try again.';
+  }
+
+  const data = error.response.data;
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  if (data?.message) return data.message;
+
+  if (error.response.status === 429) {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+
+  if (error.response.status >= 500) {
+    return 'Rail Hub is having trouble right now. Please try again shortly.';
+  }
+
+  return fallback;
+};
+
+/** Exchanges the session cookie for `{ user, token }`. */
+export const fetchSession = async () => {
+  const { data } = await api.get('/auth/session');
+  return data;
+};
+
+export const signIn = async (credentials) => {
+  await api.post('/auth/login', credentials);
+  return fetchSession();
+};
+
+export const signUp = async (payload) => {
+  await api.post('/auth/signup', payload);
+  return fetchSession();
+};
+
+export const signOut = async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch {
+    // A failed logout must still clear local state - the cookie may already
+    // be gone or the network may be down.
+  }
+};

@@ -1,291 +1,246 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ChannelList, useChatContext } from 'stream-chat-react';
-import Cookies from 'universal-cookie';
 
-import { ChannelSearch, TeamChannelList, TeamChannelPreview } from './';
-import RailwayIcon from '../assets/railway.png';
-import LogoutIcon from '../assets/logout.png';
+import ChannelSearch from './ChannelSearch';
+import TeamChannelList from './TeamChannelList';
+import TeamChannelPreview from './TeamChannelPreview';
+import Avatar from './ui/Avatar';
+import { ChannelListSkeleton } from './ui/Skeleton';
+import ThemeToggle from './ui/ThemeToggle';
+import { useToast } from './ui/Toast';
+import { useConfirm } from './ui/ConfirmDialog';
+import { LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
 
-const cookies = new Cookies();
-
-const SideBar = ({ logout }) => (
-  <div className="channel-list__sidebar">
-    <div className="channel-list__sidebar__icon1" title="NRC Rail Hub">
-      <div className='icon1__inner'>
-        <img src={RailwayIcon} alt="Rail Hub" width="30" />
-      </div>
-    </div>
-    <div className="channel-list__sidebar__icon2" onClick={logout} title="Sign Out">
-      <div className='icon1__inner'>
-        <img src={LogoutIcon} alt="Logout" width="30" />
-      </div>
-    </div>
+const EmptyGroup = ({ type }) => (
+  <div className="team-channel-list__message">
+    {type === 'team' ? 'No channels yet.' : 'No direct messages yet.'}
   </div>
 );
 
-const CompanyHeader = () => (
-  <div className="channel-list__header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px' }}>
-    <div style={{
-      width: '32px',
-      height: '32px',
-      borderRadius: '8px',
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '18px'
-    }}>
-      🚆
-    </div>
-    <div>
-      <p className="channel-list__header__text" style={{ margin: 0, fontWeight: 800, letterSpacing: '0.5px' }}>
-        Rail Hub
-      </p>
-      <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.8)', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', fontWeight: 600 }}>
-        NRC Operations
+// Stream adds channels to a list on events such as `notification.added_to_channel`
+// without re-applying the server filter, so a newly created team channel can
+// surface in the direct-message list (and vice versa). Keep the families
+// strictly separated at render time as well.
+const teamOnly = (channels) => channels.filter((channel) => channel.type === 'team');
+const messagingOnly = (channels) => channels.filter((channel) => channel.type === 'messaging');
+
+const Rail = ({ onStartCreate, onSignOut }) => (
+  <nav className="channel-list__sidebar" aria-label="Workspace actions">
+    <div className="channel-list__sidebar__icon1" title="NRC Rail Hub" aria-hidden="true">
+      <span className="icon1__inner">
+        <TrainIcon size={22} />
       </span>
     </div>
-  </div>
+
+    <button
+      type="button"
+      className="rail-action"
+      onClick={() => onStartCreate('team')}
+      title="New channel"
+      aria-label="Create a new channel"
+    >
+      <PlusIcon size={20} />
+    </button>
+
+    <button
+      type="button"
+      className="rail-action"
+      onClick={() => onStartCreate('messaging')}
+      title="New direct message"
+      aria-label="Start a direct message"
+    >
+      <UsersIcon size={19} />
+    </button>
+
+    <div className="rail-spacer" />
+
+    <ThemeToggle className="theme-switch--rail" />
+
+    <button
+      type="button"
+      className="rail-action rail-action--danger"
+      onClick={onSignOut}
+      title="Sign out"
+      aria-label="Sign out"
+    >
+      <LogoutIcon size={19} />
+    </button>
+  </nav>
 );
 
-const customChannelTeamFilter = (channels) => {
-  return channels.filter((channel) => channel.type === 'team');
-};
+const ChannelHeaderBar = ({ onStartCreate }) => (
+  <header className="channel-list__header">
+    <div className="channel-list__header__logo" aria-hidden="true">
+      <TrainIcon size={18} />
+    </div>
 
-const customChannelMessagingFilter = (channels) => {
-  return channels.filter((channel) => channel.type === 'messaging');
-};
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <p className="channel-list__header__text">Rail Hub</p>
+      <span className="channel-list__header__sub">NRC Operations</span>
+    </div>
 
-const EmptyState = ({ type }) => (
-  <div className="team-channel-list__message">
-    No {type === 'team' ? 'channels' : 'messages'} found.
-  </div>
+    <button
+      type="button"
+      className="team-channel-list__add"
+      onClick={() => onStartCreate('team')}
+      title="New channel"
+      aria-label="Create a new channel"
+    >
+      <PlusIcon size={16} />
+    </button>
+  </header>
 );
 
-const UserProfileBar = ({ logout }) => {
-  const fullName = cookies.get('fullName');
-  const username = cookies.get('username');
-  const avatarURL = cookies.get('avatarURL');
+const UserProfileBar = ({ user, onSignOut }) => {
+  const displayName = user?.fullName || user?.username || 'Rail Officer';
 
   return (
-    <div
-      style={{
-        marginTop: 'auto',
-        padding: '12px 14px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        backgroundColor: 'rgba(0, 0, 0, 0.15)',
-      }}
-    >
-      <div style={{ position: 'relative', flexShrink: 0 }}>
-        <div
-          style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255, 255, 255, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '14px',
-            overflow: 'hidden',
-          }}
-        >
-          {avatarURL ? (
-            <img src={avatarURL} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            (fullName || username || 'U')[0].toUpperCase()
-          )}
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            width: '9px',
-            height: '9px',
-            backgroundColor: '#22c55e',
-            borderRadius: '50%',
-            border: '2px solid #00733E',
-          }}
-          title="Online"
-        />
+    <div className="profile-bar">
+      <div className="profile-bar__avatar">
+        <Avatar name={displayName} image={user?.avatarURL} size={34} online />
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: '13px',
-            fontWeight: 600,
-            color: '#fff',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {fullName || username}
-        </p>
-        <p
-          style={{
-            margin: 0,
-            fontSize: '11px',
-            color: 'rgba(255, 255, 255, 0.75)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          @{username || 'staff'}
-        </p>
+      <div className="profile-bar__identity">
+        <p className="profile-bar__name truncate">{displayName}</p>
+        <p className="profile-bar__handle truncate">@{user?.username || 'staff'}</p>
       </div>
 
       <button
-        onClick={logout}
-        title="Sign Out"
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'rgba(255, 255, 255, 0.75)',
-          cursor: 'pointer',
-          padding: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '4px',
-          transition: 'color 0.2s',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)')}
+        type="button"
+        className="icon-button"
+        onClick={onSignOut}
+        title="Sign out"
+        aria-label="Sign out"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
+        <LogoutIcon size={16} />
       </button>
     </div>
   );
 };
 
-const ChannelListContent = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setToggleContainer, setAuthToken, client }) => {
-  const logout = useCallback(() => {
-    const cookiesToRemove = ['token', 'username', 'userID', 'fullName', 'phoneNumber', 'avatarURL', 'hashedPassword'];
-    cookiesToRemove.forEach((cookie) => cookies.remove(cookie, { path: '/' }));
+/**
+ * Channel sidebar.
+ *
+ * Note there is exactly *one* instance of the list tree. The previous build
+ * mounted a second copy behind a `display: none` breakpoint, which doubled the
+ * number of live Stream subscriptions for every user.
+ */
+const ChannelListContainer = ({
+  user,
+  isCreating,
+  setIsCreating,
+  setCreateType,
+  setIsEditing,
+  onCloseDrawer,
+  onStartCreate,
+  onSignOut,
+}) => {
+  const { client } = useChatContext();
+  const { confirm, dialog } = useConfirm();
+  const { info } = useToast();
+  const [collapsed, setCollapsed] = useState({ team: false, messaging: false });
 
-    if (client) {
-      client.disconnectUser();
+  const teamFilters = useMemo(
+    () => ({ type: 'team', members: { $in: [client?.userID] } }),
+    [client?.userID],
+  );
+  const messagingFilters = useMemo(
+    () => ({ type: 'messaging', members: { $in: [client?.userID] } }),
+    [client?.userID],
+  );
+
+  const toggleGroup = useCallback((type) => {
+    setCollapsed((current) => ({ ...current, [type]: !current[type] }));
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
+    const ok = await confirm({
+      title: 'Sign out of Rail Hub?',
+      description: 'You will need your station handle and password to sign back in.',
+      confirmLabel: 'Sign out',
+      tone: 'danger',
+    });
+
+    if (ok) {
+      info('Signing out…');
+      onSignOut?.();
     }
+  }, [confirm, info, onSignOut]);
 
-    setAuthToken(null);
-  }, [client, setAuthToken]);
+  if (!client || !client.userID) return null;
 
-  const filters = { members: { $in: [client.userID] } };
+  const sharedListProps = {
+    isCreating,
+    setIsCreating,
+    setCreateType,
+    setIsEditing,
+    onCloseDrawer,
+    onToggleGroup: toggleGroup,
+    collapsed,
+  };
 
   return (
-    <>
-      <SideBar logout={logout} />
-      <div className="channel-list__list__wrapper" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <CompanyHeader />
-        <ChannelSearch setToggleContainer={setToggleContainer} />
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+    <aside className="channel-list__container" aria-label="Channels and direct messages">
+      <Rail onStartCreate={onStartCreate} onSignOut={handleSignOut} />
+
+      <div className="channel-list__list__wrapper">
+        <ChannelHeaderBar onStartCreate={onStartCreate} />
+
+        <ChannelSearch onNavigate={onCloseDrawer} />
+
+        <div className="channel-list__scroll">
           <ChannelList
-            filters={filters}
-            channelRenderFilterFn={customChannelTeamFilter}
-            EmptyStateIndicator={() => <EmptyState type="team" />}
+            filters={teamFilters}
+            channelRenderFilterFn={teamOnly}
+            sort={{ last_message_at: -1 }}
+            options={{ state: true, watch: true, presence: true, limit: 30 }}
+            setActiveChannelOnMount
+            EmptyStateIndicator={() => <EmptyGroup type="team" />}
+            LoadingIndicator={ChannelListSkeleton}
             List={(listProps) => (
               <TeamChannelList
                 {...listProps}
-                type='team'
-                isCreating={isCreating}
-                setIsCreating={setIsCreating}
-                setCreateType={setCreateType}
-                setIsEditing={setIsEditing}
-                setToggleContainer={setToggleContainer}
+                {...sharedListProps}
+                collapsed={Boolean(collapsed.team)}
+                type="team"
               />
             )}
             Preview={(previewProps) => (
-              <TeamChannelPreview
-                {...previewProps}
-                setIsCreating={setIsCreating}
-                setIsEditing={setIsEditing}
-                setToggleContainer={setToggleContainer}
-                type='team'
-              />
+              <TeamChannelPreview {...previewProps} type="team" onCloseDrawer={onCloseDrawer} />
             )}
           />
+
           <ChannelList
-            filters={filters}
-            channelRenderFilterFn={customChannelMessagingFilter}
-            EmptyStateIndicator={() => <EmptyState type="messaging" />}
+            filters={messagingFilters}
+            channelRenderFilterFn={messagingOnly}
+            sort={{ last_message_at: -1 }}
+            options={{ state: true, watch: true, presence: true, limit: 30 }}
+            setActiveChannelOnMount={false}
+            EmptyStateIndicator={() => <EmptyGroup type="messaging" />}
+            LoadingIndicator={ChannelListSkeleton}
             List={(listProps) => (
               <TeamChannelList
                 {...listProps}
-                type='messaging'
-                isCreating={isCreating}
-                setIsCreating={setIsCreating}
-                setCreateType={setCreateType}
-                setIsEditing={setIsEditing}
-                setToggleContainer={setToggleContainer}
+                {...sharedListProps}
+                collapsed={Boolean(collapsed.messaging)}
+                type="messaging"
               />
             )}
             Preview={(previewProps) => (
               <TeamChannelPreview
                 {...previewProps}
-                setIsCreating={setIsCreating}
-                setIsEditing={setIsEditing}
-                setToggleContainer={setToggleContainer}
-                type='messaging'
+                type="messaging"
+                onCloseDrawer={onCloseDrawer}
               />
             )}
           />
         </div>
-        <UserProfileBar logout={logout} />
-      </div>
-    </>
-  );
-};
 
-const ChannelListContainer = ({ isCreating, setIsCreating, setCreateType, setIsEditing, setAuthToken }) => {
-  const [toggleContainer, setToggleContainer] = useState(false);
-  const { client } = useChatContext();
-
-  if (!client || !client.userID) return null;
-
-  return (
-    <>
-      <div className="channel-list__container">
-        <ChannelListContent
-          client={client}
-          setIsCreating={setIsCreating}
-          setCreateType={setCreateType}
-          setIsEditing={setIsEditing}
-          setAuthToken={setAuthToken}
-        />
+        <UserProfileBar user={user} onSignOut={handleSignOut} />
       </div>
 
-      <div
-        className='channel-list__container-responsive'
-        style={{ left: toggleContainer ? '0%' : '-89%', backgroundColor: '#00733E' }}
-      >
-        <div
-          className="channel-list__container-toggle"
-          onClick={() => setToggleContainer((prevToggleContainer) => !prevToggleContainer)}
-        />
-        <ChannelListContent
-          setIsCreating={setIsCreating}
-          client={client}
-          setCreateType={setCreateType}
-          setIsEditing={setIsEditing}
-          setToggleContainer={setToggleContainer}
-          setAuthToken={setAuthToken}
-        />
-      </div>
-    </>
+      {dialog}
+    </aside>
   );
 };
 

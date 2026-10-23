@@ -1,0 +1,349 @@
+/* ==========================================================================
+   Responsive behaviour
+   --------------------------------------------------------------------------
+   Two breakpoints carry the layout:
+
+     1100px - the sidebar narrows and secondary header text is dropped.
+      768px - the sidebar becomes an off-canvas drawer and the chat pane
+             takes the full viewport.
+
+   The drawer is driven by `body.mobile-menu-open` rather than component
+   state so that a scroll lock and the backdrop can be styled in one place.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Medium desktop / small laptop
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 1100px) {
+  :root {
+    --sidebar-width: 244px;
+  }
+
+  .team-channel-header__container {
+    padding: 0 var(--space-5);
+  }
+
+  .team-channel-header__subtitle {
+    display: none;
+  }
+
+  .str-chat__message-list,
+  .str-chat__message-list-scroll {
+    padding-inline: var(--space-5) !important;
+  }
+
+  .auth__hero {
+    padding: var(--space-8) var(--space-7);
+  }
+
+  .auth__hero-title {
+    font-size: 34px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Tablet / phone
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+  :root {
+    --sidebar-width: calc(min(310px, 86vw) - 56px);
+  }
+
+  /* Prevent the page behind the fixed shell from bouncing. */
+  html,
+  body,
+  #root {
+    overflow: hidden;
+  }
+
+  body:has(.auth),
+  body:has(.auth) #root {
+    overflow-y: auto;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+  }
+
+  .mobile-header-only {
+    display: flex;
+  }
+
+  /* ---- Drawer ---------------------------------------------------------- */
+  .channel-list__container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(310px, 86vw);
+    z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+    box-shadow: none;
+    will-change: transform;
+  }
+
+  body.mobile-menu-open .channel-list__container {
+    transform: translateX(0);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.65);
+  }
+
+  .mobile-drawer-backdrop {
+    display: none;
+  }
+
+  body.mobile-menu-open .mobile-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 13, 9, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: var(--z-backdrop);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    animation: nrc-fade-in var(--transition-normal);
+  }
+
+  .channel-list__sidebar {
+    width: 56px;
+  }
+
+  .channel-list__list__wrapper {
+    width: calc(100% - 56px);
+    min-width: 0;
+  }
+
+  /* ---- Chat pane ------------------------------------------------------- */
+  .channel__container {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .channel-inner__wrapper {
+    flex-direction: column;
+  }
+
+  .str-chat__message-list,
+  .str-chat__message-list-scroll {
+    padding: var(--space-3) var(--space-4) !important;
+  }
+
+  .str-chat__message-simple--me .str-chat__message-inner,
+  .str-chat__message--me .str-chat__message-inner,
+  .str-chat__message-simple:not(.str-chat__message-simple--me) .str-chat__message-inner,
+  .str-chat__message:not(.str-chat__message--me) .str-chat__message-inner {
+    max-width: 88% !important;
+  }
+
+  .str-chat__message-input {
+    padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom, 0px)) !important;
+    position: relative !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    background: var(--bg-surface) !important;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.18) !important;
+    z-index: 20 !important;
+  }
+
+  .str-chat__message-textarea-container {
+    padding: 4px 12px !important;
+  }
+
+  /* Touch targets: keep every control at least 40px on phones. */
+  .nrc-send-btn,
+  .str-chat__send-button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    max-width: 42px !important;
+    max-height: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  .team-channel-list__header {
+    min-height: 40px;
+    margin-bottom: var(--space-1);
+  }
+
+  .team-channel-list__add {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+  }
+
+  .team-channel-header__settings {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  /* Footer and message-action icons are only 28px wide by default, which is
+     below a comfortable thumb target. Give them air without moving them. */
+  .profile-bar .icon-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .str-chat__message-simple__actions__action {
+    min-width: 34px !important;
+    min-height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mobile-menu-toggle {
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+  }
+
+  .team-channel-header__container {
+    padding: 0 var(--space-3) !important;
+    height: var(--header-height-mobile) !important;
+  }
+
+  .team-channel-header__name {
+    font-size: var(--font-size-md);
+  }
+
+  .team-channel-header__right {
+    gap: var(--space-2);
+  }
+
+  .mobile-header-only {
+    padding: 0 var(--space-3);
+    height: var(--header-height-mobile);
+  }
+
+  /* ---- Overlays -------------------------------------------------------- */
+  .modal-backdrop {
+    padding: var(--space-3);
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .modal__header,
+  .modal__body,
+  .modal__footer {
+    padding-inline: var(--space-4);
+  }
+
+  .toast-stack {
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
+
+  .connection-banner {
+    top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
+    font-size: var(--font-size-xs);
+    padding: 6px 12px;
+  }
+
+  .empty-state {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .empty-state__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .empty-state__icon {
+    width: 58px;
+    height: 58px;
+    font-size: 26px;
+  }
+
+  /* iOS zooms any input smaller than 16px, so bump form controls. */
+  .input,
+  .auth__field input,
+  .channel-name-input__wrapper input,
+  .str-chat__textarea textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Very small phones
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 420px) {
+  .channel-list__container {
+    width: 88vw;
+  }
+
+  .str-chat__message-list,
+  .str-chat__message-list-scroll {
+    padding: var(--space-2) var(--space-3) !important;
+  }
+
+  .str-chat__message-simple--me .str-chat__message-inner,
+  .str-chat__message--me .str-chat__message-inner,
+  .str-chat__message-simple:not(.str-chat__message-simple--me) .str-chat__message-inner,
+  .str-chat__message:not(.str-chat__message--me) .str-chat__message-inner {
+    max-width: 94% !important;
+  }
+
+  .team-channel-header__icon {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Landscape phones - reclaim vertical space
+   -------------------------------------------------------------------------- */
+@media screen and (max-height: 520px) and (orientation: landscape) {
+  .team-channel-header__container,
+  .mobile-header-only {
+    height: 48px !important;
+  }
+
+  .auth__hero {
+    display: none;
+  }
+
+  .auth {
+    align-items: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print - a conversation transcript, nothing else
+   -------------------------------------------------------------------------- */
+@media print {
+  .channel-list__container,
+  .team-channel-header__right,
+  .str-chat__message-input,
+  .toast-stack,
+  .connection-banner,
+  .mobile-drawer-backdrop {
+    display: none !important;
+  }
+
+  .app__wrapper,
+  .channel__container {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .str-chat__message-list,
+  .str-chat__message-list-scroll {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+}
