@@ -112,6 +112,23 @@ The application will launch at `http://localhost:3000`.
 
 ---
 
+## Deployment
+
+The client deploys to Vercel and the API to Render. Production builds call the
+API on `/api`, and `client/vercel.json` proxies that path to the Render service.
+Keeping it same-origin means the `httpOnly` session cookie is first-party, so it
+works in Safari and needs no CORS preflight.
+
+Required on Render: `NODE_ENV=production`, `STREAM_API_KEY`, `STREAM_API_SECRET`,
+`VERCEL_FRONTEND_URL`, a durable `DATABASE_URL` (SQLite on a free instance is
+wiped on redeploy), and `STREAM_WEBHOOK_SECRET` (also append `?auth_token=<value>`
+to the webhook URL in the Stream dashboard).
+
+Point the client at a different API by editing the rewrite destination in
+`client/vercel.json`; `REACT_APP_API_URL` only applies to local development.
+
+---
+
 ## 🔒 Security
 
 - **Credential Isolation**: User passwords are encrypted with bcrypt before saving and are stripped from all API responses, tokens, and browser cookies.

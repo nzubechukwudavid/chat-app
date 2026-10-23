@@ -10,7 +10,10 @@ const { parseCookies } = require('../utils/cookies');
  */
 const cookieOptions = () => ({
   httpOnly: true,
-  sameSite: 'lax',
+  // Same-origin in production via the Vercel `/api` rewrite, so `none` is only
+  // a safety net for direct cross-site API calls (Chrome). It requires Secure,
+  // which production always has.
+  sameSite: config.isProduction ? 'none' : 'lax',
   secure: config.isProduction,
   path: '/',
   maxAge: config.auth.sessionTtlMs,
@@ -23,7 +26,7 @@ const setSessionCookie = (res, token) => {
 const clearSessionCookie = (res) => {
   res.clearCookie(config.auth.cookieName, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     secure: config.isProduction,
     path: '/',
   });
