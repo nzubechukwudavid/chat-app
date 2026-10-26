@@ -453,6 +453,28 @@
   display: none;
 }
 
+/* The drawer's own close control; only meaningful once it becomes an
+   off-canvas panel at the phone breakpoint. */
+.channel-list__close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.channel-list__close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* --------------------------------------------------------------------------
    Splash / loading screen
    -------------------------------------------------------------------------- */

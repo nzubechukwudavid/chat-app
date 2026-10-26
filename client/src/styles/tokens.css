@@ -186,7 +186,9 @@
   --z-base: 0;
   --z-sticky: 10;
   --z-drawer: 900;
-  --z-backdrop: 950;
+  /* The backdrop dims the page *behind* the drawer, so it must stay below it.
+     Above the drawer it swallows every tap meant for the menu. */
+  --z-backdrop: 850;
   --z-modal: 1000;
   --z-toast: 1100;
   --z-splash: 1200;

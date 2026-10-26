@@ -9,7 +9,7 @@ import { ChannelListSkeleton } from './ui/Skeleton';
 import ThemeToggle from './ui/ThemeToggle';
 import { useToast } from './ui/Toast';
 import { useConfirm } from './ui/ConfirmDialog';
-import { LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
+import { CloseIcon, LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
 
 const EmptyGroup = ({ type }) => (
   <div className="team-channel-list__message">
@@ -68,7 +68,7 @@ const Rail = ({ onStartCreate, onSignOut }) => (
   </nav>
 );
 
-const ChannelHeaderBar = ({ onStartCreate }) => (
+const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer }) => (
   <header className="channel-list__header">
     <div className="channel-list__header__logo" aria-hidden="true">
       <TrainIcon size={18} />
@@ -87,6 +87,18 @@ const ChannelHeaderBar = ({ onStartCreate }) => (
       aria-label="Create a new channel"
     >
       <PlusIcon size={16} />
+    </button>
+
+    {/* Only rendered as a control on phones; the drawer is closed by tapping
+        outside on desktop-sized viewports where it is not a drawer at all. */}
+    <button
+      type="button"
+      className="channel-list__close"
+      onClick={onCloseDrawer}
+      title="Close menu"
+      aria-label="Close menu"
+    >
+      <CloseIcon size={18} />
     </button>
   </header>
 );
@@ -184,7 +196,7 @@ const ChannelListContainer = ({
       <Rail onStartCreate={onStartCreate} onSignOut={handleSignOut} />
 
       <div className="channel-list__list__wrapper">
-        <ChannelHeaderBar onStartCreate={onStartCreate} />
+        <ChannelHeaderBar onStartCreate={onStartCreate} onCloseDrawer={onCloseDrawer} />
 
         <ChannelSearch onNavigate={onCloseDrawer} />
 

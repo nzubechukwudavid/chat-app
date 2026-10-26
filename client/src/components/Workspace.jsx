@@ -96,11 +96,16 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' })
     const onBreakpointChange = (event) => {
       if (!event.matches) setDrawer(false);
     };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setDrawer(false);
+    };
 
     media.addEventListener?.('change', onBreakpointChange);
+    document.addEventListener('keydown', onKeyDown);
 
     return () => {
       media.removeEventListener?.('change', onBreakpointChange);
+      document.removeEventListener('keydown', onKeyDown);
       setDrawer(false);
     };
   }, []);

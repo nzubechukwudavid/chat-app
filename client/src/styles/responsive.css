@@ -65,6 +65,12 @@
     display: inline-flex;
   }
 
+  .channel-list__close {
+    display: inline-flex;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
   .mobile-header-only {
     display: flex;
   }
