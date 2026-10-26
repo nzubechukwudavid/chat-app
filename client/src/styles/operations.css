@@ -364,16 +364,12 @@
 }
 
 /* --------------------------------------------------------------------------
-   Narrow viewports: the clock is a luxury, the service number is not
+   Narrow viewports: the clock is a luxury, the service number is not.
+   The chip sits under the title, so it costs no horizontal room and keeps the
+   operations flavour on a phone.
    -------------------------------------------------------------------------- */
 @media screen and (max-width: 900px) {
   .team-channel-header__clock {
-    display: none;
-  }
-}
-
-@media screen and (max-width: 420px) {
-  .team-channel-header__code {
     display: none;
   }
 }
