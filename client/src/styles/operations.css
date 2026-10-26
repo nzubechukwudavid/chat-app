@@ -127,6 +127,18 @@
   background: rgba(0, 115, 62, 0.07);
 }
 
+/* The pill's translucent white fill disappears on a white header, so give the
+   clock a real surface and a deeper signal lamp in the day theme. */
+:root[data-theme='light'] .team-channel-header__clock {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-default);
+}
+
+:root[data-theme='light'] .team-channel-header__clock .station-clock__led {
+  background: var(--nrc-green-600);
+  box-shadow: 0 0 0 3px rgba(5, 150, 82, 0.14);
+}
+
 /* The equivalent of a Solari board flipping over when the service changes. */
 .station-flap {
   transform-origin: left top;
