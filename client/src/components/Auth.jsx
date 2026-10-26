@@ -4,6 +4,7 @@ import { errorMessage } from '../lib/api';
 import { passwordLabel, passwordScore } from '../lib/format';
 import { AlertIcon, BoltIcon, ShieldIcon, TrainIcon } from './ui/icons';
 import PasswordField from './ui/PasswordField';
+import StationClock from './ui/StationClock';
 
 const EMPTY = {
   fullName: '',
@@ -137,6 +138,8 @@ const Auth = ({ signIn, signUp }) => {
             Nigeria Railway Corporation
           </span>
 
+          <p className="auth__hero-kicker">Operations control suite</p>
+
           <h1 className="auth__hero-title">
             Connected rail operations for <span>Nigeria</span>.
           </h1>
@@ -181,7 +184,7 @@ const Auth = ({ signIn, signUp }) => {
 
         <footer className="auth__hero-footer">
           <span>© {new Date().getFullYear()} Nigerian Railway Corporation</span>
-          <span>Rail Hub Operations Suite · v2.0</span>
+          <StationClock className="auth__hero-clock" />
         </footer>
       </section>
 
