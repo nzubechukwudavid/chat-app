@@ -1,0 +1,357 @@
+/* ==========================================================================
+   Operations layer
+   --------------------------------------------------------------------------
+   The shell is styled as a railway control board rather than a generic chat
+   window: tabular numerals, monospace service numbers, signal LEDs and a
+   timetabled clock. Everything here is additive and inherits the tokens, so
+   both themes keep working.
+
+   Imported after the component layers and before the breakpoints, so the
+   responsive sheet still gets the last word.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Ambient canvas
+   A barely-there 48px grid plus a green wash keeps the large empty areas from
+   reading as flat black, without introducing any motion.
+   -------------------------------------------------------------------------- */
+.app__wrapper {
+  background-image:
+    radial-gradient(circle at 14% -10%, rgba(16, 185, 129, 0.09), transparent 42%),
+    linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+  background-position: center, -1px -1px, -1px -1px;
+}
+
+/* --------------------------------------------------------------------------
+   Station clock (channel header)
+   -------------------------------------------------------------------------- */
+.station-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.03);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.station-clock__led {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-400);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
+  animation: station-blink 3.2s steps(1, end) infinite;
+}
+
+.station-clock__time {
+  color: var(--text-main);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+}
+
+.station-clock__zone {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+}
+
+@keyframes station-blink {
+  0%,
+  72% {
+    opacity: 1;
+  }
+  73%,
+  100% {
+    opacity: 0.28;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Channel header: service number, track rule and the split-flap title
+   -------------------------------------------------------------------------- */
+.team-channel-header__container {
+  position: relative;
+}
+
+.team-channel-header__container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--nrc-green-500) 0 14px,
+    transparent 14px 30px
+  );
+  opacity: 0.22;
+}
+
+.team-channel-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 1px;
+}
+
+.team-channel-header__code {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  border-radius: var(--radius-xs);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--nrc-green-300);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+/* On a light header the pale green would vanish, so deepen it. */
+:root[data-theme='light'] .team-channel-header__code {
+  color: var(--nrc-green-700);
+  border-color: rgba(0, 115, 62, 0.24);
+  background: rgba(0, 115, 62, 0.07);
+}
+
+/* The equivalent of a Solari board flipping over when the service changes. */
+.station-flap {
+  transform-origin: left top;
+  animation: station-flap 340ms var(--ease-out);
+}
+
+@keyframes station-flap {
+  0% {
+    opacity: 0;
+    transform: perspective(420px) rotateX(-74deg) translateY(-3px);
+  }
+  62% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(420px) rotateX(0) translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Channel list: timetable typography and a quieter hover
+   -------------------------------------------------------------------------- */
+.team-channel-list__header__title::before {
+  content: '//';
+  margin-right: 1px;
+  color: rgba(52, 211, 153, 0.5);
+  font-family: var(--font-mono);
+  letter-spacing: -1px;
+}
+
+.channel-preview__wrapper {
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.channel-preview__wrapper:hover {
+  transform: translateX(2px);
+}
+
+.channel-preview__wrapper__selected {
+  box-shadow: inset 3px 0 0 0 var(--nrc-green-400), 0 0 20px rgba(16, 185, 129, 0.1) !important;
+}
+
+.channel-preview__time {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The unread count gets a soft pulse; it stops after a few beats so it never
+   becomes a permanent distraction. Muted count badges stay still. */
+.badge:not(.badge--muted) {
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  animation: badge-beacon 2.4s var(--ease-standard) 4;
+}
+
+@keyframes badge-beacon {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Messages: tabular timestamps, day boards and a light arrival
+   -------------------------------------------------------------------------- */
+.str-chat__message-simple-timestamp,
+.str-chat__message-timestamp,
+.str-chat__message-data time,
+.str-chat__message-simple-data time {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.str-chat__message-simple--me .str-chat__message-bubble {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 2px 8px rgba(0, 95, 52, 0.28) !important;
+}
+
+/* Day separators read like a platform sign, flanked by a hairline each side. */
+.str-chat__date-separator {
+  gap: var(--space-3) !important;
+}
+
+.str-chat__date-separator::before,
+.str-chat__date-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-subtle));
+}
+
+.str-chat__date-separator::after {
+  background: linear-gradient(270deg, transparent, var(--border-subtle));
+}
+
+.str-chat__date-separator-date {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.14em !important;
+}
+
+.str-chat__li {
+  animation: message-arrive 260ms var(--ease-out);
+}
+
+@keyframes message-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Composer: a dashed track above the input plus a firmer press state
+   -------------------------------------------------------------------------- */
+.str-chat__message-input::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(52, 211, 153, 0.55) 0 10px,
+    transparent 10px 22px
+  );
+  opacity: 0.35;
+}
+
+.nrc-send-btn:active,
+.str-chat__send-button:active {
+  transform: scale(0.94);
+}
+
+/* --------------------------------------------------------------------------
+   Splash: rails under the wordmark
+   -------------------------------------------------------------------------- */
+.splash__kicker {
+  margin: 0 0 2px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.splash::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% + 104px);
+  height: 14px;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(52, 211, 153, 0.25) 0 2px, transparent 2px 22px),
+    linear-gradient(rgba(52, 211, 153, 0.4), rgba(52, 211, 153, 0.4)),
+    linear-gradient(rgba(52, 211, 153, 0.4), rgba(52, 211, 153, 0.4));
+  background-size: 22px 14px, 100% 1px, 100% 1px;
+  background-position: 0 0, 0 0, 0 13px;
+  background-repeat: repeat-x, no-repeat, no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Empty state: signage
+   -------------------------------------------------------------------------- */
+.empty-state__kicker {
+  margin: 0 0 10px;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   Narrow viewports: the clock is a luxury, the service number is not
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 900px) {
+  .team-channel-header__clock {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .team-channel-header__code {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .station-clock__led,
+  .badge,
+  .str-chat__li,
+  .station-flap {
+    animation: none !important;
+  }
+
+  .channel-preview__wrapper:hover {
+    transform: none;
+  }
+
+  .nrc-send-btn:active,
+  .str-chat__send-button:active {
+    transform: none;
+  }
+}

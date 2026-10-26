@@ -24,6 +24,7 @@ const SplashScreen = ({ message = 'Restoring your session' }) => {
       </div>
 
       <div style={{ textAlign: 'center' }}>
+        <p className="splash__kicker">NRC · Control</p>
         <p className="splash__title">Rail Hub</p>
         <p className="splash__subtitle">{message}…</p>
         {slow && (

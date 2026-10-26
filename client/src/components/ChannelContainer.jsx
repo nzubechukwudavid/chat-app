@@ -52,6 +52,7 @@ const SelectChannel = ({ onOpenDrawer, onStartCreate }) => (
       }}
     >
       <div className="empty-state">
+        <p className="empty-state__kicker">Platform 1 · No service selected</p>
         <div className="empty-state__icon" aria-hidden="true">
           <TrainIcon size={32} />
         </div>

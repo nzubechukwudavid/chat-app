@@ -9,6 +9,7 @@ import {
 } from 'stream-chat-react';
 
 import Avatar from './ui/Avatar';
+import StationClock from './ui/StationClock';
 import { MenuIcon, SendIcon, SettingsIcon } from './ui/icons';
 
 /**
@@ -31,6 +32,24 @@ export const CustomSendButton = ({ sendMessage, disabled }) => (
 );
 
 const initialsName = (user) => user?.fullName || user?.name || user?.id || 'Rail staff';
+
+/**
+ * A stable three-digit "service" number for a channel.
+ *
+ * Purely presentational: it gives each conversation a timetable identity and
+ * makes the header change readable at a glance. Derived from the channel id so
+ * it never shuffles between renders or devices.
+ */
+const serviceCode = (channel) => {
+  const key = String(channel?.cid || channel?.id || 'rail');
+  let hash = 0;
+
+  for (let index = 0; index < key.length; index += 1) {
+    hash = (hash * 31 + key.charCodeAt(index)) % 1000;
+  }
+
+  return `SVC ${String(hash).padStart(3, '0')}`;
+};
 
 const TeamChannelHeader = ({ onOpenDrawer, onStartEdit }) => {
   const { channel, watcher_count: watcherCount } = useChannelStateContext();
@@ -88,19 +107,29 @@ const TeamChannelHeader = ({ onOpenDrawer, onStartEdit }) => {
         )}
 
         <span style={{ minWidth: 0 }}>
-          <h1 className="team-channel-header__name truncate">
+          <h1
+            key={channel?.cid}
+            className="team-channel-header__name truncate station-flap"
+          >
             {title}
             {isDirect && additional > 0 && (
               <span className="team-channel-header__subtitle"> +{additional}</span>
             )}
           </h1>
-          <span className="team-channel-header__subtitle">
-            {other?.name && isDirect ? `@${other.name}` : subtitle}
+          <span className="team-channel-header__meta">
+            <span className="team-channel-header__subtitle">
+              {other?.name && isDirect ? `@${other.name}` : subtitle}
+            </span>
+            <span className="team-channel-header__code" title="Service number">
+              {serviceCode(channel)}
+            </span>
           </span>
         </span>
       </div>
 
       <div className="team-channel-header__right">
+        <StationClock className="team-channel-header__clock" />
+
         {onlineCount > 0 && (
           <span className="pill" title={`${onlineCount} watching this channel`}>
             <span className="pill__dot" aria-hidden="true" />
