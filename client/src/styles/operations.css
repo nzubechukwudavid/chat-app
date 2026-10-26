@@ -305,7 +305,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(50% + 104px);
+  bottom: 12%;
   height: 14px;
   pointer-events: none;
   opacity: 0.55;
