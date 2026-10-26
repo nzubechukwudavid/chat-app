@@ -138,8 +138,6 @@ const Auth = ({ signIn, signUp }) => {
             Nigeria Railway Corporation
           </span>
 
-          <p className="auth__hero-kicker">Operations control suite</p>
-
           <h1 className="auth__hero-title">
             Connected rail operations for <span>Nigeria</span>.
           </h1>

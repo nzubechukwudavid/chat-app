@@ -337,15 +337,6 @@
    The panel sits on the dark sidebar gradient in both themes, so the clock
    uses the on-dark palette rather than the surface tokens.
    -------------------------------------------------------------------------- */
-.auth__hero-kicker {
-  margin: 0 0 10px;
-  color: rgba(255, 255, 255, 0.55);
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-}
-
 .auth__hero-clock {
   border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
