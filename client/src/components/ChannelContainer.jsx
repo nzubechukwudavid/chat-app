@@ -4,7 +4,7 @@ import { Channel, useChatContext } from 'stream-chat-react';
 import ChannelInner from './ChannelInner';
 import CreateChannel from './CreateChannel';
 import EditChannel from './EditChannel';
-import SignalBoard from './SignalBoard';
+import RailwayBoard from '../features/railway/RailwayBoard';
 import { TrainIcon } from './ui/icons';
 
 const EmptyChannel = ({ channelName }) => (
@@ -51,7 +51,7 @@ const ChannelContainer = ({
 
   if (!channel?.id) {
     return (
-      <SignalBoard
+      <RailwayBoard
         onOpenDrawer={onOpenDrawer}
         onStartCreate={onStartCreate}
         onBroadcast={onBroadcast}

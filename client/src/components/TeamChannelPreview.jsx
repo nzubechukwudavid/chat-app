@@ -60,7 +60,7 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
       }${unread ? ' channel-preview__wrapper--unread' : ''}`}
       onClick={select}
       aria-current={active ? 'true' : undefined}
-      aria-label={`${isDirect ? 'Direct message with' : 'Channel'} ${label}${
+      aria-label={`${isDirect ? 'Bay platform with' : 'Platform'} ${label}${
         unread ? `, ${unread} unread` : ''
       }`}
     >

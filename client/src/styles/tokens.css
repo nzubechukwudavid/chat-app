@@ -181,6 +181,30 @@
   --header-height-mobile: 56px;
 
   /* ------------------------------------------------------------------------
+     Railway scene
+     The model-railway surface is a little world of its own, but still consumes
+     the station palette so it can live inside either theme.
+     ------------------------------------------------------------------------ */
+  --railway-sky-top: #07140f;
+  --railway-sky-bottom: #10291d;
+  --railway-haze: rgba(16, 185, 129, 0.2);
+  --railway-roof: #0b1c15;
+  --railway-roof-edge: #2c4f3d;
+  --railway-building: #10241b;
+  --railway-building-edge: #355846;
+  --railway-window: #f4c96b;
+  --railway-platform: #16261f;
+  --railway-platform-edge: #c9a14a;
+  --railway-track: #81928a;
+  --railway-sleeper: #26362e;
+  --railway-train: #0b6b43;
+  --railway-train-dark: #062b1c;
+  --railway-train-window: #f6d98b;
+  --railway-brass: #d2a84f;
+  --railway-steel: #a8b8b1;
+  --railway-cat: #0a0f0c;
+
+  /* ------------------------------------------------------------------------
      Z-index
      ------------------------------------------------------------------------ */
   --z-base: 0;
@@ -248,4 +272,23 @@
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
   --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.14), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+
+  --railway-sky-top: #dce9e3;
+  --railway-sky-bottom: #f7f0e1;
+  --railway-haze: rgba(0, 115, 62, 0.1);
+  --railway-roof: #315946;
+  --railway-roof-edge: #5c806d;
+  --railway-building: #e8e0cf;
+  --railway-building-edge: #b6a789;
+  --railway-window: #d69b2d;
+  --railway-platform: #e6e1d3;
+  --railway-platform-edge: #a87b2a;
+  --railway-track: #687a72;
+  --railway-sleeper: #c9c1ae;
+  --railway-train: #0a7047;
+  --railway-train-dark: #06452b;
+  --railway-train-window: #ffe1a0;
+  --railway-brass: #9b6b1f;
+  --railway-steel: #566860;
+  --railway-cat: #1b241f;
 }

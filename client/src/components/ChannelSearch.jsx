@@ -134,7 +134,7 @@ const ChannelSearch = ({ onNavigate }) => {
     () => [
       {
         id: 'channels',
-        label: 'Channels',
+        label: 'Platforms',
         items: results.channels.map((channel) => ({
           key: `channel-${channel.id}`,
           kind: 'channel',
@@ -237,13 +237,13 @@ const ChannelSearch = ({ onNavigate }) => {
           ref={inputRef}
           type="text"
           className="channel-search__input__text"
-          placeholder="Search channels and people"
+          placeholder="Search platforms and people"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => query.trim() && setOpen(true)}
           role="combobox"
-          aria-label="Search channels and people"
+          aria-label="Search platforms and people"
           aria-expanded={showDropdown}
           aria-controls={LIST_ID}
           aria-autocomplete="list"

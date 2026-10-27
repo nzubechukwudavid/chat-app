@@ -22,7 +22,7 @@ const TeamChannelList = ({
   setIsEditing,
 }) => {
   const isTeam = type === 'team';
-  const title = isTeam ? 'Channels' : 'Direct messages';
+  const title = isTeam ? 'Platforms' : 'Bay platforms';
   const groupId = `channel-group-${type}`;
 
   const addChannel = () => {

@@ -1,0 +1,1529 @@
+/* ==========================================================================
+   The Model Railway
+   --------------------------------------------------------------------------
+   The station landing surface. Real platforms, real dispatches, real unread
+   pressure; the trains are the playful part, the data is not.
+   Imported after signal.css and before responsive.css.
+   ========================================================================== */
+
+.railway-shell {
+  background: var(--bg-canvas);
+}
+
+.railway {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(16px, 2.6vw, 32px) clamp(14px, 3vw, 40px) 40px;
+  color: var(--text-main);
+  background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(1000px 420px at 78% -12%, rgba(16, 185, 129, 0.12), transparent 64%),
+    radial-gradient(700px 360px at 4% 8%, rgba(245, 158, 11, 0.05), transparent 70%),
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 64px 64px, 64px 64px;
+}
+
+.railway__header,
+.railway__hero,
+.railway__grid,
+.railway__notice {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.railway__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-default);
+}
+
+.railway__menu {
+  flex-shrink: 0;
+}
+
+.railway__identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.railway__mark {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #eafff5;
+  background: linear-gradient(140deg, var(--nrc-green-700), var(--nrc-green-600));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 18px rgba(0, 115, 62, 0.35);
+}
+
+.railway__mark::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-gold-light);
+  box-shadow: 0 0 8px var(--nrc-gold);
+}
+
+.railway__eyebrow {
+  margin: 0 0 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
+.railway__title {
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.7px;
+  line-height: 1.05;
+  color: var(--text-main);
+}
+
+.railway__clock-block {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.railway__clock {
+  padding: 6px 12px 6px 10px;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.railway__clock .station-clock__time {
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+
+.railway__watch {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.railway__watch-led {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-500);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.railway__watch-sep {
+  color: var(--text-faint);
+}
+
+/* --------------------------------------------------------------------------
+   Error notice
+   -------------------------------------------------------------------------- */
+.railway__notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------------
+   Hero: the station scene
+   -------------------------------------------------------------------------- */
+.railway__hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.08), transparent 52%),
+    var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.railway__hero-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+  padding: clamp(22px, 3.2vw, 42px);
+}
+
+.railway__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--nrc-green-400);
+}
+
+.railway__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-400);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.14);
+  animation: railway-live-pulse 2.8s ease-in-out infinite;
+}
+
+.railway__hero-title {
+  margin: 0;
+  max-width: 13ch;
+  font-size: clamp(31px, 4vw, 48px);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -1.6px;
+  line-height: 0.98;
+  color: var(--text-main);
+  text-wrap: balance;
+}
+
+.railway__lede {
+  max-width: 48ch;
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.railway__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.railway__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 82px;
+  padding: 8px 11px;
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--nrc-green-500);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.railway__stat strong {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-main);
+}
+
+.railway__stat small {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.railway__stat--signal {
+  border-left-color: var(--nrc-gold);
+  background: var(--warning-bg);
+}
+
+.railway__stat--signal strong {
+  color: var(--warning-text);
+}
+
+/* --------------------------------------------------------------------------
+   Station illustration
+   -------------------------------------------------------------------------- */
+.station-scene {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--railway-sky-top), var(--railway-sky-bottom));
+}
+
+.station-scene__svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.station-scene__live {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  background: var(--bg-glass-strong);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.station-scene__pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-400);
+  box-shadow: 0 0 7px var(--nrc-green-400);
+  animation: railway-live-pulse 2.8s ease-in-out infinite;
+}
+
+.station-scene__departure {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 230px;
+  padding: 10px 13px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-glass-strong);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.station-scene__departure span {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.station-scene__departure strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-main);
+}
+
+.station-scene__departure small {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* SVG palette */
+.scene__stars circle {
+  fill: var(--railway-window);
+  opacity: 0.42;
+}
+
+.scene__roof-line,
+.scene__support,
+.scene__truss,
+.scene__canopy-edge {
+  fill: none;
+  stroke: var(--railway-roof-edge);
+  stroke-linecap: round;
+}
+
+.scene__roof-line {
+  stroke-width: 1.4;
+  opacity: 0.6;
+}
+
+.scene__support {
+  stroke-width: 2;
+  opacity: 0.75;
+}
+
+.scene__truss {
+  stroke-width: 1;
+  opacity: 0.42;
+}
+
+.scene__canopy-edge {
+  stroke-width: 1.2;
+  opacity: 0.45;
+}
+
+.scene__wall {
+  fill: var(--railway-building);
+  stroke: var(--railway-building-edge);
+  stroke-width: 1;
+}
+
+.scene__sign {
+  fill: var(--railway-train-dark);
+  stroke: var(--railway-brass);
+  stroke-width: 1;
+}
+
+.scene__sign-text {
+  fill: var(--railway-brass);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.scene__clock-face {
+  fill: var(--railway-train-dark);
+  stroke: var(--railway-brass);
+  stroke-width: 2;
+}
+
+.scene__clock-ring {
+  fill: none;
+  stroke: var(--railway-roof-edge);
+  stroke-width: 1;
+}
+
+.scene__clock-hand {
+  fill: none;
+  stroke: var(--railway-window);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.scene__clock-pin {
+  fill: var(--railway-window);
+}
+
+.scene__window {
+  fill: var(--railway-window);
+  opacity: 0.7;
+}
+
+.scene__window-bar {
+  fill: none;
+  stroke: var(--railway-train-dark);
+  stroke-width: 1.2;
+  opacity: 0.8;
+}
+
+.scene__door {
+  fill: var(--railway-train-dark);
+  opacity: 0.7;
+}
+
+.scene__lamp path {
+  fill: none;
+  stroke: var(--railway-roof-edge);
+  stroke-width: 1;
+  opacity: 0.65;
+}
+
+.scene__lamp circle {
+  fill: var(--railway-window);
+}
+
+.scene__lamp .scene__lamp-glow {
+  opacity: 0.09;
+}
+
+.scene__platform-sign {
+  fill: var(--railway-train-dark);
+  stroke: var(--railway-brass);
+  stroke-width: 1;
+}
+
+.scene__platform-sign-text {
+  fill: var(--railway-brass);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.scene__platform {
+  fill: var(--railway-platform);
+}
+
+.scene__platform-edge {
+  fill: none;
+  stroke: var(--railway-platform-edge);
+  stroke-width: 2;
+}
+
+.scene__platform-line {
+  fill: none;
+  stroke: var(--railway-sleeper);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+  opacity: 0.45;
+}
+
+.scene__train-body {
+  fill: var(--railway-train);
+}
+
+.scene__train-roof,
+.scene__train-dark {
+  fill: var(--railway-train-dark);
+}
+
+.scene__train-window {
+  fill: var(--railway-train-window);
+  opacity: 0.9;
+}
+
+.scene__train-stripe {
+  fill: none;
+  stroke: var(--railway-brass);
+  stroke-width: 1.4;
+}
+
+.scene__train-number {
+  fill: var(--railway-train-dark);
+  opacity: 0.5;
+}
+
+.scene__wheel {
+  fill: var(--railway-cat);
+  stroke: var(--railway-steel);
+  stroke-width: 1.2;
+}
+
+.scene__coupling {
+  fill: none;
+  stroke: var(--railway-steel);
+  stroke-width: 1.5;
+}
+
+.scene__headlight {
+  fill: var(--railway-train-window);
+}
+
+.scene__headlight-glow {
+  fill: var(--railway-window);
+  opacity: 0.14;
+}
+
+.scene__steam circle {
+  fill: var(--railway-steel);
+  opacity: 0.14;
+}
+
+.scene__rail {
+  fill: none;
+  stroke: var(--railway-track);
+  stroke-width: 1.6;
+}
+
+.scene__ballast {
+  fill: none;
+  stroke: var(--railway-sleeper);
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+.scene__signal rect:first-child {
+  fill: var(--railway-steel);
+}
+
+.scene__signal-box {
+  fill: var(--railway-train-dark);
+  stroke: var(--railway-steel);
+  stroke-width: 1;
+}
+
+.scene__signal-clear {
+  fill: var(--nrc-green-400);
+}
+
+.scene__signal-wait {
+  fill: var(--nrc-gold);
+  opacity: 0.55;
+}
+
+.scene__cat {
+  fill: var(--railway-cat);
+}
+
+.scene__cat-eye {
+  fill: var(--railway-window);
+}
+
+.scene__passengers {
+  fill: var(--railway-steel);
+  opacity: 0.72;
+}
+
+.scene__passengers rect {
+  fill: var(--railway-brass);
+}
+
+/* --------------------------------------------------------------------------
+   Station panels
+   -------------------------------------------------------------------------- */
+.railway__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.railway__panel {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.railway__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, var(--bg-surface-elevated), var(--bg-surface));
+}
+
+.railway__panel-kicker {
+  margin: 0 0 3px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
+.railway__panel-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.3px;
+  color: var(--text-main);
+}
+
+.railway__panel-count {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.railway__side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.railway__platforms {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.railway__platforms li:last-child .platform {
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   A platform row
+   -------------------------------------------------------------------------- */
+.platform {
+  --platform-accent: var(--text-faint);
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 14px minmax(0, 1fr) auto auto 12px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 18px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.platform::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--platform-accent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.platform--clear {
+  --platform-accent: var(--nrc-green-500);
+}
+
+.platform--waiting {
+  --platform-accent: var(--nrc-gold);
+}
+
+.platform--idle {
+  --platform-accent: var(--text-faint);
+}
+
+.platform:hover {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent 72%);
+}
+
+.platform:hover::before,
+.platform:focus-visible::before {
+  opacity: 1;
+}
+
+.platform:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.platform__number {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 42px;
+  padding: 4px 5px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-surface-elevated);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.platform__number small {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.platform__number strong {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-main);
+}
+
+.platform--waiting .platform__number {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+}
+
+.platform--waiting .platform__number strong {
+  color: var(--warning-text);
+}
+
+.platform__signal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 14px;
+  height: 32px;
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  background: var(--bg-canvas);
+}
+
+.platform__signal i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--text-faint);
+  opacity: 0.28;
+}
+
+.platform--clear .platform__signal-clear {
+  background: var(--nrc-green-400);
+  opacity: 1;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.65);
+}
+
+.platform--waiting .platform__signal-wait {
+  background: var(--nrc-gold);
+  opacity: 1;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+}
+
+.platform__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.platform__heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.platform__avatar {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.platform__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-main);
+}
+
+.platform__code {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: var(--bg-surface-elevated);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  color: var(--text-subtle);
+}
+
+.platform__dispatch {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.platform__online {
+  color: var(--success-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.platform__train {
+  width: var(--train-width, 72px);
+  height: 27px;
+  flex-shrink: 0;
+  opacity: 0.52;
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.platform__train--waiting {
+  opacity: 1;
+}
+
+.platform__train svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.platform:hover .platform__train {
+  transform: translateX(-3px);
+  opacity: 1;
+}
+
+.train__body {
+  fill: var(--railway-train);
+}
+
+.train__roof,
+.train__chimney {
+  fill: var(--railway-train-dark);
+}
+
+.train__window {
+  fill: var(--railway-train-window);
+  opacity: 0.82;
+}
+
+.train__wheel {
+  fill: var(--railway-cat);
+  stroke: var(--railway-steel);
+  stroke-width: 1;
+}
+
+.train__lamp {
+  fill: var(--railway-train-window);
+}
+
+.platform--waiting .train__window {
+  fill: var(--nrc-gold-light);
+  opacity: 1;
+}
+
+.platform--waiting .train__lamp {
+  filter: drop-shadow(0 0 4px var(--nrc-gold));
+}
+
+.platform__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.platform__time {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.platform__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-gold);
+  color: #211403;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: var(--font-weight-bold);
+}
+
+.platform__crew {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.platform__arrow {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-faint);
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.platform:hover .platform__arrow {
+  transform: translateX(2px);
+  color: var(--text-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Broadcast and station actions
+   -------------------------------------------------------------------------- */
+.railway__broadcast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 15px 16px;
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.17), rgba(245, 158, 11, 0.04) 68%),
+    var(--bg-surface);
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.railway__broadcast::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--nrc-green-500), var(--nrc-gold));
+}
+
+.railway__broadcast:hover {
+  transform: translateY(-1px);
+  border-color: var(--nrc-green-500);
+  box-shadow: var(--shadow-accent);
+}
+
+.railway__broadcast:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.railway__broadcast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  color: #eafff5;
+  background: var(--nrc-green-700);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.railway__broadcast-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.railway__broadcast-copy strong {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.1px;
+}
+
+.railway__broadcast-copy small {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.railway__broadcast-arrow {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--text-accent);
+}
+
+.railway__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.railway__actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.railway__foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+
+.railway__foot-dot {
+  width: 5px;
+  height: 5px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-500);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+}
+
+/* --------------------------------------------------------------------------
+   Empty and loading states
+   -------------------------------------------------------------------------- */
+.railway__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 28px 20px 30px;
+}
+
+.railway__empty--compact {
+  padding: 22px 16px 24px;
+}
+
+.railway__empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-bg);
+  color: var(--nrc-green-400);
+}
+
+.railway__empty-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.railway__empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-main);
+}
+
+.railway__empty-text {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.railway__skeleton {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 18px 8px;
+}
+
+.railway__skeleton-row {
+  display: grid;
+  grid-template-columns: 38px 1fr 52px;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.railway__skeleton-row:last-child {
+  border-bottom: 0;
+}
+
+.railway__skeleton-row i,
+.railway__skeleton-row b,
+.railway__skeleton-row em {
+  display: block;
+  height: 9px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover),
+    var(--bg-hover-strong),
+    var(--bg-hover)
+  );
+  background-size: 200% 100%;
+  animation: railway-shimmer 1.6s linear infinite;
+}
+
+.railway__skeleton-row i {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+.railway__skeleton-row b {
+  width: 74%;
+}
+
+.railway__skeleton-row em {
+  width: 100%;
+  justify-self: end;
+}
+
+/* --------------------------------------------------------------------------
+   Motion
+   -------------------------------------------------------------------------- */
+@keyframes railway-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes railway-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Light theme adjustments
+   -------------------------------------------------------------------------- */
+:root[data-theme='light'] .railway {
+  background-image:
+    radial-gradient(1000px 420px at 78% -12%, rgba(0, 115, 62, 0.1), transparent 64%),
+    radial-gradient(700px 360px at 4% 8%, rgba(245, 158, 11, 0.07), transparent 70%),
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: auto, auto, 64px 64px, 64px 64px;
+}
+
+:root[data-theme='light'] .railway__hero {
+  background:
+    linear-gradient(135deg, rgba(0, 115, 62, 0.06), transparent 52%),
+    var(--bg-surface);
+}
+
+:root[data-theme='light'] .railway__stat {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme='light'] .platform__number {
+  background: #ffffff;
+}
+
+:root[data-theme='light'] .platform__signal {
+  background: #f8faf9;
+}
+
+:root[data-theme='light'] .station-scene__live,
+:root[data-theme='light'] .station-scene__departure {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (min-width: 980px) {
+  .railway__hero {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+    min-height: 320px;
+  }
+}
+
+@media (min-width: 1240px) {
+  .railway__grid {
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .station-scene {
+    min-height: 250px;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 768px) {
+  .railway {
+    padding: 14px 12px 30px;
+  }
+
+  .railway__header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .railway__identity {
+    flex: 1;
+    gap: 10px;
+  }
+
+  .railway__mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .railway__title {
+    font-size: 24px;
+  }
+
+  .railway__eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+  }
+
+  .railway__clock-block {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-subtle);
+  }
+
+  .railway__clock .station-clock__time {
+    font-size: 18px;
+  }
+
+  .railway__watch {
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .railway__hero {
+    margin-top: 12px;
+    border-radius: 16px;
+  }
+
+  .railway__hero-copy {
+    padding: 20px 18px 18px;
+  }
+
+  .railway__hero-title {
+    max-width: 12ch;
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+
+  .railway__lede {
+    margin-top: 11px;
+    font-size: 12.5px;
+  }
+
+  .railway__stats {
+    margin-top: 17px;
+    gap: 6px;
+  }
+
+  .railway__stat {
+    min-width: 0;
+    padding: 6px 9px;
+  }
+
+  .railway__stat strong {
+    font-size: 15px;
+  }
+
+  .railway__stat small {
+    font-size: 7.5px;
+  }
+
+  .station-scene {
+    min-height: 205px;
+  }
+
+  .station-scene__departure {
+    left: 12px;
+    bottom: 12px;
+    max-width: 190px;
+    padding: 9px 11px;
+  }
+
+  .station-scene__departure strong {
+    font-size: 12px;
+  }
+
+  .station-scene__live {
+    top: 10px;
+    right: 10px;
+    font-size: 7.5px;
+  }
+
+  .railway__grid {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .railway__panel {
+    border-radius: 14px;
+  }
+
+  .railway__panel-head {
+    padding: 12px 14px 10px;
+  }
+
+  .railway__panel-head h2 {
+    font-size: 15px;
+  }
+
+  .platform {
+    grid-template-columns: 38px 14px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 11px 12px;
+  }
+
+  .platform__number {
+    min-height: 38px;
+  }
+
+  .platform__number strong {
+    font-size: 14px;
+  }
+
+  .platform__name {
+    font-size: 13.5px;
+  }
+
+  .platform__dispatch {
+    font-size: 11px;
+  }
+
+  .platform__train,
+  .platform__code,
+  .platform__crew,
+  .platform__arrow {
+    display: none;
+  }
+
+  .platform__badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  .railway__broadcast {
+    border-radius: 14px;
+    padding: 13px;
+  }
+
+  .railway__actions {
+    flex-wrap: wrap;
+  }
+
+  .railway__foot {
+    font-size: 8px;
+  }
+
+  .railway__empty {
+    padding: 22px 16px 24px;
+  }
+
+  .railway__skeleton {
+    padding-inline: 14px;
+  }
+
+  .railway__skeleton-row {
+    grid-template-columns: 34px 1fr 44px;
+    padding: 11px 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .railway__hero-title {
+    font-size: 27px;
+  }
+
+  .railway__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .railway__stat {
+    justify-content: center;
+  }
+
+  .railway__stat small {
+    letter-spacing: 0.06em;
+  }
+
+  .station-scene {
+    min-height: 170px;
+  }
+
+  .station-scene__departure {
+    display: none;
+  }
+
+  .railway__panel-count {
+    display: none;
+  }
+
+  .railway__broadcast-copy small {
+    font-size: 9.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railway__live-dot,
+  .station-scene__pulse,
+  .railway__skeleton-row i,
+  .railway__skeleton-row b,
+  .railway__skeleton-row em {
+    animation: none !important;
+  }
+
+  .platform,
+  .platform__train,
+  .platform__arrow,
+  .railway__broadcast {
+    transition: none !important;
+  }
+
+  .platform:hover .platform__train,
+  .railway__broadcast:hover {
+    transform: none;
+  }
+}
