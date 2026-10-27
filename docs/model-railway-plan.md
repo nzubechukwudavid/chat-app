@@ -1,6 +1,6 @@
 # Model Railway — Build Plan
 
-Status: Phase 2 implemented and locally verified; production deploy and two-account verification pending.
+Status: Phase 2 implemented, locally verified, and deployed; the production shell is verified. A real two-account inbound test remains pending.
 
 Vocabulary note: the user-facing board now uses **Lines**, **DMs**, **Station board**, and **All lines**. “Platform” remains only in the decorative scene and internal filenames/CSS. The plan below keeps some original platform/bay language where it describes the metaphor.
 
@@ -223,8 +223,9 @@ Phase 2 implementation notes:
   state legible.
 - Deferred this pass: reaction cargo, voice plume, station-cat gameplay, sound,
   ambient time-of-day, and the miniature track-map sidebar.
-- Local verification used synthetic Stream events, not server messages. A real
-  two-account inbound test and production deploy are still pending.
+- Local verification used synthetic Stream events, not server messages. The
+  production shell is deployed and verified; a real two-account inbound test is
+  still pending.
 
 ### Phase 3 — The station has personality
 
