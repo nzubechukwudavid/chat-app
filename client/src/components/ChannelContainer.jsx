@@ -1,11 +1,11 @@
 import React from 'react';
-import { Channel, MessageSimple, useChatContext } from 'stream-chat-react';
+import { Channel, useChatContext } from 'stream-chat-react';
 
-import ChannelInner, { CustomSendButton } from './ChannelInner';
+import ChannelInner from './ChannelInner';
 import CreateChannel from './CreateChannel';
 import EditChannel from './EditChannel';
 import SignalBoard from './SignalBoard';
-import { BroadcastIcon, TrainIcon } from './ui/icons';
+import { TrainIcon } from './ui/icons';
 
 const EmptyChannel = ({ channelName }) => (
   <div className="empty-state">
@@ -19,27 +19,6 @@ const EmptyChannel = ({ channelName }) => (
     </p>
   </div>
 );
-
-/**
- * Broadcast dispatches get a network-wide marker above the normal bubble.
- * The wrapper is deliberately thin so the SDK keeps owning layout, timestamps
- * and delivery state.
- */
-const DispatchMessage = (props) => {
-  const broadcast = Boolean(props.message?.broadcast || props.message?.custom?.broadcast);
-
-  if (!broadcast) return <MessageSimple {...props} />;
-
-  return (
-    <div className="dispatch-broadcast">
-      <p className="dispatch-broadcast__tag">
-        <BroadcastIcon size={11} strokeWidth={2.4} />
-        All stations
-      </p>
-      <MessageSimple {...props} />
-    </div>
-  );
-};
 
 const ChannelContainer = ({
   isCreating,
@@ -84,10 +63,6 @@ const ChannelContainer = ({
     <div className="channel__container">
       <Channel
         EmptyStateIndicator={() => <EmptyChannel channelName={channel?.data?.name || 'channel'} />}
-        Message={(messageProps, index) => (
-          <DispatchMessage key={messageProps.message?.id || index} {...messageProps} />
-        )}
-        SendButton={CustomSendButton}
       >
         <ChannelInner onOpenDrawer={onOpenDrawer} onStartEdit={onStartEdit} />
       </Channel>

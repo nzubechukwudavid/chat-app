@@ -9,6 +9,7 @@ import {
 } from 'stream-chat-react';
 
 import Avatar from './ui/Avatar';
+import DispatchMessage from './DispatchMessage';
 import StationClock from './ui/StationClock';
 import { MenuIcon, SendIcon, SettingsIcon } from './ui/icons';
 import { serviceCode } from '../lib/lines';
@@ -138,7 +139,7 @@ const ChannelInner = ({ onOpenDrawer, onStartEdit }) => (
   <div className="channel-inner__wrapper">
     <Window>
       <TeamChannelHeader onOpenDrawer={onOpenDrawer} onStartEdit={onStartEdit} />
-      <MessageList />
+      <MessageList Message={DispatchMessage} />
       <MessageInput audioRecordingEnabled SendButton={CustomSendButton} focus />
     </Window>
     <Thread />
