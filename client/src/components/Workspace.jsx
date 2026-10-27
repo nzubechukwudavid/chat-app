@@ -3,6 +3,7 @@ import { Chat } from 'stream-chat-react';
 
 import ChannelContainer from './ChannelContainer';
 import ChannelListContainer from './ChannelListContainer';
+import BroadcastConsole from './BroadcastConsole';
 import ConnectionBanner from './ui/ConnectionBanner';
 import SplashScreen from './ui/SplashScreen';
 import { AlertIcon } from './ui/icons';
@@ -50,9 +51,14 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' })
   const [isEditing, setIsEditing] = useState(false);
   const [createType, setCreateType] = useState('');
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const openDrawer = useCallback(() => setDrawer(true), []);
   const closeDrawer = useCallback(() => setDrawer(false), []);
+  const openBroadcast = useCallback(() => {
+    setIsBroadcasting(true);
+    setDrawer(false);
+  }, []);
 
   // Connect (or re-use) the chat client.
   useEffect(() => {
@@ -218,6 +224,7 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' })
           onCloseDrawer={closeDrawer}
           onStartCreate={startCreate}
           onSignOut={handleSignOut}
+          onBroadcast={openBroadcast}
         />
 
         <ChannelContainer
@@ -229,6 +236,12 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' })
           onOpenDrawer={openDrawer}
           onStartCreate={startCreate}
           onStartEdit={startEdit}
+          onBroadcast={openBroadcast}
+        />
+
+        <BroadcastConsole
+          open={isBroadcasting}
+          onClose={() => setIsBroadcasting(false)}
         />
       </Chat>
 

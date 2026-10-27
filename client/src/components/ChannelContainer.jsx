@@ -4,7 +4,8 @@ import { Channel, MessageSimple, useChatContext } from 'stream-chat-react';
 import ChannelInner, { CustomSendButton } from './ChannelInner';
 import CreateChannel from './CreateChannel';
 import EditChannel from './EditChannel';
-import { MenuIcon, TrainIcon } from './ui/icons';
+import SignalBoard from './SignalBoard';
+import { BroadcastIcon, TrainIcon } from './ui/icons';
 
 const EmptyChannel = ({ channelName }) => (
   <div className="empty-state">
@@ -19,60 +20,26 @@ const EmptyChannel = ({ channelName }) => (
   </div>
 );
 
-const SelectChannel = ({ onOpenDrawer, onStartCreate }) => (
-  <div className="channel__container" style={{ display: 'flex', flexDirection: 'column' }}>
-    <header className="mobile-header-only">
-      <button
-        type="button"
-        className="mobile-menu-toggle"
-        onClick={onOpenDrawer}
-        title="Open channels"
-        aria-label="Open channels and direct messages"
-      >
-        <MenuIcon size={18} />
-      </button>
+/**
+ * Broadcast dispatches get a network-wide marker above the normal bubble.
+ * The wrapper is deliberately thin so the SDK keeps owning layout, timestamps
+ * and delivery state.
+ */
+const DispatchMessage = (props) => {
+  const broadcast = Boolean(props.message?.broadcast || props.message?.custom?.broadcast);
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="channel-list__header__logo" style={{ width: 28, height: 28 }}>
-          <TrainIcon size={16} />
-        </span>
-        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>Rail Hub</span>
-      </div>
+  if (!broadcast) return <MessageSimple {...props} />;
 
-      <div style={{ width: 36 }} aria-hidden="true" />
-    </header>
-
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-      }}
-    >
-      <div className="empty-state">
-        <p className="empty-state__kicker">Platform 1 · No service selected</p>
-        <div className="empty-state__icon" aria-hidden="true">
-          <TrainIcon size={32} />
-        </div>
-        <h2 className="empty-state__title">NRC Rail Hub Operations</h2>
-        <p className="empty-state__text">
-          Pick a channel from the sidebar or start a direct message with a colleague to
-          coordinate movements across the network.
-        </p>
-        <div className="empty-state__actions">
-          <button type="button" className="btn btn--primary" onClick={() => onStartCreate?.('team')}>
-            Create a channel
-          </button>
-          <button type="button" className="btn btn--secondary" onClick={() => onStartCreate?.('messaging')}>
-            New direct message
-          </button>
-        </div>
-      </div>
+  return (
+    <div className="dispatch-broadcast">
+      <p className="dispatch-broadcast__tag">
+        <BroadcastIcon size={11} strokeWidth={2.4} />
+        All stations
+      </p>
+      <MessageSimple {...props} />
     </div>
-  </div>
-);
+  );
+};
 
 const ChannelContainer = ({
   isCreating,
@@ -83,6 +50,7 @@ const ChannelContainer = ({
   onOpenDrawer,
   onStartCreate,
   onStartEdit,
+  onBroadcast,
 }) => {
   const { channel } = useChatContext();
 
@@ -103,14 +71,22 @@ const ChannelContainer = ({
   }
 
   if (!channel?.id) {
-    return <SelectChannel onOpenDrawer={onOpenDrawer} onStartCreate={onStartCreate} />;
+    return (
+      <SignalBoard
+        onOpenDrawer={onOpenDrawer}
+        onStartCreate={onStartCreate}
+        onBroadcast={onBroadcast}
+      />
+    );
   }
 
   return (
     <div className="channel__container">
       <Channel
         EmptyStateIndicator={() => <EmptyChannel channelName={channel?.data?.name || 'channel'} />}
-        Message={(messageProps, index) => <MessageSimple key={messageProps.message?.id || index} {...messageProps} />}
+        Message={(messageProps, index) => (
+          <DispatchMessage key={messageProps.message?.id || index} {...messageProps} />
+        )}
         SendButton={CustomSendButton}
       >
         <ChannelInner onOpenDrawer={onOpenDrawer} onStartEdit={onStartEdit} />

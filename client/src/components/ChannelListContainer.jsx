@@ -9,7 +9,7 @@ import { ChannelListSkeleton } from './ui/Skeleton';
 import ThemeToggle from './ui/ThemeToggle';
 import { useToast } from './ui/Toast';
 import { useConfirm } from './ui/ConfirmDialog';
-import { CloseIcon, LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
+import { CloseIcon, BoardIcon, BroadcastIcon, LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
 
 const EmptyGroup = ({ type }) => (
   <div className="team-channel-list__message">
@@ -24,13 +24,24 @@ const EmptyGroup = ({ type }) => (
 const teamOnly = (channels) => channels.filter((channel) => channel.type === 'team');
 const messagingOnly = (channels) => channels.filter((channel) => channel.type === 'messaging');
 
-const Rail = ({ onStartCreate, onSignOut }) => (
+const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive }) => (
   <nav className="channel-list__sidebar" aria-label="Workspace actions">
     <div className="channel-list__sidebar__icon1" title="NRC Rail Hub" aria-hidden="true">
       <span className="icon1__inner">
         <TrainIcon size={22} />
       </span>
     </div>
+
+    <button
+      type="button"
+      className={`rail-action${boardActive ? ' rail-action--active' : ''}`}
+      onClick={onOpenBoard}
+      title="Signal board"
+      aria-label="Open the signal board"
+      aria-current={boardActive ? 'page' : undefined}
+    >
+      <BoardIcon size={20} />
+    </button>
 
     <button
       type="button"
@@ -52,6 +63,16 @@ const Rail = ({ onStartCreate, onSignOut }) => (
       <UsersIcon size={19} />
     </button>
 
+    <button
+      type="button"
+      className="rail-action"
+      onClick={onBroadcast}
+      title="All-stations broadcast"
+      aria-label="Broadcast a message to every line"
+    >
+      <BroadcastIcon size={20} />
+    </button>
+
     <div className="rail-spacer" />
 
     <ThemeToggle className="theme-switch--rail" />
@@ -68,11 +89,17 @@ const Rail = ({ onStartCreate, onSignOut }) => (
   </nav>
 );
 
-const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer }) => (
+const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer, onOpenBoard }) => (
   <header className="channel-list__header">
-    <div className="channel-list__header__logo" aria-hidden="true">
+    <button
+      type="button"
+      className="channel-list__header__logo"
+      onClick={onOpenBoard}
+      title="Open the signal board"
+      aria-label="Open the signal board"
+    >
       <TrainIcon size={18} />
-    </div>
+    </button>
 
     <div style={{ minWidth: 0, flex: 1 }}>
       <p className="channel-list__header__text">Rail Hub</p>
@@ -101,6 +128,24 @@ const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer }) => (
       <CloseIcon size={18} />
     </button>
   </header>
+);
+
+const BoardLink = ({ active, onOpen }) => (
+  <button
+    type="button"
+    className={`board-link${active ? ' board-link--active' : ''}`}
+    onClick={onOpen}
+    aria-current={active ? 'page' : undefined}
+  >
+    <span className="board-link__icon" aria-hidden="true">
+      <BoardIcon size={15} />
+    </span>
+    <span className="board-link__text">
+      <strong>Signal board</strong>
+      <small>Live network overview</small>
+    </span>
+    <span className="board-link__lamp" aria-hidden="true" />
+  </button>
 );
 
 const UserProfileBar = ({ user, onSignOut }) => {
@@ -146,11 +191,19 @@ const ChannelListContainer = ({
   onCloseDrawer,
   onStartCreate,
   onSignOut,
+  onBroadcast,
 }) => {
-  const { client } = useChatContext();
+  const { client, channel: activeChannel, setActiveChannel } = useChatContext();
   const { confirm, dialog } = useConfirm();
   const { info } = useToast();
   const [collapsed, setCollapsed] = useState({ team: false, messaging: false });
+
+  const boardActive = !activeChannel?.id;
+
+  const handleOpenBoard = useCallback(() => {
+    setActiveChannel?.(undefined);
+    onCloseDrawer?.();
+  }, [onCloseDrawer, setActiveChannel]);
 
   const teamFilters = useMemo(
     () => ({ type: 'team', members: { $in: [client?.userID] } }),
@@ -193,10 +246,22 @@ const ChannelListContainer = ({
 
   return (
     <aside className="channel-list__container" aria-label="Channels and direct messages">
-      <Rail onStartCreate={onStartCreate} onSignOut={handleSignOut} />
+      <Rail
+        onStartCreate={onStartCreate}
+        onSignOut={handleSignOut}
+        onOpenBoard={handleOpenBoard}
+        onBroadcast={onBroadcast}
+        boardActive={boardActive}
+      />
 
       <div className="channel-list__list__wrapper">
-        <ChannelHeaderBar onStartCreate={onStartCreate} onCloseDrawer={onCloseDrawer} />
+        <ChannelHeaderBar
+          onStartCreate={onStartCreate}
+          onCloseDrawer={onCloseDrawer}
+          onOpenBoard={handleOpenBoard}
+        />
+
+        <BoardLink active={boardActive} onOpen={handleOpenBoard} />
 
         <ChannelSearch onNavigate={onCloseDrawer} />
 
@@ -206,7 +271,7 @@ const ChannelListContainer = ({
             channelRenderFilterFn={teamOnly}
             sort={{ last_message_at: -1 }}
             options={{ state: true, watch: true, presence: true, limit: 30 }}
-            setActiveChannelOnMount
+            setActiveChannelOnMount={false}
             EmptyStateIndicator={() => <EmptyGroup type="team" />}
             LoadingIndicator={ChannelListSkeleton}
             List={(listProps) => (

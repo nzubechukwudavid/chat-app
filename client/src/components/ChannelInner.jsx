@@ -11,6 +11,7 @@ import {
 import Avatar from './ui/Avatar';
 import StationClock from './ui/StationClock';
 import { MenuIcon, SendIcon, SettingsIcon } from './ui/icons';
+import { serviceCode } from '../lib/lines';
 
 /**
  * Circular send button matching the composer.
@@ -32,24 +33,6 @@ export const CustomSendButton = ({ sendMessage, disabled }) => (
 );
 
 const initialsName = (user) => user?.fullName || user?.name || user?.id || 'Rail staff';
-
-/**
- * A stable three-digit "service" number for a channel.
- *
- * Purely presentational: it gives each conversation a timetable identity and
- * makes the header change readable at a glance. Derived from the channel id so
- * it never shuffles between renders or devices.
- */
-const serviceCode = (channel) => {
-  const key = String(channel?.cid || channel?.id || 'rail');
-  let hash = 0;
-
-  for (let index = 0; index < key.length; index += 1) {
-    hash = (hash * 31 + key.charCodeAt(index)) % 1000;
-  }
-
-  return `SVC ${String(hash).padStart(3, '0')}`;
-};
 
 const TeamChannelHeader = ({ onOpenDrawer, onStartEdit }) => {
   const { channel, watcher_count: watcherCount } = useChannelStateContext();
@@ -156,7 +139,7 @@ const ChannelInner = ({ onOpenDrawer, onStartEdit }) => (
     <Window>
       <TeamChannelHeader onOpenDrawer={onOpenDrawer} onStartEdit={onStartEdit} />
       <MessageList />
-      <MessageInput SendButton={CustomSendButton} focus />
+      <MessageInput audioRecordingEnabled SendButton={CustomSendButton} focus />
     </Window>
     <Thread />
   </div>

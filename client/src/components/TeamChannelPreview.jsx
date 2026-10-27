@@ -57,7 +57,7 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
       type="button"
       className={`channel-preview__wrapper${
         active ? ' channel-preview__wrapper__selected' : ''
-      }`}
+      }${unread ? ' channel-preview__wrapper--unread' : ''}`}
       onClick={select}
       aria-current={active ? 'true' : undefined}
       aria-label={`${isDirect ? 'Direct message with' : 'Channel'} ${label}${

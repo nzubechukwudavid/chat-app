@@ -192,6 +192,25 @@ export const BoltIcon = (props) => (
   </svg>
 );
 
+/** Board: a grid of live readouts. */
+export const BoardIcon = (props) => (
+  <svg {...base(props)}>
+    <rect x="3" y="4" width="7" height="6" rx="1.2" />
+    <rect x="14" y="4" width="7" height="6" rx="1.2" />
+    <rect x="3" y="14" width="7" height="6" rx="1.2" />
+    <path d="M14 15h7M14 19h4" />
+  </svg>
+);
+
+/** Broadcast: a mast sending in every direction. */
+export const BroadcastIcon = (props) => (
+  <svg {...base(props)}>
+    <circle cx="12" cy="12" r="1.8" />
+    <path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6" />
+    <path d="M5.4 5.4a9.4 9.4 0 0 0 0 13.2M18.6 5.4a9.4 9.4 0 0 1 0 13.2" />
+  </svg>
+);
+
 const iconSet = {
   MenuIcon,
   CloseIcon,
@@ -216,6 +235,8 @@ const iconSet = {
   ExitIcon,
   ShieldIcon,
   BoltIcon,
+  BoardIcon,
+  BroadcastIcon,
 };
 
 export default iconSet;
