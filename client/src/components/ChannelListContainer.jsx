@@ -243,6 +243,7 @@ const ChannelListContainer = ({
   const collapseButtonRef = useRef(null);
   const expandButtonRef = useRef(null);
   const restoreToggleFocus = useRef(false);
+  const focusRequestRef = useRef(0);
 
   const boardActive = !activeChannel?.id;
 
@@ -261,9 +262,26 @@ const ChannelListContainer = ({
 
     restoreToggleFocus.current = false;
     const target = navCollapsed ? expandButtonRef.current : collapseButtonRef.current;
-    // A frame boundary lets the newly shown panel become focusable before the
-    // browser tries to move focus into it.
-    window.setTimeout(() => target?.focus(), 0);
+    if (!target) return;
+
+    const request = focusRequestRef.current + 1;
+    focusRequestRef.current = request;
+
+    // Retry briefly: the panel may still be resolving its visible state when
+    // the first frame after the toggle runs.
+    let attempts = 0;
+    const moveFocus = () => {
+      if (focusRequestRef.current !== request) return;
+
+      target.focus({ preventScroll: true });
+      attempts += 1;
+
+      if (document.activeElement !== target && attempts < 5) {
+        window.setTimeout(moveFocus, 40);
+      }
+    };
+
+    window.setTimeout(moveFocus, 0);
   }, [navCollapsed]);
 
   const toggleNav = useCallback(() => {
