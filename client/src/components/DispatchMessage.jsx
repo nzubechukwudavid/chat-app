@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSimple } from 'stream-chat-react';
+import { MessageSimple, useMessageContext } from 'stream-chat-react';
 
 import { BroadcastIcon } from './ui/icons';
 
@@ -8,11 +8,13 @@ import { BroadcastIcon } from './ui/icons';
  * The wrapper is deliberately thin so the SDK keeps owning layout, timestamps
  * and delivery state.
  *
- * This must be passed to `MessageList`, not `Channel`: in the installed SDK,
+ * The SDK passes this component only `groupedByUser`; the message itself comes
+ * from `MessageContext`. It must also be passed to `MessageList`, not `Channel`:
  * `Channel` does not forward a `Message` override to the list.
  */
 const DispatchMessage = (props) => {
-  const broadcast = Boolean(props.message?.broadcast || props.message?.custom?.broadcast);
+  const { message } = useMessageContext();
+  const broadcast = Boolean(message?.broadcast || message?.custom?.broadcast);
 
   if (!broadcast) return <MessageSimple {...props} />;
 
