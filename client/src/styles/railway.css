@@ -373,6 +373,67 @@
   color: var(--text-muted);
 }
 
+/* A waiting train shows only its headlights at the tunnel mouth. */
+.station-scene__waiting {
+  position: absolute;
+  left: 12px;
+  bottom: 31px;
+  z-index: 1;
+  width: 38px;
+  height: 9px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(ellipse at 18% 50%, var(--railway-train-window), transparent 68%);
+  box-shadow: 0 0 12px rgba(246, 217, 139, 0.25);
+  opacity: 0.85;
+  animation: station-waiting 2.6s ease-in-out infinite;
+}
+
+/* Typing is a short headlight sweep, not an extra panel. */
+.station-scene__beam {
+  position: absolute;
+  left: 6px;
+  bottom: 45px;
+  z-index: 1;
+  width: 112px;
+  height: 32px;
+  background: linear-gradient(90deg, rgba(246, 217, 139, 0.32), transparent 78%);
+  clip-path: polygon(0 42%, 100% 0, 100% 100%, 0 58%);
+  filter: blur(0.6px);
+  opacity: 0;
+  animation: station-beam 2.4s ease-in-out infinite;
+}
+
+.scene__train {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.scene__train--arrival {
+  animation: station-arrive 1.6s var(--ease-out) both;
+}
+
+.scene__train--broadcast {
+  animation: station-broadcast 2.8s var(--ease-out) both;
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45));
+}
+
+.scene__train--broadcast .scene__train-body {
+  fill: var(--nrc-gold);
+}
+
+.scene__train--broadcast .scene__train-stripe {
+  stroke: var(--nrc-green-900);
+}
+
+.scene__train--broadcast .scene__headlight {
+  fill: #ffffff;
+}
+
+.scene__train--broadcast .scene__headlight-glow {
+  fill: var(--nrc-gold-light);
+  opacity: 0.42;
+}
+
 /* SVG palette */
 .scene__stars circle {
   fill: var(--railway-window);
@@ -724,7 +785,8 @@
   --platform-accent: var(--nrc-green-500);
 }
 
-.platform--waiting {
+.platform--waiting,
+.platform--typing {
   --platform-accent: var(--nrc-gold);
 }
 
@@ -776,12 +838,14 @@
   color: var(--text-main);
 }
 
-.platform--waiting .platform__number {
+.platform--waiting .platform__number,
+.platform--typing .platform__number {
   border-color: var(--warning-border);
   background: var(--warning-bg);
 }
 
-.platform--waiting .platform__number strong {
+.platform--waiting .platform__number strong,
+.platform--typing .platform__number strong {
   color: var(--warning-text);
 }
 
@@ -812,10 +876,15 @@
   box-shadow: 0 0 6px rgba(52, 211, 153, 0.65);
 }
 
-.platform--waiting .platform__signal-wait {
+.platform--waiting .platform__signal-wait,
+.platform--typing .platform__signal-wait {
   background: var(--nrc-gold);
   opacity: 1;
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+}
+
+.platform--typing .platform__signal-wait {
+  animation: railway-signal-pulse 1.8s ease-in-out infinite;
 }
 
 .platform__body {
@@ -868,6 +937,11 @@
 
 .platform__online {
   color: var(--success-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.platform__typing {
+  color: var(--warning-text);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -1221,6 +1295,88 @@
   }
 }
 
+@keyframes railway-signal-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+  }
+
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 11px rgba(245, 158, 11, 0.9);
+  }
+}
+
+@keyframes station-arrive {
+  0% {
+    opacity: 0;
+    transform: translateX(-380px);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translateX(8px);
+  }
+
+  76% {
+    transform: translateX(-2px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes station-broadcast {
+  0% {
+    opacity: 0;
+    transform: translateX(-480px);
+  }
+
+  16% {
+    opacity: 1;
+  }
+
+  74% {
+    transform: translateX(14px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes station-waiting {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleX(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes station-beam {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scaleX(0.72);
+    transform-origin: left center;
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
 /* --------------------------------------------------------------------------
    Light theme adjustments
    -------------------------------------------------------------------------- */
@@ -1398,6 +1554,11 @@
     font-size: 7.5px;
   }
 
+  .station-scene__waiting,
+  .station-scene__beam {
+    display: none;
+  }
+
   .railway__grid {
     gap: 12px;
     margin-top: 12px;
@@ -1516,10 +1677,22 @@
 @media (prefers-reduced-motion: reduce) {
   .railway__live-dot,
   .station-scene__pulse,
+  .station-scene__waiting,
+  .station-scene__beam,
+  .scene__train--arrival,
+  .scene__train--broadcast,
+  .platform--typing .platform__signal-wait,
   .railway__skeleton-row i,
   .railway__skeleton-row b,
   .railway__skeleton-row em {
     animation: none !important;
+  }
+
+  .scene__train--arrival,
+  .scene__train--broadcast {
+    filter: none;
+    opacity: 1;
+    transform: none;
   }
 
   .platform,

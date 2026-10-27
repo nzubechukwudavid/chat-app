@@ -28,7 +28,7 @@ export const lastDispatch = (channel) => {
   const messages = channel?.state?.messages || [];
   const message = messages[messages.length - 1];
 
-  if (!message) return 'No dispatches yet';
+  if (!message) return 'No messages yet';
 
   const text = String(message.text || '').trim();
 
@@ -36,10 +36,10 @@ export const lastDispatch = (channel) => {
 
   const attachments = message.attachments || [];
 
-  if (attachments.some(isAudio)) return 'Voice dispatch';
+  if (attachments.some(isAudio)) return 'Voice message';
   if (attachments.length) return 'Attachment';
 
-  return 'Dispatch';
+  return 'Message';
 };
 
 /** Members of a channel, excluding the signed-in user. */

@@ -81,6 +81,7 @@ export const useRailwayNetwork = () => {
       'notification.removed_from_channel',
       'channel.deleted',
       'channel.updated',
+      'user.presence.changed',
     ];
 
     events.forEach((event) => client.on(event, schedule));

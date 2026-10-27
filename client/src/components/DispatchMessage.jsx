@@ -22,7 +22,7 @@ const DispatchMessage = (props) => {
     <div className="dispatch-broadcast">
       <p className="dispatch-broadcast__tag">
         <BroadcastIcon size={11} strokeWidth={2.4} />
-        All stations
+        All lines
       </p>
       <MessageSimple {...props} />
     </div>

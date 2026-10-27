@@ -13,7 +13,7 @@ import { CloseIcon, BoardIcon, BroadcastIcon, LogoutIcon, PlusIcon, TrainIcon, U
 
 const EmptyGroup = ({ type }) => (
   <div className="team-channel-list__message">
-    {type === 'team' ? 'No platforms yet.' : 'No bay platforms yet.'}
+    {type === 'team' ? 'No lines yet.' : 'No DMs yet.'}
   </div>
 );
 
@@ -36,8 +36,8 @@ const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive 
       type="button"
       className={`rail-action${boardActive ? ' rail-action--active' : ''}`}
       onClick={onOpenBoard}
-      title="Platform board"
-      aria-label="Open the platform board"
+      title="Station board"
+      aria-label="Open the station board"
       aria-current={boardActive ? 'page' : undefined}
     >
       <BoardIcon size={20} />
@@ -47,8 +47,8 @@ const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive 
       type="button"
       className="rail-action"
       onClick={() => onStartCreate('team')}
-      title="New platform"
-      aria-label="Create a new platform"
+      title="New line"
+      aria-label="Create a new line"
     >
       <PlusIcon size={20} />
     </button>
@@ -57,8 +57,8 @@ const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive 
       type="button"
       className="rail-action"
       onClick={() => onStartCreate('messaging')}
-      title="New direct line"
-      aria-label="Start a direct line"
+      title="New DM"
+      aria-label="Start a new DM"
     >
       <UsersIcon size={19} />
     </button>
@@ -67,8 +67,8 @@ const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive 
       type="button"
       className="rail-action"
       onClick={onBroadcast}
-      title="All-stations broadcast"
-      aria-label="Broadcast a message to every line"
+      title="Message all lines"
+      aria-label="Message every line"
     >
       <BroadcastIcon size={20} />
     </button>
@@ -95,8 +95,8 @@ const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer, onOpenBoard }) => (
       type="button"
       className="channel-list__header__logo"
       onClick={onOpenBoard}
-      title="Open the platform board"
-      aria-label="Open the platform board"
+      title="Open the station board"
+      aria-label="Open the station board"
     >
       <TrainIcon size={18} />
     </button>
@@ -110,8 +110,8 @@ const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer, onOpenBoard }) => (
       type="button"
       className="team-channel-list__add"
       onClick={() => onStartCreate('team')}
-      title="New platform"
-      aria-label="Create a new platform"
+      title="New line"
+      aria-label="Create a new line"
     >
       <PlusIcon size={16} />
     </button>
@@ -141,8 +141,8 @@ const BoardLink = ({ active, onOpen }) => (
       <BoardIcon size={15} />
     </span>
     <span className="board-link__text">
-      <strong>Platform board</strong>
-      <small>Live station overview</small>
+      <strong>Station board</strong>
+      <small>Live lines and DMs</small>
     </span>
     <span className="board-link__lamp" aria-hidden="true" />
   </button>
@@ -245,7 +245,7 @@ const ChannelListContainer = ({
   };
 
   return (
-    <aside className="channel-list__container" aria-label="Platforms and bay platforms">
+    <aside className="channel-list__container" aria-label="Lines and DMs">
       <Rail
         onStartCreate={onStartCreate}
         onSignOut={handleSignOut}

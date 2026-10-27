@@ -12,7 +12,7 @@ const MAX_LENGTH = 1200;
  * All-stations broadcast.
  *
  * A normal chat app makes you repeat an announcement once per channel. A
- * control room does not. This console sends one dispatch to every selected
+ * control room does not. This console sends one message to every selected
  * team line, tagging it so recipients can see it was a network-wide call.
  */
 const BroadcastConsole = ({ open, onClose, onSent }) => {
@@ -123,7 +123,7 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
     } catch (sendError) {
       console.error('[RailHub] broadcast failed:', sendError);
       setSending(false);
-      setFailure('The broadcast could not be sent. Check your connection and try again.');
+      setFailure('The message could not be sent. Check your connection and try again.');
       return;
     }
 
@@ -142,19 +142,19 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
     setSending(false);
 
     if (!sent) {
-      setFailure('No line accepted the dispatch. Check your connection and try again.');
+      setFailure('No line accepted the message. Check your connection and try again.');
       return;
     }
 
     if (failed) {
       warning(
-        `Broadcast reached ${sent} of ${results.length} lines`,
+        `Message reached ${sent} of ${results.length} lines`,
         `${failed} line${failed === 1 ? '' : 's'} could not be reached.`,
       );
     } else {
       success(
-        `Broadcast sent to ${sent} ${sent === 1 ? 'line' : 'lines'}`,
-        'The dispatch is already on the board.',
+        `Message sent to ${sent} ${sent === 1 ? 'line' : 'lines'}`,
+        'It is already on the station board.',
       );
     }
 
@@ -193,8 +193,8 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
     <Modal
       open={open}
       onClose={sending ? () => {} : onClose}
-      title="All-stations broadcast"
-      subtitle="One dispatch, every selected line."
+      title="All lines"
+      subtitle="One message to every selected line."
       size="modal--lg"
       footer={footer}
     >
@@ -212,7 +212,7 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
           </p>
         ) : null}
 
-        <div className="broadcast__lines" role="group" aria-label="Lines to broadcast to">
+        <div className="broadcast__lines" role="group" aria-label="Lines to message">
           {loading ? (
             <p className="broadcast__empty">Reading the network…</p>
           ) : !lines.length ? (
@@ -243,7 +243,7 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
         </div>
 
         <label className="broadcast__composer">
-          <span className="broadcast__label">Dispatch</span>
+          <span className="broadcast__label">Message</span>
           <textarea
             ref={textareaRef}
             value={text}
@@ -259,8 +259,8 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
         </label>
 
         <p className="broadcast__hint">
-          Recipients see an <strong>All stations</strong> marker on the dispatch. The message is
-          sent once to each selected line — it is not a group chat.
+          Recipients see an <strong>All lines</strong> marker on the message. It is sent once to
+          each selected line — it is not a group chat.
         </p>
       </div>
     </Modal>

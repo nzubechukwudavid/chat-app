@@ -22,7 +22,7 @@ const TeamChannelList = ({
   setIsEditing,
 }) => {
   const isTeam = type === 'team';
-  const title = isTeam ? 'Platforms' : 'Bay platforms';
+  const title = isTeam ? 'Lines' : 'DMs';
   const groupId = `channel-group-${type}`;
 
   const addChannel = () => {
@@ -56,8 +56,8 @@ const TeamChannelList = ({
           type="button"
           className="team-channel-list__add"
           onClick={addChannel}
-          title={isTeam ? 'New channel' : 'New direct message'}
-          aria-label={isTeam ? 'Create a new channel' : 'Start a new direct message'}
+          title={isTeam ? 'New line' : 'New DM'}
+          aria-label={isTeam ? 'Create a new line' : 'Start a new DM'}
         >
           <PlusIcon size={14} />
         </button>
@@ -66,7 +66,7 @@ const TeamChannelList = ({
       <div id={groupId} hidden={collapsed}>
         {error ? (
           <p className="team-channel-list__message" role="alert">
-            Could not load {isTeam ? 'channels' : 'direct messages'}. Check your connection.
+            Could not load {isTeam ? 'lines' : 'DMs'}. Check your connection.
           </p>
         ) : loading ? (
           <ChannelListSkeleton rows={4} />

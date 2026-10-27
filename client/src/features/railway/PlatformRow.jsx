@@ -5,12 +5,12 @@ import { formatRelative } from '../../lib/format';
 
 export const directName = (line) => {
   const other = line.members[0];
-  return other?.fullName || other?.name || line.name || 'Direct line';
+  return other?.fullName || other?.name || line.name || 'DM';
 };
 
 export const directHandle = (line) => {
   const other = line.members[0];
-  return other?.name && other.name !== other.fullName ? `@${other.name}` : 'Direct line';
+  return other?.name && other.name !== other.fullName ? `@${other.name}` : 'DM';
 };
 
 const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
@@ -61,10 +61,15 @@ const TrainMark = ({ unread, direct }) => {
   );
 };
 
-const PlatformRow = ({ line, direct = false, number, onOpen }) => {
+const PlatformRow = ({ line, direct = false, number, typing, onOpen }) => {
   const title = direct ? directName(line) : line.name;
-  const status = line.unread ? 'waiting' : line.online ? 'clear' : 'idle';
-  const group = direct ? 'Bay platform' : 'Platform';
+  const status = typing ? 'typing' : line.unread ? 'waiting' : line.online ? 'clear' : 'idle';
+  const group = direct ? 'DM' : 'Line';
+  const activity = typing
+    ? `, ${typing.userName} is typing`
+    : line.unread
+      ? `, ${plural(line.unread, 'message', 'messages')} waiting`
+      : '';
 
   return (
     <li>
@@ -72,12 +77,10 @@ const PlatformRow = ({ line, direct = false, number, onOpen }) => {
         type="button"
         className={`platform platform--${status}${direct ? ' platform--bay' : ''}`}
         onClick={() => onOpen(line.channel)}
-        aria-label={`${group} ${number}, ${title}${
-          line.unread ? `, ${plural(line.unread, 'dispatch', 'dispatches')} waiting` : ''
-        }`}
+        aria-label={`${group} ${number}, ${title}${activity}`}
       >
         <span className="platform__number" aria-hidden="true">
-          <small>{direct ? 'BAY' : 'PLAT'}</small>
+          <small>{direct ? 'DM' : 'LINE'}</small>
           <strong>{number}</strong>
         </span>
 
@@ -99,13 +102,19 @@ const PlatformRow = ({ line, direct = false, number, onOpen }) => {
               </span>
             ) : null}
             <span className="platform__name">{title}</span>
-            <span className="platform__code">{direct ? 'DIRECT' : line.code}</span>
+            <span className="platform__code">{direct ? 'DM' : line.code}</span>
           </span>
           <span className="platform__dispatch">
-            {direct && line.members[0]?.online ? (
-              <span className="platform__online">On watch · </span>
-            ) : null}
-            {line.lastText}
+            {typing ? (
+              <span className="platform__typing">{typing.userName} is typing…</span>
+            ) : (
+              <>
+                {direct && line.members[0]?.online ? (
+                  <span className="platform__online">Online · </span>
+                ) : null}
+                {line.lastText}
+              </>
+            )}
           </span>
         </span>
 
@@ -117,7 +126,9 @@ const PlatformRow = ({ line, direct = false, number, onOpen }) => {
             <span className="platform__badge">{line.unread > 99 ? '99+' : line.unread}</span>
           ) : (
             <span className="platform__crew">
-              {direct ? directHandle(line) : `${line.memberCount + 1} crew`}
+              {direct
+                ? directHandle(line)
+                : plural(line.memberCount + 1, 'member', 'members')}
             </span>
           )}
         </span>

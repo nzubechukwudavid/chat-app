@@ -1,19 +1,44 @@
 import React, { useId } from 'react';
 
 /**
- * The static heart of the station.
+ * The heart of the station.
  *
- * Everything here is decorative: the real platform data lives in the accessible
- * rows below. The departure card is a small live sign layered over the scene so
- * the illustration still reports something true.
+ * Everything here is decorative: the real line data lives in the accessible
+ * rows below. Live journeys are finite and event-driven, and the departure card
+ * is a small truthful sign layered over the scene.
  */
-const StationScene = ({ nextLine, unreadTotal }) => {
+const StationScene = ({ nextLine, unreadTotal, journey, typing }) => {
   const rawId = useId();
   const uid = rawId.replace(/:/g, '');
   const sky = `${uid}-sky`;
   const roof = `${uid}-roof`;
   const glow = `${uid}-glow`;
   const sleepers = `${uid}-sleepers`;
+
+  const departing = typing
+    ? {
+        label: 'Typing now',
+        title: typing.lineName,
+        detail: `${typing.userName} is typing…`,
+      }
+    : journey
+      ? {
+          label: journey.kind === 'broadcast' ? 'All lines' : 'Arriving now',
+          title: journey.kind === 'broadcast' ? 'All lines' : journey.lineName,
+          detail:
+            journey.kind === 'broadcast'
+              ? 'Broadcast running'
+              : `Message from ${journey.userName}`,
+        }
+      : {
+          label: 'Latest',
+          title: nextLine ? nextLine.name : 'No lines yet',
+          detail: unreadTotal ? `${unreadTotal} waiting` : 'All lines clear',
+        };
+
+  const trainClass = `scene__train${
+    journey ? ` scene__train--${journey.kind}` : ''
+  }`;
 
   return (
     <div className="station-scene" aria-hidden="true">
@@ -98,7 +123,7 @@ const StationScene = ({ nextLine, unreadTotal }) => {
 
           <rect x="510" y="122" width="92" height="26" rx="4" className="scene__platform-sign" />
           <text x="556" y="139" textAnchor="middle" className="scene__platform-sign-text">
-            PLATFORM 01
+            LINE 01
           </text>
         </g>
 
@@ -108,7 +133,7 @@ const StationScene = ({ nextLine, unreadTotal }) => {
         <path d="M0 246h640" className="scene__platform-line" />
 
         {/* Train */}
-        <g className="scene__train">
+        <g className={trainClass} key={journey?.id || 'parked'}>
           <g className="scene__carriage scene__carriage--two">
             <rect x="274" y="218" width="78" height="31" rx="5" className="scene__train-body" />
             <path d="M278 220h70" className="scene__train-roof" />
@@ -192,10 +217,13 @@ const StationScene = ({ nextLine, unreadTotal }) => {
         Live station
       </div>
 
+      {unreadTotal > 0 ? <span className="station-scene__waiting" /> : null}
+      {typing ? <span className="station-scene__beam" /> : null}
+
       <div className="station-scene__departure">
-        <span>Next departure</span>
-        <strong>{nextLine ? nextLine.name : 'No trains yet'}</strong>
-        <small>{unreadTotal ? `${unreadTotal} waiting` : 'All platforms clear'}</small>
+        <span>{departing.label}</span>
+        <strong>{departing.title}</strong>
+        <small>{departing.detail}</small>
       </div>
     </div>
   );

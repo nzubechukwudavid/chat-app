@@ -1,6 +1,8 @@
 # Model Railway — Build Plan
 
-Status: Phase 1 implemented and verified in production.
+Status: Phase 2 implemented and locally verified; production deploy and two-account verification pending.
+
+Vocabulary note: the user-facing board now uses **Lines**, **DMs**, **Station board**, and **All lines**. “Platform” remains only in the decorative scene and internal filenames/CSS. The plan below keeps some original platform/bay language where it describes the metaphor.
 
 ## 1. The Shift
 
@@ -26,11 +28,11 @@ railway is a living visualization of real channel and message state.
 
 ## 2. Experience Principles
 
-1. **Real state, playful surface.** Every platform, train, badge and light maps
-   to a real channel, message, presence or unread count. No invented activity.
+1. **Real state, playful surface.** Every line, train, badge and light maps to a
+   real channel, message, presence or unread count. No invented activity.
 2. **Toy first, dashboard second.** The board should be fun to watch before it is
    useful to read.
-3. **One obvious verb.** Click a platform to go there. Everything else is
+3. **One obvious verb.** Click a line or DM to go there. Everything else is
    secondary.
 4. **Motion with meaning.** A train moves because something happened. Ambient
    motion stays quiet and optional.
@@ -44,34 +46,34 @@ railway is a living visualization of real channel and message state.
 A single responsive top-down/cutaway station:
 
 - canopy roof, clock, departure board and tunnel mouth;
-- a main line with numbered platforms for team channels;
-- a bay spur for direct messages;
-- a traverser / golden loop for all-stations broadcasts;
-- platform signs, signal lamps, sleepers, buffers and tiny passengers;
-- a station cat that wanders between platforms;
+- a main line with numbered tracks for team lines;
+- a DM spur for direct messages;
+- a traverser / golden loop for all-lines broadcasts;
+- line signs, signal lamps, sleepers, buffers and tiny passengers;
+- a station cat that wanders between lines;
 - a sky strip that follows WAT time of day.
 
 The scene is SVG plus HTML labels, not a canvas or a game engine.
 
-### Platform states
+### Line states
 
 | State | Visual |
 | --- | --- |
-| Idle | train parked at platform, lamp steady |
+| Idle | train parked at the platform, lamp steady |
 | Unread | one or more trains waiting in the tunnel, headlights on, count badge |
-| Typing | headlight approaches, signal amber, "approaching" label |
-| Active | platform sign lit, track highlighted |
-| Offline members | platform lamp off |
-| Broadcast | gold train crosses the station, "ALL STATIONS" board |
+| Typing | headlight approaches, signal amber, "typing" label |
+| Active | line sign lit, track highlighted |
+| Offline members | line lamp off |
+| Broadcast | gold train crosses the station, "ALL LINES" board |
 | No lines | empty station, cat asleep, invitation to open the first line |
 
 ### Controls
 
-- Click/tap a platform or train: open that channel.
-- Hover/focus a platform: show last dispatch and unread count in the departure board.
+- Click/tap a line or DM: open that channel.
+- Hover/focus a line: show its last message and unread count in the departure board.
 - "Whistle": local sound only, no message sent.
 - Sound toggle: off by default, persisted locally.
-- "All lines": expand the full list when the station has more platforms than fit.
+- "All lines": expand the full list when the station has more lines than fit.
 - Reduced motion: no travel; state changes are instant with badges and light.
 
 ## 4. Data Model
@@ -204,6 +206,26 @@ Phase 1 implementation notes:
 - Reduced-motion and sound-off fallbacks.
 - Deploy and verify with two accounts, including a received message.
 
+Phase 2 implementation notes:
+
+- `useTrainEvents` listens to `message.new`, `typing.start`, `typing.stop` and the
+  existing presence refresh. It derives a short journey from the latest event
+  instead of replaying channel history.
+- Ordinary self-sent messages stay quiet; self broadcasts are allowed so the
+  station reacts when the broadcast console closes.
+- Received messages animate an arrival and update the departure board. Rapid
+  events on one line are coalesced, duplicate message IDs are dropped, and a
+  broadcast is limited to one golden run per cooldown.
+- Typing shows a headlight beam and a line row message; stop, send, and a timeout
+  clear it. Presence changes refresh the board lamps.
+- The scene hides the beam and waiting light under 768 px, hides the departure
+  card under 420 px, and disables travel under reduced motion while keeping all
+  state legible.
+- Deferred this pass: reaction cargo, voice plume, station-cat gameplay, sound,
+  ambient time-of-day, and the miniature track-map sidebar.
+- Local verification used synthetic Stream events, not server messages. A real
+  two-account inbound test and production deploy are still pending.
+
 ### Phase 3 — The station has personality
 
 - Station cat with a tiny pet interaction.
@@ -229,7 +251,7 @@ Do not add a game layer until the station itself is fun to watch.
 - Empty workspace: no fake platforms, cat asleep, clear first action.
 - One team line, one DM, five team lines, twenty lines.
 - Unread count 1 and 10; open platform clears state.
-- Own message animates out; received message animates in.
+- Received message animates in; ordinary self messages stay quiet.
 - Broadcast shows one gold run and a marker in chat.
 - Typing appears and disappears; offline lamps are distinct from online.
 - Reload does not replay history as a train stampede.

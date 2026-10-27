@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useChatContext } from 'stream-chat-react';
 
 import StationClock from '../../components/ui/StationClock';
@@ -13,6 +13,7 @@ import { boardDate, watchLabel } from '../../lib/lines';
 import PlatformRow from './PlatformRow';
 import StationScene from './StationScene';
 import { useRailwayNetwork } from './useRailwayNetwork';
+import { useTrainEvents } from './useTrainEvents';
 
 const Skeleton = ({ rows = 4 }) => (
   <div className="railway__skeleton" aria-hidden="true">
@@ -26,19 +27,19 @@ const Skeleton = ({ rows = 4 }) => (
   </div>
 );
 
-const EmptyPlatforms = ({ onCreate }) => (
+const EmptyLines = ({ onCreate }) => (
   <div className="railway__empty">
     <span className="railway__empty-icon" aria-hidden="true">
       <TrainIcon size={26} />
     </span>
     <div className="railway__empty-copy">
-      <p className="railway__empty-title">The station is quiet</p>
+      <p className="railway__empty-title">No lines yet</p>
       <p className="railway__empty-text">
-        Create the first platform and give the timetable somewhere to go.
+        Create the first line and give the station somewhere to go.
       </p>
     </div>
     <button type="button" className="btn btn--primary btn--sm" onClick={() => onCreate?.('team')}>
-      <PlusIcon size={14} /> Create a platform
+      <PlusIcon size={14} /> Create a line
     </button>
   </div>
 );
@@ -49,15 +50,15 @@ const EmptyDirect = ({ onCreate }) => (
       <UsersIcon size={22} />
     </span>
     <div className="railway__empty-copy">
-      <p className="railway__empty-title">No bay platforms yet</p>
-      <p className="railway__empty-text">Open a private line with a colleague.</p>
+      <p className="railway__empty-title">No DMs yet</p>
+      <p className="railway__empty-text">Start a private chat with a colleague.</p>
     </div>
     <button
       type="button"
       className="btn btn--secondary btn--sm"
       onClick={() => onCreate?.('messaging')}
     >
-      Open a direct line
+      Start a DM
     </button>
   </div>
 );
@@ -65,14 +66,14 @@ const EmptyDirect = ({ onCreate }) => (
 /**
  * The station landing surface.
  *
- * Phase one is deliberately static: real platforms, real dispatch text, real
- * unread pressure and real presence, presented as a model railway. Live train
- * movement arrives in the next layer.
+ * The board is built from real lines, messages, unread pressure and presence.
+ * Live journeys are driven by incoming events, never by ambient animation.
  */
 const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
-  const { setActiveChannel } = useChatContext();
+  const { client, setActiveChannel } = useChatContext();
   const { teamLines, directLines, loading, error, reload, onWatch, unreadTotal } =
     useRailwayNetwork();
+  const { journey, typingByLine } = useTrainEvents(client);
 
   const openLine = useCallback(
     (channel) => {
@@ -81,12 +82,14 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
     [setActiveChannel],
   );
 
+  const typing = useMemo(() => Object.values(typingByLine)[0] || null, [typingByLine]);
+
   const watch = watchLabel();
   const date = boardDate();
-  const nextLine = teamLines[0] || null;
+  const nextLine = teamLines[0] || directLines[0] || null;
   const signalCopy = unreadTotal
-    ? `${unreadTotal} signal${unreadTotal === 1 ? '' : 's'} waiting`
-    : 'All platforms clear';
+    ? `${unreadTotal} message${unreadTotal === 1 ? '' : 's'} waiting`
+    : 'All lines clear';
 
   return (
     <div className="channel__container railway-shell">
@@ -96,8 +99,8 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
             type="button"
             className="mobile-menu-toggle railway__menu"
             onClick={onOpenDrawer}
-            title="Open platforms"
-            aria-label="Open platforms and bay platforms"
+            title="Open lines and DMs"
+            aria-label="Open lines and DMs"
           >
             <MenuIcon size={18} />
           </button>
@@ -107,7 +110,7 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
               <TrainIcon size={22} />
             </span>
             <div>
-              <p className="railway__eyebrow">Platform board · live station</p>
+              <p className="railway__eyebrow">Station board · live</p>
               <h1 className="railway__title">NRC Central</h1>
             </div>
           </div>
@@ -140,24 +143,23 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
               <span className="railway__live-dot" aria-hidden="true" />
               Live from the station
             </p>
-            <h2 className="railway__hero-title">Every line has a platform.</h2>
+            <h2 className="railway__hero-title">Every line is live.</h2>
             <p className="railway__lede">
-              Real conversations, one station. Pick a platform, board a line, and see where the
-              day takes you.
+              Real conversations, one station. Pick a line and see where the day is going.
             </p>
 
             <div className="railway__stats" aria-label="Station status">
               <span className="railway__stat">
                 <strong>{teamLines.length}</strong>
-                <small>platform{teamLines.length === 1 ? '' : 's'}</small>
+                <small>line{teamLines.length === 1 ? '' : 's'}</small>
               </span>
               <span className="railway__stat">
                 <strong>{directLines.length}</strong>
-                <small>bay{directLines.length === 1 ? '' : 's'}</small>
+                <small>DM{directLines.length === 1 ? '' : 's'}</small>
               </span>
               <span className="railway__stat">
                 <strong>{onWatch}</strong>
-                <small>crew on watch</small>
+                <small>online</small>
               </span>
               <span className={`railway__stat${unreadTotal ? ' railway__stat--signal' : ''}`}>
                 <strong>{unreadTotal || '—'}</strong>
@@ -166,18 +168,23 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
             </div>
           </div>
 
-          <StationScene nextLine={nextLine} unreadTotal={unreadTotal} />
+          <StationScene
+            nextLine={nextLine}
+            unreadTotal={unreadTotal}
+            journey={journey}
+            typing={typing}
+          />
         </section>
 
         <div className="railway__grid">
-          <section className="railway__panel railway__panel--main" aria-labelledby="main-platforms">
+          <section className="railway__panel railway__panel--main" aria-labelledby="main-lines">
             <header className="railway__panel-head">
               <div>
-                <p className="railway__panel-kicker">Main line</p>
-                <h2 id="main-platforms">Platforms</h2>
+                <p className="railway__panel-kicker">Live lines</p>
+                <h2 id="main-lines">Lines</h2>
               </div>
               <span className="railway__panel-count">
-                {teamLines.length} in service
+                {teamLines.length} live
               </span>
             </header>
 
@@ -190,12 +197,13 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
                     key={line.cid}
                     line={line}
                     number={String(index + 1).padStart(2, '0')}
+                    typing={typingByLine[line.cid]}
                     onOpen={openLine}
                   />
                 ))}
               </ul>
             ) : (
-              <EmptyPlatforms onCreate={onStartCreate} />
+              <EmptyLines onCreate={onStartCreate} />
             )}
           </section>
 
@@ -205,8 +213,8 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
                 <BroadcastIcon size={22} />
               </span>
               <span className="railway__broadcast-copy">
-                <strong>All-stations broadcast</strong>
-                <small>One dispatch, every platform on the station</small>
+                <strong>All lines</strong>
+                <small>One message to every line</small>
               </span>
               <span className="railway__broadcast-arrow" aria-hidden="true">
                 →
@@ -215,12 +223,12 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
 
             <section
               className="railway__panel railway__panel--bay"
-              aria-labelledby="bay-platforms"
+              aria-labelledby="direct-messages"
             >
               <header className="railway__panel-head">
                 <div>
-                  <p className="railway__panel-kicker">Side spur</p>
-                  <h2 id="bay-platforms">Bay platforms</h2>
+                  <p className="railway__panel-kicker">Direct</p>
+                  <h2 id="direct-messages">DMs</h2>
                 </div>
                 <span className="railway__panel-count">{directLines.length}</span>
               </header>
@@ -235,6 +243,7 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
                       line={line}
                       direct
                       number={String(index + 1).padStart(2, '0')}
+                      typing={typingByLine[line.cid]}
                       onOpen={openLine}
                     />
                   ))}
@@ -250,20 +259,20 @@ const RailwayBoard = ({ onOpenDrawer, onStartCreate, onBroadcast }) => {
                 className="btn btn--secondary btn--sm"
                 onClick={() => onStartCreate?.('team')}
               >
-                <PlusIcon size={14} /> New platform
+                <PlusIcon size={14} /> New line
               </button>
               <button
                 type="button"
                 className="btn btn--ghost btn--sm"
                 onClick={() => onStartCreate?.('messaging')}
               >
-                <UsersIcon size={14} /> Direct line
+                <UsersIcon size={14} /> New DM
               </button>
             </div>
 
             <p className="railway__foot">
               <span className="railway__foot-dot" aria-hidden="true" />
-              {signalCopy}. Every platform is a live channel; every dispatch is a real message.
+              {signalCopy}. Every message on this board is real.
             </p>
           </aside>
         </div>

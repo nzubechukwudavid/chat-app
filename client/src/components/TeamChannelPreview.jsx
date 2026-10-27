@@ -28,7 +28,7 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
 
     if (!isDirect) {
       return {
-        label: channel?.data?.name || channel?.id || 'Channel',
+        label: channel?.data?.name || channel?.id || 'Line',
         image: null,
         online: false,
         badge: members.length || channel?.state?.member_count || 0,
@@ -60,7 +60,7 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
       }${unread ? ' channel-preview__wrapper--unread' : ''}`}
       onClick={select}
       aria-current={active ? 'true' : undefined}
-      aria-label={`${isDirect ? 'Bay platform with' : 'Platform'} ${label}${
+      aria-label={`${isDirect ? 'DM with' : 'Line'} ${label}${
         unread ? `, ${unread} unread` : ''
       }`}
     >

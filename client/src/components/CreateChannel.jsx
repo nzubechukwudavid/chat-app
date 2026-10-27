@@ -39,7 +39,7 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
     const name = channelName.trim();
 
     if (isTeam && !name) {
-      setError('Give the channel a name, for example “rolling-stock”.');
+      setError('Give the line a name, for example “rolling-stock”.');
       return;
     }
 
@@ -69,8 +69,8 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
       console.error('[RailHub] could not create channel:', createError);
       setError(
         createError?.message?.includes('permission')
-          ? 'You do not have permission to create this channel.'
-          : 'Could not create the channel. Please try again.',
+          ? 'You do not have permission to create this line.'
+          : 'Could not create the line. Please try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -81,10 +81,10 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
     <Modal
       open
       onClose={close}
-      title={isTeam ? 'Create a channel' : 'Start a direct message'}
+      title={isTeam ? 'Create a line' : 'Start a DM'}
       subtitle={
         isTeam
-          ? 'Channels are shared spaces for a corridor, depot or crew.'
+          ? 'Lines are shared spaces for a team or project.'
           : 'Pick the people you want in this private conversation.'
       }
       footer={
@@ -106,7 +106,7 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
             ) : (
               <>
                 <PlusIcon size={15} />
-                <span>{isTeam ? 'Create channel' : 'Start conversation'}</span>
+                <span>{isTeam ? 'Create line' : 'Start DM'}</span>
               </>
             )}
           </button>
@@ -126,7 +126,7 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
         {isTeam && (
           <div className="field" style={{ marginBottom: 16 }}>
             <label className="field__label" htmlFor="channel-name">
-              Channel name
+              Line name
             </label>
             <input
               id="channel-name"
@@ -140,7 +140,7 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
               aria-describedby="channel-name-hint"
             />
             <span className="field__hint" id="channel-name-hint">
-              Lowercase words joined by dashes keep channels easy to find.
+              Short lowercase words joined by dashes keep lines easy to find.
             </span>
           </div>
         )}
