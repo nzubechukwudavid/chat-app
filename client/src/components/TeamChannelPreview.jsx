@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import { useChatContext } from 'stream-chat-react';
 
 import Avatar from './ui/Avatar';
+import LineMark from './ui/LineMark';
 import { formatRelative } from '../lib/format';
+import { lastDispatch } from '../lib/lines';
 
 const displayName = (user) => user?.fullName || user?.name || user?.id || 'Unknown';
 
@@ -46,6 +48,7 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
   const unread = channel?.countUnread?.() || 0;
   const lastAt = channel?.state?.last_message_at || channel?.data?.last_message_at;
   const timestamp = formatRelative(lastAt);
+  const snippet = lastDispatch(channel);
 
   const select = () => {
     setActiveChannel(channel);
@@ -67,23 +70,27 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
       <span className="channel-preview__item">
         {isDirect ? (
           <span className="channel-preview__identity">
-            <Avatar name={label} image={image} size={26} online={online} />
+            <Avatar name={label} image={image} size={30} online={online} />
           </span>
         ) : (
-          <span className="channel-preview__hash" aria-hidden="true">
-            #
-          </span>
+          <LineMark name={label} />
         )}
 
-        <span className="channel-preview__label">{label}</span>
+        <span className="channel-preview__body">
+          <span className="channel-preview__topline">
+            <span className="channel-preview__label">{label}</span>
 
-        <span className="channel-preview__meta">
-          {timestamp && <span className="channel-preview__time">{timestamp}</span>}
-          {unread > 0 ? (
-            <span className="badge">{unread > 99 ? '99+' : unread}</span>
-          ) : isDirect && badge > 1 ? (
-            <span className="badge badge--muted">{badge}</span>
-          ) : null}
+            <span className="channel-preview__meta">
+              {timestamp && <span className="channel-preview__time">{timestamp}</span>}
+              {unread > 0 ? (
+                <span className="badge">{unread > 99 ? '99+' : unread}</span>
+              ) : isDirect && badge > 1 ? (
+                <span className="badge badge--muted">{badge}</span>
+              ) : null}
+            </span>
+          </span>
+
+          <span className="channel-preview__snippet">{snippet}</span>
         </span>
       </span>
     </button>

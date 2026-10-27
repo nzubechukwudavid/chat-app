@@ -130,6 +130,24 @@ export const ChevronDownIcon = (props) => (
   </svg>
 );
 
+/** Panel with the content edge highlighted; used to collapse the sidebar. */
+export const PanelLeftCloseIcon = (props) => (
+  <svg {...base(props)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <line x1="9" y1="4" x2="9" y2="20" />
+    <polyline points="17 9 14 12 17 15" />
+  </svg>
+);
+
+/** The same panel with its edge opening; used to expand the sidebar. */
+export const PanelLeftOpenIcon = (props) => (
+  <svg {...base(props)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <line x1="9" y1="4" x2="9" y2="20" />
+    <polyline points="14 9 17 12 14 15" />
+  </svg>
+);
+
 export const SendIcon = (props) => (
   <svg {...base(props)}>
     <path d="M22 2L11 13" />
@@ -227,6 +245,8 @@ const iconSet = {
   AlertIcon,
   InfoIcon,
   ChevronDownIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   SendIcon,
   TrainIcon,
   UsersIcon,

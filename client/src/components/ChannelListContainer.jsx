@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChannelList, useChatContext } from 'stream-chat-react';
 
 import ChannelSearch from './ChannelSearch';
@@ -9,7 +9,27 @@ import { ChannelListSkeleton } from './ui/Skeleton';
 import ThemeToggle from './ui/ThemeToggle';
 import { useToast } from './ui/Toast';
 import { useConfirm } from './ui/ConfirmDialog';
-import { CloseIcon, BoardIcon, BroadcastIcon, LogoutIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
+import {
+  BoardIcon,
+  BroadcastIcon,
+  CloseIcon,
+  LogoutIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  PlusIcon,
+  TrainIcon,
+  UsersIcon,
+} from './ui/icons';
+
+const NAV_COLLAPSED_KEY = 'railhub.navigation.collapsed';
+
+const readNavPreference = () => {
+  try {
+    return window.localStorage.getItem(NAV_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 const EmptyGroup = ({ type }) => (
   <div className="team-channel-list__message">
@@ -24,13 +44,37 @@ const EmptyGroup = ({ type }) => (
 const teamOnly = (channels) => channels.filter((channel) => channel.type === 'team');
 const messagingOnly = (channels) => channels.filter((channel) => channel.type === 'messaging');
 
-const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive }) => (
+const Rail = ({
+  onStartCreate,
+  onSignOut,
+  onOpenBoard,
+  onBroadcast,
+  onToggleCollapsed,
+  collapsed,
+  boardActive,
+  expandButtonRef,
+}) => (
   <nav className="channel-list__sidebar" aria-label="Workspace actions">
     <div className="channel-list__sidebar__icon1" title="NRC Rail Hub" aria-hidden="true">
       <span className="icon1__inner">
         <TrainIcon size={22} />
       </span>
     </div>
+
+    {collapsed ? (
+      <button
+        type="button"
+        ref={expandButtonRef}
+        className="rail-action rail-toggle"
+        onClick={onToggleCollapsed}
+        title="Expand navigation"
+        aria-label="Expand navigation"
+        aria-controls="channel-navigation"
+        aria-expanded="false"
+      >
+        <PanelLeftOpenIcon size={19} />
+      </button>
+    ) : null}
 
     <button
       type="button"
@@ -89,44 +133,42 @@ const Rail = ({ onStartCreate, onSignOut, onOpenBoard, onBroadcast, boardActive 
   </nav>
 );
 
-const ChannelHeaderBar = ({ onStartCreate, onCloseDrawer, onOpenBoard }) => (
+const ChannelHeaderBar = ({ onCloseDrawer, onToggleCollapsed, collapseButtonRef }) => (
   <header className="channel-list__header">
-    <button
-      type="button"
-      className="channel-list__header__logo"
-      onClick={onOpenBoard}
-      title="Open the station board"
-      aria-label="Open the station board"
-    >
-      <TrainIcon size={18} />
-    </button>
-
-    <div style={{ minWidth: 0, flex: 1 }}>
+    <div className="channel-list__brand">
       <p className="channel-list__header__text">Rail Hub</p>
-      <span className="channel-list__header__sub">NRC Operations</span>
+      <span className="channel-list__header__sub">
+        <span className="channel-list__live-dot" aria-hidden="true" />
+        NRC Operations
+      </span>
     </div>
 
-    <button
-      type="button"
-      className="team-channel-list__add"
-      onClick={() => onStartCreate('team')}
-      title="New line"
-      aria-label="Create a new line"
-    >
-      <PlusIcon size={16} />
-    </button>
+    <div className="channel-list__header__actions">
+      <button
+        type="button"
+        ref={collapseButtonRef}
+        className="channel-list__collapse"
+        onClick={onToggleCollapsed}
+        title="Collapse navigation"
+        aria-label="Collapse navigation"
+        aria-controls="channel-navigation"
+        aria-expanded="true"
+      >
+        <PanelLeftCloseIcon size={17} />
+      </button>
 
-    {/* Only rendered as a control on phones; the drawer is closed by tapping
-        outside on desktop-sized viewports where it is not a drawer at all. */}
-    <button
-      type="button"
-      className="channel-list__close"
-      onClick={onCloseDrawer}
-      title="Close menu"
-      aria-label="Close menu"
-    >
-      <CloseIcon size={18} />
-    </button>
+      {/* Only rendered as a control on phones; the drawer is closed by tapping
+          outside on desktop-sized viewports where it is not a drawer at all. */}
+      <button
+        type="button"
+        className="channel-list__close"
+        onClick={onCloseDrawer}
+        title="Close menu"
+        aria-label="Close menu"
+      >
+        <CloseIcon size={18} />
+      </button>
+    </div>
   </header>
 );
 
@@ -197,8 +239,37 @@ const ChannelListContainer = ({
   const { confirm, dialog } = useConfirm();
   const { info } = useToast();
   const [collapsed, setCollapsed] = useState({ team: false, messaging: false });
+  const [navCollapsed, setNavCollapsed] = useState(readNavPreference);
+  const collapseButtonRef = useRef(null);
+  const expandButtonRef = useRef(null);
+  const restoreToggleFocus = useRef(false);
 
   const boardActive = !activeChannel?.id;
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(NAV_COLLAPSED_KEY, navCollapsed ? '1' : '0');
+    } catch {
+      // A blocked storage area should never make the navigation unusable.
+    }
+  }, [navCollapsed]);
+
+  // The button that was just pressed disappears in the opposite state, so
+  // hand focus to the matching control instead of dropping it on <body>.
+  useEffect(() => {
+    if (!restoreToggleFocus.current) return;
+
+    restoreToggleFocus.current = false;
+    const target = navCollapsed ? expandButtonRef.current : collapseButtonRef.current;
+    // A frame boundary lets the newly shown panel become focusable before the
+    // browser tries to move focus into it.
+    window.setTimeout(() => target?.focus(), 0);
+  }, [navCollapsed]);
+
+  const toggleNav = useCallback(() => {
+    restoreToggleFocus.current = true;
+    setNavCollapsed((current) => !current);
+  }, []);
 
   const handleOpenBoard = useCallback(() => {
     setActiveChannel?.(undefined);
@@ -245,20 +316,28 @@ const ChannelListContainer = ({
   };
 
   return (
-    <aside className="channel-list__container" aria-label="Lines and DMs">
+    <aside
+      className={`channel-list__container${
+        navCollapsed ? ' channel-list__container--collapsed' : ''
+      }`}
+      aria-label="Lines and DMs"
+    >
       <Rail
         onStartCreate={onStartCreate}
         onSignOut={handleSignOut}
         onOpenBoard={handleOpenBoard}
         onBroadcast={onBroadcast}
+        onToggleCollapsed={toggleNav}
+        collapsed={navCollapsed}
         boardActive={boardActive}
+        expandButtonRef={expandButtonRef}
       />
 
-      <div className="channel-list__list__wrapper">
+      <div className="channel-list__list__wrapper" id="channel-navigation">
         <ChannelHeaderBar
-          onStartCreate={onStartCreate}
           onCloseDrawer={onCloseDrawer}
-          onOpenBoard={handleOpenBoard}
+          onToggleCollapsed={toggleNav}
+          collapseButtonRef={collapseButtonRef}
         />
 
         <BoardLink active={boardActive} onOpen={handleOpenBoard} />

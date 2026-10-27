@@ -790,11 +790,7 @@
 
 .channel-preview__item span,
 .channel-preview__item p {
-  color: #ffffff !important;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .channel-preview__item.single {
@@ -805,19 +801,6 @@
 
 .channel-preview__wrapper__selected .channel-preview__item {
   font-weight: var(--font-weight-semibold);
-}
-
-.channel-preview__hash {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.12);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  flex-shrink: 0;
 }
 
 .channel-preview__identity {
@@ -990,20 +973,6 @@
   font-size: var(--font-size-sm);
   color: var(--text-main);
   margin: 0;
-}
-
-.result-hashtag {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-bg);
-  color: var(--nrc-green-400);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-md);
-  flex-shrink: 0;
 }
 
 .channel-search__empty {

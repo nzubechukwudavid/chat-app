@@ -749,75 +749,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   Route map sidebar
-   -------------------------------------------------------------------------- */
-.channel-preview__wrapper {
-  position: relative;
-  padding-left: 15px;
-}
-
-.channel-preview__wrapper::before {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: -2px;
-  bottom: -2px;
-  width: 1px;
-  background: linear-gradient(
-    180deg,
-    rgba(52, 211, 153, 0.3),
-    rgba(255, 255, 255, 0.1)
-  );
-  pointer-events: none;
-}
-
-.channel-preview__wrapper::after {
-  content: '';
-  position: absolute;
-  left: 1.5px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  transform: translateY(-50%);
-  background: var(--bg-sidebar-mid);
-  border: 1.5px solid rgba(52, 211, 153, 0.5);
-  box-shadow: 0 0 0 2px rgba(6, 17, 9, 0.9);
-  z-index: 1;
-  pointer-events: none;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.channel-preview__wrapper:hover::after {
-  border-color: var(--nrc-green-300);
-}
-
-.channel-preview__wrapper--unread::after {
-  background: var(--nrc-gold);
-  border-color: var(--nrc-gold-light);
-}
-
-.channel-preview__wrapper--unread .channel-preview__time {
-  color: var(--nrc-gold-light);
-}
-
-.channel-preview__wrapper__selected {
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.22), rgba(255, 255, 255, 0.07)) !important;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.12) !important;
-}
-
-.channel-preview__wrapper__selected::after {
-  background: var(--nrc-green-300);
-  border-color: var(--nrc-green-100);
-  box-shadow:
-    0 0 0 3px rgba(52, 211, 153, 0.18),
-    0 0 10px rgba(52, 211, 153, 0.75);
-}
-
-/* --------------------------------------------------------------------------
    Sidebar entries: board + broadcast
    -------------------------------------------------------------------------- */
 .board-link {
@@ -1417,10 +1348,6 @@ button.channel-list__header__logo:focus-visible {
     flex-wrap: wrap;
   }
 
-  .channel-preview__wrapper {
-    padding-left: 14px;
-  }
-
   .broadcast__lines {
     max-height: 160px;
   }
@@ -1466,8 +1393,7 @@ button.channel-list__header__logo:focus-visible {
 
   .board__stop-node,
   .board__broadcast,
-  .board-row__chevron,
-  .channel-preview__wrapper::after {
+  .board-row__chevron {
     transition: none !important;
   }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ChannelListSkeleton } from './ui/Skeleton';
-import { ChevronDownIcon, PlusIcon } from './ui/icons';
+import { ChevronDownIcon, PlusIcon, TrainIcon, UsersIcon } from './ui/icons';
 
 /**
  * Group header for one channel family ("Channels" or "Direct messages").
@@ -24,6 +24,7 @@ const TeamChannelList = ({
   const isTeam = type === 'team';
   const title = isTeam ? 'Lines' : 'DMs';
   const groupId = `channel-group-${type}`;
+  const titleId = `${groupId}-title`;
 
   const addChannel = () => {
     setCreateType?.(isTeam ? 'team' : 'messaging');
@@ -32,24 +33,28 @@ const TeamChannelList = ({
   };
 
   return (
-    <section className="team-channel-list" aria-labelledby={groupId}>
+    <section className="team-channel-list" aria-labelledby={titleId}>
       <div className="team-channel-list__header">
         <button
           type="button"
+          id={titleId}
           className="team-channel-list__header__title"
           onClick={() => onToggleGroup?.(type)}
           aria-expanded={!collapsed}
           aria-controls={groupId}
           title={collapsed ? `Show ${title.toLowerCase()}` : `Hide ${title.toLowerCase()}`}
         >
+          <span className="team-channel-list__glyph" aria-hidden="true">
+            {isTeam ? <TrainIcon size={13} /> : <UsersIcon size={13} />}
+          </span>
+          {title}
           <ChevronDownIcon
-            size={13}
+            size={12}
+            className="team-channel-list__chevron"
             style={{
               transform: collapsed ? 'rotate(-90deg)' : 'none',
-              transition: 'transform 150ms ease',
             }}
           />
-          {title}
         </button>
 
         <button

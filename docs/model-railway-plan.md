@@ -227,6 +227,19 @@ Phase 2 implementation notes:
   production shell is deployed and verified; a real two-account inbound test is
   still pending.
 
+Navigation refresh (Phase 2 follow-up):
+
+- Sidebar rows now use a compact two-line route mark instead of `#`, with the
+  line name, latest dispatch, relative time and unread count.
+- The desktop list collapses into the existing rail so the station board can
+  take the full width. The preference is stored locally.
+- On phones the drawer always opens with the full list, regardless of the
+  desktop collapse preference; collapse controls stay desktop-only.
+- Focus moves to the matching expand/collapse control when the list changes
+  state, so keyboard navigation does not drop back to the page body.
+- Verified locally at 1440x900, 800x574 and 390x844 in both themes. Unit tests
+  and the production build pass.
+
 ### Phase 3 — The station has personality
 
 - Station cat with a tiny pet interaction.

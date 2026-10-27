@@ -9,6 +9,7 @@ import {
 } from 'stream-chat-react';
 
 import Avatar from './ui/Avatar';
+import LineMark from './ui/LineMark';
 import DispatchMessage from './DispatchMessage';
 import StationClock from './ui/StationClock';
 import { MenuIcon, SendIcon, SettingsIcon } from './ui/icons';
@@ -85,9 +86,7 @@ const TeamChannelHeader = ({ onOpenDrawer, onStartEdit }) => {
             />
           </span>
         ) : (
-          <span className="team-channel-header__icon" aria-hidden="true">
-            #
-          </span>
+          <LineMark name={title} className="line-mark--header" />
         )}
 
         <span style={{ minWidth: 0 }}>

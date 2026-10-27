@@ -1,0 +1,567 @@
+/* ==========================================================================
+   Navigation refresh
+   --------------------------------------------------------------------------
+   The sidebar is the station's departure board: compact line marks, a clear
+   hierarchy and a collapse control that gives the station board the full
+   width when the operator does not need the list.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Shell + collapse
+   -------------------------------------------------------------------------- */
+.channel-list__container {
+  transition: width var(--transition-normal);
+}
+
+.channel-list__list__wrapper {
+  overflow: hidden;
+  transition:
+    width var(--transition-normal),
+    opacity var(--transition-fast);
+}
+
+.channel-list__container--collapsed .channel-list__list__wrapper {
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    width var(--transition-normal),
+    opacity var(--transition-fast);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar header
+   -------------------------------------------------------------------------- */
+.channel-list__header {
+  gap: var(--space-2);
+  padding: 15px 14px 13px;
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
+}
+
+.channel-list__brand {
+  min-width: 0;
+  flex: 1;
+}
+
+.channel-list__header__text {
+  font-size: 17px;
+  line-height: 1.1;
+  letter-spacing: -0.35px;
+}
+
+.channel-list__header__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.channel-list__live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-400);
+  box-shadow:
+    0 0 0 3px rgba(52, 211, 153, 0.11),
+    0 0 8px rgba(52, 211, 153, 0.55);
+  flex-shrink: 0;
+}
+
+.channel-list__header__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.channel-list__collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(255, 255, 255, 0.64);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.channel-list__collapse:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.channel-list__collapse:focus-visible {
+  outline: 2px solid var(--nrc-green-400);
+  outline-offset: 1px;
+}
+
+.channel-list__header__actions .channel-list__close {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Board shortcut
+   -------------------------------------------------------------------------- */
+.board-link {
+  margin: 12px 12px 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.board-link__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.board-link--active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.045));
+}
+
+/* --------------------------------------------------------------------------
+   Search
+   -------------------------------------------------------------------------- */
+.channel-search__container {
+  padding: 12px 12px 8px;
+}
+
+.channel-search__input__wrapper {
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.channel-search__input__wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.channel-list__scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.channel-list__scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.channel-list__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.channel-list__scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.18);
+  background-clip: padding-box;
+}
+
+.channel-list__scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
+/* --------------------------------------------------------------------------
+   Group headers
+   -------------------------------------------------------------------------- */
+.team-channel-list {
+  padding: 9px 10px 2px;
+}
+
+.team-channel-list + .team-channel-list {
+  margin-top: 5px;
+  padding-top: 9px;
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+.team-channel-list__header {
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.team-channel-list__header__title {
+  gap: 7px;
+  padding: 3px 2px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  border-radius: 6px;
+  transition: color var(--transition-fast);
+}
+
+.team-channel-list__header__title::before {
+  content: none;
+}
+
+.team-channel-list__header__title:hover {
+  color: #ffffff;
+}
+
+.team-channel-list__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(52, 211, 153, 0.16);
+  border-radius: 7px;
+  background: rgba(52, 211, 153, 0.08);
+  color: var(--nrc-green-300);
+  flex-shrink: 0;
+}
+
+.team-channel-list__chevron {
+  opacity: 0.36;
+  transition:
+    transform 150ms ease,
+    opacity var(--transition-fast);
+}
+
+.team-channel-list__header__title:hover .team-channel-list__chevron {
+  opacity: 0.8;
+}
+
+.team-channel-list__add {
+  width: 26px;
+  height: 26px;
+  margin: -3px -1px -3px 0;
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.team-channel-list__add:hover {
+  color: var(--nrc-green-300);
+  background: rgba(52, 211, 153, 0.11);
+}
+
+.team-channel-list__message {
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* --------------------------------------------------------------------------
+   Line / DM rows
+   -------------------------------------------------------------------------- */
+.channel-preview__wrapper {
+  width: calc(100% - 16px);
+  margin: 2px 8px;
+  padding: 0;
+  border-radius: 10px;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.channel-preview__wrapper:hover {
+  background: rgba(255, 255, 255, 0.075);
+  transform: none;
+}
+
+.channel-preview__wrapper__selected {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.045)) !important;
+  box-shadow: inset 2px 0 0 0 var(--nrc-green-300) !important;
+}
+
+.channel-preview__item {
+  gap: 9px;
+  padding: 7px 8px;
+  font-size: var(--font-size-sm);
+}
+
+.channel-preview__item span,
+.channel-preview__item p {
+  margin: 0;
+}
+
+.channel-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.channel-preview__topline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.channel-preview__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  letter-spacing: -0.05px;
+}
+
+.channel-preview__snippet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 10.8px;
+  line-height: 1.35;
+}
+
+.channel-preview__wrapper--unread .channel-preview__snippet {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.channel-preview__wrapper__selected .channel-preview__label {
+  color: #ffffff;
+}
+
+.channel-preview__wrapper__selected .channel-preview__snippet {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.channel-preview__meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.channel-preview__time {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+}
+
+.channel-preview__wrapper--unread .channel-preview__time {
+  color: var(--nrc-gold-light);
+}
+
+.channel-preview__item .badge:not(.badge--muted) {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  background: var(--nrc-gold);
+  color: #211403;
+  animation: none;
+}
+
+.channel-preview__identity .avatar {
+  display: flex;
+}
+
+.channel-preview__wrapper__selected .channel-preview__identity .avatar {
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Line marks
+   -------------------------------------------------------------------------- */
+.line-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid rgba(52, 211, 153, 0.24);
+  border-radius: 9px;
+  background: linear-gradient(155deg, rgba(52, 211, 153, 0.16), rgba(16, 185, 129, 0.055));
+  color: var(--nrc-green-300);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.line-mark__code {
+  position: relative;
+  z-index: 1;
+  transform: translateY(-1px);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.line-mark__track {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 5px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.26;
+}
+
+.line-mark__track::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+.channel-preview__wrapper--unread .line-mark {
+  border-color: rgba(245, 158, 11, 0.38);
+  background: linear-gradient(155deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.035));
+  color: var(--nrc-gold-light);
+}
+
+.channel-preview__wrapper__selected .line-mark {
+  border-color: rgba(110, 231, 183, 0.58);
+  background: linear-gradient(155deg, rgba(52, 211, 153, 0.3), rgba(16, 185, 129, 0.13));
+  color: var(--nrc-green-100);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 12px rgba(52, 211, 153, 0.12);
+}
+
+.line-mark--result {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.line-mark--result .line-mark__track {
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+}
+
+.line-mark--header {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.line-mark--header .line-mark__code {
+  font-size: 10px;
+}
+
+.line-mark--header .line-mark__track {
+  left: 9px;
+  right: 9px;
+  bottom: 7px;
+}
+
+/* The sidebar keeps its dark rail in both themes, but the chat header is
+   light in light mode. Darken the header mark so it keeps its contrast. */
+:root[data-theme='light'] .line-mark--header {
+  color: var(--nrc-green-700);
+  border-color: rgba(0, 115, 62, 0.26);
+  background: linear-gradient(155deg, rgba(0, 115, 62, 0.13), rgba(0, 115, 62, 0.045));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Rail
+   -------------------------------------------------------------------------- */
+.channel-list__sidebar {
+  padding-top: 16px;
+  padding-bottom: 14px;
+  gap: 14px;
+}
+
+.channel-list__sidebar__icon1 {
+  cursor: default;
+  border-color: rgba(52, 211, 153, 0.22);
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.17), rgba(255, 255, 255, 0.045));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.channel-list__sidebar__icon1:hover {
+  transform: none;
+  border-color: rgba(52, 211, 153, 0.22);
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.17), rgba(255, 255, 255, 0.045));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.channel-list__sidebar__icon1::after {
+  content: '';
+  position: absolute;
+  right: 9px;
+  bottom: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--nrc-green-400);
+  box-shadow: 0 0 7px rgba(52, 211, 153, 0.7);
+}
+
+.rail-toggle {
+  color: var(--nrc-green-300);
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.22);
+}
+
+.rail-toggle:hover {
+  color: var(--nrc-green-100);
+  background: rgba(52, 211, 153, 0.17);
+  border-color: rgba(52, 211, 153, 0.36);
+}
+
+/* --------------------------------------------------------------------------
+   Profile
+   -------------------------------------------------------------------------- */
+.profile-bar {
+  gap: 10px;
+  padding: 12px 14px;
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.profile-bar__name {
+  font-size: 12.5px;
+}
+
+.profile-bar__handle {
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10.5px;
+}
+
+.profile-bar .icon-button {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.profile-bar .icon-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .channel-list__container,
+  .channel-list__list__wrapper,
+  .channel-preview__wrapper,
+  .team-channel-list__chevron,
+  .line-mark {
+    transition: none !important;
+  }
+}

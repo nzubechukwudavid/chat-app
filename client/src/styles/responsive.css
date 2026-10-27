@@ -118,6 +118,25 @@
   .channel-list__list__wrapper {
     width: calc(100% - 56px);
     min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  /* Collapsing is a desktop affordance. On a phone the drawer always opens
+     with the full list, even if the desktop preference is collapsed. */
+  .channel-list__container--collapsed .channel-list__list__wrapper {
+    width: calc(100% - 56px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  .channel-list__collapse,
+  .rail-toggle {
+    display: none !important;
   }
 
   /* ---- Chat pane ------------------------------------------------------- */
@@ -299,7 +318,8 @@
     max-width: 94% !important;
   }
 
-  .team-channel-header__icon {
+  .team-channel-header__icon,
+  .line-mark--header {
     display: none;
   }
 }

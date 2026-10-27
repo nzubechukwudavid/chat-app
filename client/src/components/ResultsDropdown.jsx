@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Avatar from './ui/Avatar';
+import LineMark from './ui/LineMark';
 import { Skeleton } from './ui/Skeleton';
 import { SearchIcon } from './ui/icons';
 
@@ -24,9 +25,7 @@ const ResultRow = ({ item, focused, onSelect, onHover }) => {
       }}
     >
       {item.kind === 'channel' ? (
-        <span className="result-hashtag" aria-hidden="true">
-          #
-        </span>
+        <LineMark name={item.label} className="line-mark--result" />
       ) : (
         <Avatar
           name={item.label}

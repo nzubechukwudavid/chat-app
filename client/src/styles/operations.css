@@ -162,26 +162,6 @@
 /* --------------------------------------------------------------------------
    Channel list: timetable typography and a quieter hover
    -------------------------------------------------------------------------- */
-.team-channel-list__header__title::before {
-  content: '//';
-  margin-right: 1px;
-  color: rgba(52, 211, 153, 0.5);
-  font-family: var(--font-mono);
-  letter-spacing: -1px;
-}
-
-.channel-preview__wrapper {
-  transition: background var(--transition-fast), transform var(--transition-fast);
-}
-
-.channel-preview__wrapper:hover {
-  transform: translateX(2px);
-}
-
-.channel-preview__wrapper__selected {
-  box-shadow: inset 3px 0 0 0 var(--nrc-green-400), 0 0 20px rgba(16, 185, 129, 0.1) !important;
-}
-
 .channel-preview__time {
   font-family: var(--font-mono);
   font-size: 9.5px;
@@ -374,10 +354,6 @@
   .str-chat__li,
   .station-flap {
     animation: none !important;
-  }
-
-  .channel-preview__wrapper:hover {
-    transform: none;
   }
 
   .nrc-send-btn:active,
