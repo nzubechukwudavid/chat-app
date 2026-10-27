@@ -1,6 +1,6 @@
 # Model Railway — Build Plan
 
-Status: Phase 1 implemented in the working tree; production visual check pending.
+Status: Phase 1 implemented and verified in production.
 
 ## 1. The Shift
 
@@ -190,6 +190,9 @@ Phase 1 implementation notes:
   is no longer rendered.
 - The board still uses its own hook query loop; the shared provider is deferred
   until Phase 2 needs the same snapshot in the sidebar and train layer.
+- Production verified with real channel data at 1440px, 800px and 390px: rows
+  open correctly, long dispatches truncate, both themes render, and no
+  horizontal overflow appears. Temporary QA platforms were deleted afterwards.
 
 ### Phase 2 — The station breathes
 
