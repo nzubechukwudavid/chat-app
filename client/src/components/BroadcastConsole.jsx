@@ -39,7 +39,11 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
       .queryChannels(
         { type: 'team', members: { $in: [client.userID] } },
         { last_message_at: -1 },
-        { state: true, watch: false, presence: false, limit: 50 },
+        // Watch the lines while the console is open. A state-only query can hand
+        // back a channel that has never been activated, which makes the first
+        // send unreliable. The channel list already watches these lines, so this
+        // reuses the same subscriptions rather than adding a second set.
+        { state: true, watch: true, presence: false, limit: 50 },
       )
       .then((channels) => {
         if (cancelled) return;
@@ -122,6 +126,15 @@ const BroadcastConsole = ({ open, onClose, onSent }) => {
       setFailure('The broadcast could not be sent. Check your connection and try again.');
       return;
     }
+
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(
+          `[RailHub] broadcast to ${targets[index]?.cid || 'line'} failed:`,
+          result.reason,
+        );
+      }
+    });
 
     const sent = results.filter((result) => result.status === 'fulfilled').length;
     const failed = results.length - sent;
