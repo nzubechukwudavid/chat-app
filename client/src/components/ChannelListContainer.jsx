@@ -148,24 +148,6 @@ const ChannelHeaderBar = ({ onCloseDrawer, onToggleCollapsed, collapseButtonRef 
   </header>
 );
 
-const BoardLink = ({ active, onOpen }) => (
-  <button
-    type="button"
-    className={`board-link${active ? ' board-link--active' : ''}`}
-    onClick={onOpen}
-    aria-current={active ? 'page' : undefined}
-  >
-    <span className="board-link__icon" aria-hidden="true">
-      <BoardIcon size={15} />
-    </span>
-    <span className="board-link__text">
-      <strong>Station board</strong>
-      <small>Live lines and DMs</small>
-    </span>
-    <span className="board-link__lamp" aria-hidden="true" />
-  </button>
-);
-
 const UserProfileBar = ({ user }) => {
   const displayName = user?.fullName || user?.username || 'Rail Officer';
 
@@ -270,10 +252,6 @@ const ChannelListContainer = ({
   const toggleGroup = useCallback((type) => {
     setCollapsed((current) => ({ ...current, [type]: !current[type] }));
   }, []);
-
-  const handleSignOut = useCallback(() => {
-    onSignOut?.();
-  }, [onSignOut]);
 
   if (!client || !client.userID) return null;
 
