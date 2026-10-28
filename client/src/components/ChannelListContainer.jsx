@@ -7,13 +7,10 @@ import TeamChannelPreview from './TeamChannelPreview';
 import Avatar from './ui/Avatar';
 import { ChannelListSkeleton } from './ui/Skeleton';
 import ThemeToggle from './ui/ThemeToggle';
-import { useToast } from './ui/Toast';
-import { useConfirm } from './ui/ConfirmDialog';
 import {
   BoardIcon,
   BroadcastIcon,
   CloseIcon,
-  LogoutIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -46,7 +43,6 @@ const messagingOnly = (channels) => channels.filter((channel) => channel.type ==
 
 const Rail = ({
   onStartCreate,
-  onSignOut,
   onOpenBoard,
   onBroadcast,
   onToggleCollapsed,
@@ -61,30 +57,20 @@ const Rail = ({
       </span>
     </div>
 
-    {collapsed ? (
-      <button
-        type="button"
-        ref={expandButtonRef}
-        className="rail-action rail-toggle"
-        onClick={onToggleCollapsed}
-        title="Expand navigation"
-        aria-label="Expand navigation"
-        aria-controls="channel-navigation"
-        aria-expanded="false"
-      >
-        <PanelLeftOpenIcon size={19} />
-      </button>
-    ) : null}
-
     <button
       type="button"
-      className={`rail-action${boardActive ? ' rail-action--active' : ''}`}
-      onClick={onOpenBoard}
-      title="Station board"
-      aria-label="Open the station board"
-      aria-current={boardActive ? 'page' : undefined}
+      ref={expandButtonRef}
+      className={`rail-action${boardActive && !collapsed ? ' rail-action--active' : ''}${
+        collapsed ? ' rail-toggle' : ''
+      }`}
+      onClick={collapsed ? onToggleCollapsed : onOpenBoard}
+      title={collapsed ? 'Expand navigation' : 'Station board'}
+      aria-label={collapsed ? 'Expand navigation' : 'Open the station board'}
+      aria-controls={collapsed ? 'channel-navigation' : undefined}
+      aria-expanded={collapsed ? false : undefined}
+      aria-current={boardActive && !collapsed ? 'page' : undefined}
     >
-      <BoardIcon size={20} />
+      {collapsed ? <PanelLeftOpenIcon size={19} /> : <BoardIcon size={20} />}
     </button>
 
     <button
@@ -120,16 +106,6 @@ const Rail = ({
     <div className="rail-spacer" />
 
     <ThemeToggle className="theme-switch--rail" />
-
-    <button
-      type="button"
-      className="rail-action rail-action--danger"
-      onClick={onSignOut}
-      title="Sign out"
-      aria-label="Sign out"
-    >
-      <LogoutIcon size={19} />
-    </button>
   </nav>
 );
 
@@ -190,7 +166,7 @@ const BoardLink = ({ active, onOpen }) => (
   </button>
 );
 
-const UserProfileBar = ({ user, onSignOut }) => {
+const UserProfileBar = ({ user }) => {
   const displayName = user?.fullName || user?.username || 'Rail Officer';
 
   return (
@@ -203,16 +179,6 @@ const UserProfileBar = ({ user, onSignOut }) => {
         <p className="profile-bar__name truncate">{displayName}</p>
         <p className="profile-bar__handle truncate">@{user?.username || 'staff'}</p>
       </div>
-
-      <button
-        type="button"
-        className="icon-button"
-        onClick={onSignOut}
-        title="Sign out"
-        aria-label="Sign out"
-      >
-        <LogoutIcon size={16} />
-      </button>
     </div>
   );
 };
@@ -236,8 +202,6 @@ const ChannelListContainer = ({
   onBroadcast,
 }) => {
   const { client, channel: activeChannel, setActiveChannel } = useChatContext();
-  const { confirm, dialog } = useConfirm();
-  const { info } = useToast();
   const [collapsed, setCollapsed] = useState({ team: false, messaging: false });
   const [navCollapsed, setNavCollapsed] = useState(readNavPreference);
   const collapseButtonRef = useRef(null);
@@ -307,19 +271,9 @@ const ChannelListContainer = ({
     setCollapsed((current) => ({ ...current, [type]: !current[type] }));
   }, []);
 
-  const handleSignOut = useCallback(async () => {
-    const ok = await confirm({
-      title: 'Sign out of Rail Hub?',
-      description: 'You will need your station handle and password to sign back in.',
-      confirmLabel: 'Sign out',
-      tone: 'danger',
-    });
-
-    if (ok) {
-      info('Signing out…');
-      onSignOut?.();
-    }
-  }, [confirm, info, onSignOut]);
+  const handleSignOut = useCallback(() => {
+    onSignOut?.();
+  }, [onSignOut]);
 
   if (!client || !client.userID) return null;
 
@@ -342,7 +296,6 @@ const ChannelListContainer = ({
     >
       <Rail
         onStartCreate={onStartCreate}
-        onSignOut={handleSignOut}
         onOpenBoard={handleOpenBoard}
         onBroadcast={onBroadcast}
         onToggleCollapsed={toggleNav}
@@ -357,8 +310,6 @@ const ChannelListContainer = ({
           onToggleCollapsed={toggleNav}
           collapseButtonRef={collapseButtonRef}
         />
-
-        <BoardLink active={boardActive} onOpen={handleOpenBoard} />
 
         <ChannelSearch onNavigate={onCloseDrawer} />
 
@@ -410,10 +361,8 @@ const ChannelListContainer = ({
           />
         </div>
 
-        <UserProfileBar user={user} onSignOut={handleSignOut} />
+        <UserProfileBar user={user} />
       </div>
-
-      {dialog}
     </aside>
   );
 };
