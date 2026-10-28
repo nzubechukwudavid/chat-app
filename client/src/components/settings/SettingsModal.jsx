@@ -9,11 +9,12 @@ const TABS = [
   { id: 'account', label: 'Account' },
 ];
 
-const ProfileForm = ({ user, onUpdateProfile, notify }) => {
+const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
   const [avatarURL, setAvatarURL] = useState(user?.avatarURL || '');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,12 +28,36 @@ const ProfileForm = ({ user, onUpdateProfile, notify }) => {
     }
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!onUploadAvatar) return;
+    setUploading(true);
+    const res = await onUploadAvatar(file);
+    setUploading(false);
+    if (res?.ok && res.avatarURL) {
+      setAvatarURL(res.avatarURL);
+      notify?.({ type: 'success', message: 'Avatar uploaded. Save to apply.' });
+    } else if (res?.error) {
+      notify?.({ type: 'error', message: res.error });
+    }
+    e.target.value = '';
+  };
+
   const displayName = fullName || user?.username || 'Rail Officer';
 
   return (
     <form className="settings-form" onSubmit={handleSubmit}>
       <div className="settings-avatar-preview">
         <Avatar name={displayName} image={avatarURL || user?.avatarURL} size={64} online />
+      </div>
+
+      <div className="settings-avatar-upload">
+        <label className="settings-upload-btn">
+          {uploading ? 'Uploading...' : 'Upload avatar'}
+          <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+        </label>
+        <span className="settings-upload-hint">JPG, PNG, GIF, WebP (max 2MB)</span>
       </div>
 
       <label className="settings-field">
@@ -162,7 +187,7 @@ const DangerZone = ({ onDeleteAccount, notify }) => {
   );
 };
 
-const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword, onDeleteAccount, notify }) => {
+const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword, onDeleteAccount, onUploadAvatar, notify }) => {
   const [tab, setTab] = useState('profile');
 
   if (!open) return null;
@@ -191,7 +216,7 @@ const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword,
         </div>
 
         <div className="settings-content">
-          {tab === 'profile' && <ProfileForm user={user} onUpdateProfile={onUpdateProfile} notify={notify} />}
+          {tab === 'profile' && <ProfileForm user={user} onUpdateProfile={onUpdateProfile} onUploadAvatar={onUploadAvatar} notify={notify} />}
           {tab === 'security' && <PasswordForm onChangePassword={onChangePassword} notify={notify} />}
           {tab === 'account' && <DangerZone onDeleteAccount={onDeleteAccount} notify={notify} />}
         </div>

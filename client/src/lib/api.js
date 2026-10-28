@@ -106,3 +106,16 @@ export const deleteMe = async (payload = {}) => {
     return { ok: false, error: errorMessage(error) };
   }
 };
+
+export const uploadAvatar = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const res = await api.post('/auth/upload/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return { ok: true, avatarURL: res.data?.avatarURL || null };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};

@@ -1,9 +1,10 @@
 const express = require('express');
 
-const { signup, login, session, logout, getMe, updateMe, changePassword, deleteMe } = require('../controllers/auth.js');
+const { signup, login, session, logout, getMe, updateMe, changePassword, deleteMe, uploadAvatar } = require('../controllers/auth.js');
 const { createRateLimiter, createAuthLimiter, clientKey } = require('../middleware/rateLimit');
 const { config } = require('../config');
 const { requireAuth } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -56,6 +57,7 @@ router.put('/me', requireAuth, sensitiveLimiter, updateMe);
 router.put('/password', requireAuth, sensitiveLimiter, changePassword);
 router.post('/change-password', requireAuth, sensitiveLimiter, changePassword);
 router.delete('/me', requireAuth, sensitiveLimiter, deleteMe);
+router.post('/upload/avatar', requireAuth, sensitiveLimiter, upload.single('avatar'), uploadAvatar);
 
 module.exports = router;
 module.exports.clientKey = clientKey;

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const { config, assertUsable } = require('./config');
 const authRoutes = require('./routes/auth.js');
@@ -29,6 +30,7 @@ app.use(securityHeaders);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: true, limit: '256kb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Compact request log - enough to spot abuse, cheap enough to leave on.
 app.use((req, res, next) => {
