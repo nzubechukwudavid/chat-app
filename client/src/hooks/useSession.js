@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { changePassword as apiChangePassword, deleteMe as apiDeleteMe, errorMessage, fetchSession, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp, updateMe as apiUpdateMe } from '../lib/api';
+import { changePassword as apiChangePassword, deleteMe as apiDeleteMe, errorMessage, fetchSession, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp, updateMe as apiUpdateMe, uploadAvatar as apiUploadAvatar } from '../lib/api';
 
 const IDLE = { status: 'idle', user: null, token: null, error: '' };
 
@@ -95,6 +95,10 @@ export const useSession = () => {
     return res;
   }, []);
 
+  const uploadAvatar = useCallback(async (file) => {
+    return apiUploadAvatar(file);
+  }, []);
+
   return {
     ...state,
     isAuthenticated: state.status === 'authenticated',
@@ -106,6 +110,7 @@ export const useSession = () => {
     updateProfile,
     changePassword,
     deleteAccount,
+    uploadAvatar,
   };
 };
 

@@ -42,7 +42,7 @@ let mountedWorkspaces = 0;
  * the Stream SDK bundle, and the socket connection starts at the same moment
  * the workspace code arrives.
  */
-const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', updateProfile, changePassword, deleteAccount }) => {
+const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', updateProfile, changePassword, deleteAccount, uploadAvatar }) => {
   const { notify } = useToast();
   const [status, setStatus] = useState(() =>
     isChatConnected(user.id) ? 'ready' : 'connecting',
@@ -230,6 +230,7 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
           onUpdateProfile={updateProfile}
           onChangePassword={changePassword}
           onDeleteAccount={deleteAccount}
+          onUploadAvatar={uploadAvatar}
           notify={notify}
         />
 

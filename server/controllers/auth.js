@@ -164,6 +164,21 @@ const logout = async (req, res) => {
   return res.status(200).json({ message: 'Signed out.' });
 };
 
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const avatarUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+    return res.status(200).json({ avatarURL: avatarUrl });
+  } catch (error) {
+    console.error('UploadAvatar error:', error);
+    return res.status(500).json({ message: 'We could not upload the avatar.' });
+  }
+};
+
 const getMe = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -335,4 +350,4 @@ const deleteMe = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, deleteMe };
+module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, deleteMe, uploadAvatar };
