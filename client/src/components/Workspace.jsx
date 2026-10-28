@@ -7,6 +7,7 @@ import BroadcastConsole from './BroadcastConsole';
 import ConnectionBanner from './ui/ConnectionBanner';
 import SplashScreen from './ui/SplashScreen';
 import { AlertIcon } from './ui/icons';
+import { useToast } from './ui/Toast';
 import { chatClient, connectChatUser, describeConnectionError, disconnectChatUser, isChatConnected } from '../lib/stream';
 
 /** Mirrors the CSS breakpoint so the drawer behaves the same in JS. */
@@ -41,7 +42,8 @@ let mountedWorkspaces = 0;
  * the Stream SDK bundle, and the socket connection starts at the same moment
  * the workspace code arrives.
  */
-const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' }) => {
+const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', updateProfile, changePassword, deleteAccount }) => {
+  const { notify } = useToast();
   const [status, setStatus] = useState(() =>
     isChatConnected(user.id) ? 'ready' : 'connecting',
   );
@@ -225,6 +227,10 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark' })
           onStartCreate={startCreate}
           onSignOut={handleSignOut}
           onBroadcast={openBroadcast}
+          onUpdateProfile={updateProfile}
+          onChangePassword={changePassword}
+          onDeleteAccount={deleteAccount}
+          notify={notify}
         />
 
         <ChannelContainer

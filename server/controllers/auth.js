@@ -164,4 +164,175 @@ const logout = async (req, res) => {
   return res.status(200).json({ message: 'Signed out.' });
 };
 
-module.exports = { signup, login, session, logout, publicUser };
+const getMe = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+    const user = await db.getUserById(userId) || await db.findUserById(userId);
+    if (!user) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+    return res.status(200).json({ user: publicUser(user) });
+  } catch (error) {
+    console.error('GetMe error:', error);
+    return res.status(500).json({ message: 'We could not fetch your profile.' });
+  }
+};
+
+const isValidHttpUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const updateMe = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+
+    const { fullName, full_name, phoneNumber, phone_number, avatarURL, avatar_url } = req.body || {};
+    const updates = {};
+
+    const nextFullName = fullName !== undefined ? fullName : full_name;
+    if (nextFullName !== undefined) {
+      const sanitized = sanitizeText(nextFullName, { maxLength: 100 });
+      if (sanitized.length === 0 && nextFullName !== '') {
+        return res.status(400).json({ message: 'Full name is too long.' });
+      }
+      updates.full_name = sanitized === '' ? null : sanitized;
+    }
+
+    const nextPhone = phoneNumber !== undefined ? phoneNumber : phone_number;
+    if (nextPhone !== undefined) {
+      const sanitized = sanitizeText(nextPhone, { maxLength: 20 });
+      // Allow empty to clear
+      if (sanitized !== '' && !/^[0-9+\-\s()]{7,20}$/.test(sanitized)) {
+        return res.status(400).json({ message: 'Enter a valid phone number.' });
+      }
+      updates.phone_number = sanitized === '' ? null : sanitized;
+    }
+
+    const nextAvatar = avatarURL !== undefined ? avatarURL : avatar_url;
+    if (nextAvatar !== undefined) {
+      const sanitized = sanitizeText(nextAvatar, { maxLength: 512 });
+      if (sanitized !== '' && !isValidHttpUrl(sanitized)) {
+        return res.status(400).json({ message: 'Avatar URL must be a valid http(s) link.' });
+      }
+      updates.avatar_url = sanitized === '' ? null : sanitized;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      const user = await db.getUserById(userId);
+      if (!user) return res.status(404).json({ message: 'User not found.' });
+      return res.status(200).json({ user: publicUser(user) });
+    }
+
+    const updated = await db.updateUser(userId, updates);
+    if (!updated) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    try {
+      const serverClient = getServerClient();
+      await serverClient.upsertUser({
+        id: updated.id,
+        role: 'user',
+        name: updated.full_name || updated.username,
+        image: updated.avatar_url || undefined,
+      });
+    } catch (streamErr) {
+      console.error('[STREAM] Failed to upsert user after profile update:', streamErr.message);
+    }
+
+    return res.status(200).json({ user: publicUser(updated) });
+  } catch (error) {
+    console.error('UpdateMe error:', error);
+    return res.status(500).json({ message: 'We could not update your profile.' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Enter your current and new password.' });
+    }
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+    }
+
+    const user = await db.getUserById(userId);
+    if (!user) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+
+    const match = await bcrypt.compare(String(currentPassword), user.password_hash || '');
+    if (!match) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const hash = await bcrypt.hash(String(newPassword), salt);
+    await db.updatePassword(userId, hash);
+
+    return res.status(200).json({ message: 'Password updated.' });
+  } catch (error) {
+    console.error('ChangePassword error:', error);
+    return res.status(500).json({ message: 'We could not change your password.' });
+  }
+};
+
+const deleteMe = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+
+    const { confirm, password } = req.body || {};
+    if (confirm !== true && confirm !== 'true') {
+      return res.status(400).json({ message: 'Please confirm account deletion.' });
+    }
+
+    const user = await db.getUserById(userId);
+    if (!user) {
+      clearSessionCookie(res);
+      return res.status(200).json({ message: 'Account deleted.' });
+    }
+
+    if (password) {
+      const match = await bcrypt.compare(String(password), user.password_hash || '');
+      if (!match) {
+        return res.status(400).json({ message: 'Password is incorrect.' });
+      }
+    }
+
+    await db.deleteUser(userId);
+    try {
+      const serverClient = getServerClient();
+      await serverClient.deleteUser(userId, { hard_delete: true });
+    } catch (streamErr) {
+      console.error('[STREAM] Failed to delete user:', streamErr.message);
+    }
+
+    clearSessionCookie(res);
+    return res.status(200).json({ message: 'Account deleted.' });
+  } catch (error) {
+    console.error('DeleteMe error:', error);
+    return res.status(500).json({ message: 'We could not delete your account.' });
+  }
+};
+
+module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, deleteMe };

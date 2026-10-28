@@ -1,8 +1,9 @@
 const express = require('express');
 
-const { signup, login, session, logout } = require('../controllers/auth.js');
+const { signup, login, session, logout, getMe, updateMe, changePassword, deleteMe } = require('../controllers/auth.js');
 const { createRateLimiter, createAuthLimiter, clientKey } = require('../middleware/rateLimit');
 const { config } = require('../config');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -29,6 +30,12 @@ const guard = (req, res, next) => {
   return next();
 };
 
+const sensitiveLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  name: 'auth-sensitive',
+});
+
 router.post('/signup', ipLimiter, guard, signup);
 router.post('/login', ipLimiter, guard, (req, res, next) => {
   const originalJson = res.json.bind(res);
@@ -43,6 +50,12 @@ router.post('/login', ipLimiter, guard, (req, res, next) => {
 
 router.get('/session', session);
 router.post('/logout', logout);
+router.get('/me', requireAuth, getMe);
+router.patch('/me', requireAuth, sensitiveLimiter, updateMe);
+router.put('/me', requireAuth, sensitiveLimiter, updateMe);
+router.put('/password', requireAuth, sensitiveLimiter, changePassword);
+router.post('/change-password', requireAuth, sensitiveLimiter, changePassword);
+router.delete('/me', requireAuth, sensitiveLimiter, deleteMe);
 
 module.exports = router;
 module.exports.clientKey = clientKey;

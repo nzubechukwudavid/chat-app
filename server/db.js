@@ -184,6 +184,105 @@ async function closeDb() {
   }
 }
 
+const getUserById = async (id) => {
+  await ensureDb();
+  const row = findUserById(id);
+  if (row) {
+    return {
+      id: row.id,
+      username: row.username,
+      full_name: row.full_name,
+      phone_number: row.phone_number,
+      avatar_url: row.avatar_url,
+      password_hash: row.password_hash,
+      created_at: row.created_at,
+    };
+  }
+  return null;
+};
+
+const getUserByUsername = async (username) => {
+  await ensureDb();
+  const row = findUserByUsername(username);
+  if (row) {
+    return {
+      id: row.id,
+      username: row.username,
+      full_name: row.full_name,
+      phone_number: row.phone_number,
+      avatar_url: row.avatar_url,
+      password_hash: row.password_hash,
+      created_at: row.created_at,
+    };
+  }
+  return null;
+};
+
+const updateUser = async (id, updates = {}) => {
+  await ensureDb();
+  const allowed = ['full_name', 'phone_number', 'avatar_url'];
+  const keys = Object.keys(updates).filter((key) => allowed.includes(key));
+  if (keys.length === 0) {
+    return getUserById(id);
+  }
+
+  if (dbType === 'postgres') {
+    const sets = [];
+    const params = [];
+    keys.forEach((key, idx) => {
+      sets.push(`${key} = $${idx + 1}`);
+      params.push(updates[key]);
+    });
+    params.push(id);
+    const sql = `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING id, username, full_name, phone_number, avatar_url, created_at`;
+    const res = await dbClient.query(sql, params);
+    return res.rows[0] || getUserById(id);
+  }
+
+  const client = dbClient;
+  const sets = [];
+  const params = [];
+  keys.forEach((key, idx) => {
+    sets.push(`${key} = $${idx + 1}`);
+    params.push(updates[key]);
+  });
+  params.push(id);
+  const sql = `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}`;
+  const stmt = client.prepare(sql.replace(/\$(\d+)/g, '?'));
+  stmt.run(...params);
+  const row = findUserById(id);
+  if (!row) return null;
+  return {
+    id: row.id,
+    username: row.username,
+    full_name: row.full_name,
+    phone_number: row.phone_number,
+    avatar_url: row.avatar_url,
+    created_at: row.created_at,
+  };
+};
+
+const updatePassword = async (id, passwordHash) => {
+  await ensureDb();
+  if (dbType === 'postgres') {
+    await dbClient.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, id]);
+    return;
+  }
+  const stmt = dbClient.prepare('UPDATE users SET password_hash = $1 WHERE id = $2');
+  stmt.run(passwordHash, id);
+};
+
+const deleteUser = async (id) => {
+  await ensureDb();
+  if (dbType === 'postgres') {
+    const res = await dbClient.query('DELETE FROM users WHERE id = $1', [id]);
+    return (res.rowCount || 0) > 0;
+  }
+  const stmt = dbClient.prepare('DELETE FROM users WHERE id = $1');
+  const info = stmt.run(id);
+  return (info.changes || 0) > 0;
+};
+
 module.exports = {
   initDb,
   ensureDb,
@@ -193,6 +292,11 @@ module.exports = {
   createUser,
   countUsers,
   closeDb,
+  getUserById,
+  getUserByUsername,
+  updateUser,
+  updatePassword,
+  deleteUser,
   get dbType() {
     return dbType;
   },
