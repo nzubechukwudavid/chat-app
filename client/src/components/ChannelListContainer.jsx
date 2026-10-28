@@ -11,6 +11,7 @@ import {
   BoardIcon,
   BroadcastIcon,
   CloseIcon,
+  LogoutIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -44,6 +45,7 @@ const messagingOnly = (channels) => channels.filter((channel) => channel.type ==
 const Rail = ({
   onStartCreate,
   onOpenBoard,
+  onSignOut,
   onBroadcast,
   onToggleCollapsed,
   collapsed,
@@ -106,6 +108,16 @@ const Rail = ({
     <div className="rail-spacer" />
 
     <ThemeToggle className="theme-switch--rail" />
+
+    <button
+      type="button"
+      className="rail-action rail-action--danger"
+      onClick={onSignOut}
+      title="Sign out"
+      aria-label="Sign out"
+    >
+      <LogoutIcon size={19} />
+    </button>
   </nav>
 );
 
@@ -275,6 +287,7 @@ const ChannelListContainer = ({
       <Rail
         onStartCreate={onStartCreate}
         onOpenBoard={handleOpenBoard}
+        onSignOut={onSignOut}
         onBroadcast={onBroadcast}
         onToggleCollapsed={toggleNav}
         collapsed={navCollapsed}
