@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { errorMessage, fetchSession, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp } from '../lib/api';
+import { changePassword as apiChangePassword, deleteMe as apiDeleteMe, errorMessage, fetchSession, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp, updateMe as apiUpdateMe } from '../lib/api';
 
 const IDLE = { status: 'idle', user: null, token: null, error: '' };
 
@@ -73,6 +73,28 @@ export const useSession = () => {
     await apiSignOut();
   }, []);
 
+  const updateProfile = useCallback(async (updates) => {
+    const res = await apiUpdateMe(updates);
+    if (!mounted.current) return res;
+    if (res.ok && res.user) {
+      setState((prev) => (prev.status === 'authenticated' ? { ...prev, user: res.user, error: '' } : prev));
+    }
+    return res;
+  }, []);
+
+  const changePassword = useCallback(async (payload) => {
+    return apiChangePassword(payload);
+  }, []);
+
+  const deleteAccount = useCallback(async (payload) => {
+    const res = await apiDeleteMe(payload);
+    if (!mounted.current) return res;
+    if (res.ok) {
+      setState({ ...IDLE });
+    }
+    return res;
+  }, []);
+
   return {
     ...state,
     isAuthenticated: state.status === 'authenticated',
@@ -81,6 +103,9 @@ export const useSession = () => {
     signIn,
     signUp,
     signOut,
+    updateProfile,
+    changePassword,
+    deleteAccount,
   };
 };
 

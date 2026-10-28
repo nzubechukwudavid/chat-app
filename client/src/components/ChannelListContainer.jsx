@@ -7,6 +7,7 @@ import TeamChannelPreview from './TeamChannelPreview';
 import Avatar from './ui/Avatar';
 import { ChannelListSkeleton } from './ui/Skeleton';
 import ThemeToggle from './ui/ThemeToggle';
+import SettingsModal from './settings/SettingsModal';
 import {
   BoardIcon,
   BroadcastIcon,
@@ -15,6 +16,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  SettingsIcon,
   TrainIcon,
   UsersIcon,
 } from './ui/icons';
@@ -51,6 +53,7 @@ const Rail = ({
   collapsed,
   boardActive,
   expandButtonRef,
+  onOpenSettings,
 }) => (
   <nav className="channel-list__sidebar" aria-label="Workspace actions">
     <div className="channel-list__sidebar__icon1" title="NRC Rail Hub" aria-hidden="true">
@@ -107,6 +110,16 @@ const Rail = ({
 
     <div className="rail-spacer" />
 
+    <button
+      type="button"
+      className="rail-action"
+      onClick={onOpenSettings}
+      title="Settings"
+      aria-label="Open settings"
+    >
+      <SettingsIcon size={19} />
+    </button>
+
     <ThemeToggle className="theme-switch--rail" />
 
     <button
@@ -160,11 +173,11 @@ const ChannelHeaderBar = ({ onCloseDrawer, onToggleCollapsed, collapseButtonRef 
   </header>
 );
 
-const UserProfileBar = ({ user }) => {
+const UserProfileBar = ({ user, onOpenSettings }) => {
   const displayName = user?.fullName || user?.username || 'Rail Officer';
 
   return (
-    <div className="profile-bar">
+    <button type="button" className="profile-bar profile-bar--button" onClick={onOpenSettings} title="Open settings">
       <div className="profile-bar__avatar">
         <Avatar name={displayName} image={user?.avatarURL} size={34} online />
       </div>
@@ -173,7 +186,7 @@ const UserProfileBar = ({ user }) => {
         <p className="profile-bar__name truncate">{displayName}</p>
         <p className="profile-bar__handle truncate">@{user?.username || 'staff'}</p>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -194,6 +207,10 @@ const ChannelListContainer = ({
   onStartCreate,
   onSignOut,
   onBroadcast,
+  onUpdateProfile,
+  onChangePassword,
+  onDeleteAccount,
+  notify,
 }) => {
   const { client, channel: activeChannel, setActiveChannel } = useChatContext();
   const [collapsed, setCollapsed] = useState({ team: false, messaging: false });
@@ -202,6 +219,7 @@ const ChannelListContainer = ({
   const expandButtonRef = useRef(null);
   const restoreToggleFocus = useRef(false);
   const focusRequestRef = useRef(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const boardActive = !activeChannel?.id;
 
@@ -252,6 +270,15 @@ const ChannelListContainer = ({
     onCloseDrawer?.();
   }, [onCloseDrawer, setActiveChannel]);
 
+  const openSettings = useCallback(() => {
+    setSettingsOpen(true);
+    onCloseDrawer?.();
+  }, [onCloseDrawer]);
+
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+  }, []);
+
   const teamFilters = useMemo(
     () => ({ type: 'team', members: { $in: [client?.userID] } }),
     [client?.userID],
@@ -293,6 +320,7 @@ const ChannelListContainer = ({
         collapsed={navCollapsed}
         boardActive={boardActive}
         expandButtonRef={expandButtonRef}
+        onOpenSettings={openSettings}
       />
 
       <div className="channel-list__list__wrapper" id="channel-navigation">
@@ -352,8 +380,18 @@ const ChannelListContainer = ({
           />
         </div>
 
-        <UserProfileBar user={user} />
+        <UserProfileBar user={user} onOpenSettings={openSettings} />
       </div>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={closeSettings}
+        user={user}
+        onUpdateProfile={onUpdateProfile}
+        onChangePassword={onChangePassword}
+        onDeleteAccount={onDeleteAccount}
+        notify={notify}
+      />
     </aside>
   );
 };

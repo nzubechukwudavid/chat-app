@@ -70,3 +70,39 @@ export const signOut = async () => {
     // be gone or the network may be down.
   }
 };
+
+export const fetchMe = async () => {
+  try {
+    const res = await api.get('/auth/me');
+    return { ok: true, user: res.data?.user || null };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
+
+export const updateMe = async (payload) => {
+  try {
+    const res = await api.patch('/auth/me', payload);
+    return { ok: true, user: res.data?.user || null, message: res.data?.message };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
+
+export const changePassword = async (payload) => {
+  try {
+    const res = await api.put('/auth/password', payload);
+    return { ok: true, message: res.data?.message || 'Password updated.' };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
+
+export const deleteMe = async (payload = {}) => {
+  try {
+    const res = await api.delete('/auth/me', { data: payload });
+    return { ok: true, message: res.data?.message || 'Account deleted.' };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
