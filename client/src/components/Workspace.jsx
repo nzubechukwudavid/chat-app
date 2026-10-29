@@ -8,7 +8,7 @@ import ConnectionBanner from './ui/ConnectionBanner';
 import SplashScreen from './ui/SplashScreen';
 import { AlertIcon } from './ui/icons';
 import { useToast } from './ui/Toast';
-import { chatClient, connectChatUser, describeConnectionError, disconnectChatUser, isChatConnected } from '../lib/stream';
+import { chatClient, connectChatUser, describeConnectionError, disconnectChatUser, isAuthTokenError, isChatConnected, isStreamConfigError } from '../lib/stream';
 
 /** Mirrors the CSS breakpoint so the drawer behaves the same in JS. */
 const MOBILE_QUERY = '(max-width: 768px)';
@@ -48,6 +48,7 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
     isChatConnected(user.id) ? 'ready' : 'connecting',
   );
   const [error, setError] = useState('');
+  const [reconnecting, setReconnecting] = useState(false);
 
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -83,7 +84,10 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
 
         console.error('[RailHub] chat connection failed:', connectError);
 
-        if (/token/i.test(String(connectError?.message || '')) && onSessionExpired) {
+        // Only a genuine credential rejection means the login is dead. A
+        // misconfigured Stream app is an operator problem: signing the user out
+        // would just loop them back to this same screen.
+        if (isAuthTokenError(connectError) && !isStreamConfigError(connectError) && onSessionExpired) {
           onSessionExpired();
           return;
         }
@@ -96,6 +100,21 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
       cancelled = true;
     };
   }, [user, token, onSessionExpired]);
+
+  // Surface socket-level reconnects (token refresh, dropped websocket) in the
+  // same banner as browser-level offline. Without this the "Reconnecting to
+  // Rail Hub" state was unreachable.
+  useEffect(() => {
+    const onConnectionChanged = (event) => {
+      setReconnecting(event?.online === false);
+    };
+
+    chatClient.on('connection.changed', onConnectionChanged);
+
+    return () => {
+      chatClient.off('connection.changed', onConnectionChanged);
+    };
+  }, []);
 
   // The drawer is a body class, so it must be cleaned up on unmount and when
   // the viewport grows past the mobile breakpoint.
@@ -252,7 +271,7 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
         />
       </Chat>
 
-      <ConnectionBanner />
+      <ConnectionBanner reconnecting={reconnecting && status === 'ready'} />
     </div>
   );
 };

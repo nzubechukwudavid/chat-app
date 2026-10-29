@@ -21,9 +21,10 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
   const isTeam = createType === 'team';
 
   const [channelName, setChannelName] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState(() =>
-    client?.userID ? [client.userID] : [],
-  );
+  // Start empty: the creator is always added server-side, and counting
+  // ourselves as a "selected member" made the empty state say "1 selected"
+  // while submit still asked for at least one member.
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,6 +49,7 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
       setError('Select at least one team member to include.');
       return;
     }
+    const members = Array.from(new Set([client.userID, ...others]));
 
     setIsSubmitting(true);
 
@@ -58,9 +60,9 @@ const CreateChannel = ({ createType = 'team', onClose }) => {
       const channel = isTeam
         ? client.channel('team', `${slugify(name)}-${shortId()}`, {
             name,
-            members: selectedUsers,
+            members,
           })
-        : client.channel('messaging', { members: selectedUsers });
+        : client.channel('messaging', { members });
 
       await channel.watch();
       setActiveChannel(channel);

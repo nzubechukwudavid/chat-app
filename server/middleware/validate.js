@@ -26,8 +26,11 @@ const TRIMMED_COMMON_PASSWORDS = new Set([
  */
 const sanitizeText = (value, maxLength = 255) => {
   if (typeof value !== 'string') return '';
+  // Guard against callers passing an options object: `slice(0, {} )` yields
+  // `slice(0, NaN)` and silently truncates the value to an empty string.
+  const limit = Number.isFinite(maxLength) ? Math.max(0, maxLength) : 255;
   // eslint-disable-next-line no-control-regex
-  return value.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, maxLength);
+  return value.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, limit);
 };
 
 const validateUsername = (raw) => {

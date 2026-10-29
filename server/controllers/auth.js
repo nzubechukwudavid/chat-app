@@ -1,4 +1,3 @@
-const { connect } = require('getstream');
 const bcrypt = require('bcrypt');
 const StreamChat = require('stream-chat').StreamChat;
 const crypto = require('crypto');
@@ -19,6 +18,11 @@ const TIMING_EQUALIZER_HASH = '$2b$12$S/PwA.EDR5tjfl72sKcF1eBzZYPbmUOK8Y/GKtEIq4
 
 const GENERIC_LOGIN_FAILURE = 'Invalid username or password.';
 
+/**
+ * Single Stream server client for every privileged operation: issuing user
+ * tokens, upserting profiles and deleting accounts. Using one SDK avoids the
+ * v2/v3 API drift that previously made profile updates silently no-op.
+ */
 let streamClient = null;
 const getStreamClient = () => {
   if (!streamClient) {
@@ -26,8 +30,6 @@ const getStreamClient = () => {
   }
   return streamClient;
 };
-
-const getServerClient = () => connect(config.stream.apiKey, config.stream.apiSecret, config.stream.appId);
 
 /**
  * The public shape of a user. `password_hash` is never included - the field
@@ -85,7 +87,7 @@ const signup = async (req, res) => {
 
     await upsertToStream({ id: userID, username, fullName, avatarURL });
 
-    const token = getServerClient().createUserToken(userID);
+    const token = getStreamClient().createToken(userID);
     setSessionCookie(res, token);
 
     return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: avatarURL }) });
@@ -113,7 +115,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: GENERIC_LOGIN_FAILURE });
     }
 
-    const token = getServerClient().createUserToken(user.id);
+    const token = getStreamClient().createToken(user.id);
     setSessionCookie(res, token);
 
     return res.status(200).json({ user: publicUser(user) });
@@ -148,7 +150,7 @@ const session = async (req, res) => {
       return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
     }
 
-    const freshToken = getServerClient().createUserToken(user.id);
+    const freshToken = getStreamClient().createToken(user.id);
     setSessionCookie(res, freshToken);
 
     return res.status(200).json({ user: publicUser(user), token: freshToken });
@@ -217,7 +219,7 @@ const updateMe = async (req, res) => {
 
     const nextFullName = fullName !== undefined ? fullName : full_name;
     if (nextFullName !== undefined) {
-      const sanitized = sanitizeText(nextFullName, { maxLength: 100 });
+      const sanitized = sanitizeText(nextFullName, 100);
       if (sanitized.length === 0 && nextFullName !== '') {
         return res.status(400).json({ message: 'Full name is too long.' });
       }
@@ -226,7 +228,7 @@ const updateMe = async (req, res) => {
 
     const nextPhone = phoneNumber !== undefined ? phoneNumber : phone_number;
     if (nextPhone !== undefined) {
-      const sanitized = sanitizeText(nextPhone, { maxLength: 20 });
+      const sanitized = sanitizeText(nextPhone, 20);
       // Allow empty to clear
       if (sanitized !== '' && !/^[0-9+\-\s()]{7,20}$/.test(sanitized)) {
         return res.status(400).json({ message: 'Enter a valid phone number.' });
@@ -236,7 +238,7 @@ const updateMe = async (req, res) => {
 
     const nextAvatar = avatarURL !== undefined ? avatarURL : avatar_url;
     if (nextAvatar !== undefined) {
-      const sanitized = sanitizeText(nextAvatar, { maxLength: 512 });
+      const sanitized = sanitizeText(nextAvatar, 512);
       if (sanitized !== '' && !isValidHttpUrl(sanitized)) {
         return res.status(400).json({ message: 'Avatar URL must be a valid http(s) link.' });
       }
@@ -255,7 +257,7 @@ const updateMe = async (req, res) => {
     }
 
     try {
-      const serverClient = getServerClient();
+      const serverClient = getStreamClient();
       await serverClient.upsertUser({
         id: updated.id,
         role: 'user',
@@ -336,7 +338,7 @@ const deleteMe = async (req, res) => {
 
     await db.deleteUser(userId);
     try {
-      const serverClient = getServerClient();
+      const serverClient = getStreamClient();
       await serverClient.deleteUser(userId, { hard_delete: true });
     } catch (streamErr) {
       console.error('[STREAM] Failed to delete user:', streamErr.message);

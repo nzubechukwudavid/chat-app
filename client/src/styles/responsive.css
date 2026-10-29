@@ -270,7 +270,7 @@
   }
 
   .connection-banner {
-    top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
+    top: calc(var(--header-height-mobile) + var(--space-2) + env(safe-area-inset-top, 0px));
     font-size: var(--font-size-xs);
     padding: 6px 12px;
   }

@@ -545,9 +545,13 @@
    -------------------------------------------------------------------------- */
 .connection-banner {
   position: fixed;
-  top: var(--space-3);
+  /* Clear the app header so the banner never covers the channel title or the
+     settings control. */
+  top: calc(var(--header-height) + var(--space-2));
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - var(--space-6));
   z-index: var(--z-toast);
   display: flex;
   align-items: center;

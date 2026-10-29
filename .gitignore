@@ -17,6 +17,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Uploaded avatars (runtime data, not source)
+/server/uploads/
+
 # Production build outputs
 /client/build
 /dist

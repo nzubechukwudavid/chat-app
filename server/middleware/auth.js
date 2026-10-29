@@ -9,12 +9,15 @@ const requireAuth = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
-    const payload = verifyUserToken(token);
-    if (!payload?.userId) {
+    // `verifyUserToken` returns the Stream user id itself (a string), not the
+    // decoded JWT payload. Treating it as `payload.userId` made every
+    // authenticated route answer 401.
+    const userId = verifyUserToken(token);
+    if (!userId) {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
-    const user = await db.getUserById(payload.userId);
+    const user = await db.getUserById(userId);
     if (!user) {
       return res.status(401).json({ message: 'Not authenticated.' });
     }

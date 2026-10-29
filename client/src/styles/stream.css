@@ -306,12 +306,19 @@
   margin: 0 !important;
 }
 
+.str-chat__message-simple--me.str-chat__message--has-text .str-chat__message-bubble,
+.str-chat__message--me.str-chat__message--has-text .str-chat__message-bubble {
+  /* Reserve a gutter for the delivery/read tick, which is absolutely
+     positioned in the bottom-right corner of the bubble. */
+  padding-right: 32px !important;
+}
+
 .str-chat__message-simple--me .str-chat__message-simple-status,
 .str-chat__message-simple--me .str-chat__message-status {
   order: 2 !important;
   position: absolute !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  right: 10px !important;
+  bottom: 9px !important;
   left: auto !important;
   top: auto !important;
   margin: 0 !important;
@@ -333,7 +340,8 @@
 
 .str-chat__message-simple--me .str-chat__message-simple-status svg path,
 .str-chat__message-simple--me .str-chat__message-status svg path {
-  fill: var(--nrc-green-500) !important;
+  /* White on the emerald bubble; the old emerald-on-emerald fill was invisible. */
+  fill: rgba(255, 255, 255, 0.92) !important;
 }
 
 /* --- Inbound (others) ---------------------------------------------------- */
@@ -353,6 +361,27 @@
   align-items: flex-start !important;
   max-width: min(72%, 620px) !important;
   position: relative !important;
+}
+
+/*
+ * Inbound sender avatar.
+ *
+ * Stream renders `.str-chat__message-sender-avatar` as a flex child with
+ * `align-self: end`, which resolves against the full-width row and parks the
+ * avatar on the *right* edge. Because the message is now a column, move the
+ * avatar to the left gutter with absolute positioning and indent the message
+ * body so the two never overlap. `padding` here must out-specify the
+ * `padding: 0 !important` reset above, hence the doubled class selector.
+ */
+.str-chat__message.str-chat__message--other {
+  padding-left: 44px !important;
+}
+
+.str-chat__message--other > .str-chat__message-sender-avatar {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  align-self: auto !important;
 }
 
 .str-chat__message-simple:not(.str-chat__message-simple--me) .str-chat__message-bubble {

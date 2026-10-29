@@ -186,7 +186,7 @@ async function closeDb() {
 
 const getUserById = async (id) => {
   await ensureDb();
-  const row = findUserById(id);
+  const row = await findUserById(id);
   if (row) {
     return {
       id: row.id,
@@ -203,7 +203,7 @@ const getUserById = async (id) => {
 
 const getUserByUsername = async (username) => {
   await ensureDb();
-  const row = findUserByUsername(username);
+  const row = await findUserByUsername(username);
   if (row) {
     return {
       id: row.id,
@@ -236,7 +236,7 @@ const updateUser = async (id, updates = {}) => {
     params.push(id);
     const sql = `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING id, username, full_name, phone_number, avatar_url, created_at`;
     const res = await dbClient.query(sql, params);
-    return res.rows[0] || getUserById(id);
+    return res.rows[0] || await getUserById(id);
   }
 
   const client = dbClient;
@@ -250,7 +250,7 @@ const updateUser = async (id, updates = {}) => {
   const sql = `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}`;
   const stmt = client.prepare(sql.replace(/\$(\d+)/g, '?'));
   stmt.run(...params);
-  const row = findUserById(id);
+  const row = await findUserById(id);
   if (!row) return null;
   return {
     id: row.id,
@@ -268,7 +268,7 @@ const updatePassword = async (id, passwordHash) => {
     await dbClient.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, id]);
     return;
   }
-  const stmt = dbClient.prepare('UPDATE users SET password_hash = $1 WHERE id = $2');
+  const stmt = dbClient.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
   stmt.run(passwordHash, id);
 };
 
@@ -278,7 +278,7 @@ const deleteUser = async (id) => {
     const res = await dbClient.query('DELETE FROM users WHERE id = $1', [id]);
     return (res.rowCount || 0) > 0;
   }
-  const stmt = dbClient.prepare('DELETE FROM users WHERE id = $1');
+  const stmt = dbClient.prepare('DELETE FROM users WHERE id = ?');
   const info = stmt.run(id);
   return (info.changes || 0) > 0;
 };

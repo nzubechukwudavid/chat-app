@@ -76,8 +76,10 @@ export const ToastProvider = ({ children }) => {
 
     const entry = {
       id: idRef.current,
-      variant: toast.variant || 'info',
-      title: toast.title || '',
+      // `type`/`message` are accepted as aliases so call sites can use either
+      // shape without silently rendering an empty toast.
+      variant: toast.variant || toast.type || 'info',
+      title: toast.title || toast.message || '',
       description: toast.description || '',
       duration: toast.duration,
       action: toast.action,
