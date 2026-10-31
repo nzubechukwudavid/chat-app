@@ -12,6 +12,7 @@ const {
   createAuthLimiter,
   clientKey,
   resetAll,
+  storeName,
 } = require('../middleware/rateLimit');
 
 const makeReq = (ip = '203.0.113.10') => ({
@@ -80,6 +81,10 @@ test('clientKey prefers the resolved req.ip over a spoofable header', () => {
   };
 
   assert.equal(clientKey(req), '203.0.113.55');
+});
+
+test('rate limit store defaults to memory without DATABASE_URL', () => {
+  assert.equal(storeName, 'memory');
 });
 
 test('failed-login limiter blocks after the configured threshold and clears', async () => {

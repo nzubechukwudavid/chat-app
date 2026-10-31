@@ -129,6 +129,12 @@ const createStore = () => {
 
 const store = createStore();
 
+// Effective store, after the empty-DATABASE_URL fallback. Exposed through
+// `/health` so deployments can confirm shared counters without log access.
+const storeName = config.rateLimit.store === 'postgres' && config.databaseUrl
+  ? 'postgres'
+  : 'memory';
+
 const timer = setInterval(() => {
   Promise.resolve(store.sweep()).catch((error) => {
     console.error('[rate-limit] sweep failed:', error.message);
@@ -203,4 +209,4 @@ const createAuthLimiter = () => ({
 
 const resetAll = () => store.clearAll();
 
-module.exports = { createRateLimiter, createAuthLimiter, clientKey, resetAll };
+module.exports = { createRateLimiter, createAuthLimiter, clientKey, resetAll, storeName };

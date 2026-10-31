@@ -4,7 +4,7 @@ const cors = require('cors');
 const { config, assertUsable } = require('./config');
 const authRoutes = require('./routes/auth.js');
 const { securityHeaders } = require('./middleware/security.js');
-const { createRateLimiter } = require('./middleware/rateLimit');
+const { createRateLimiter, storeName } = require('./middleware/rateLimit');
 const { initDb, countUsers, closeDb } = require('./db.js');
 
 const app = express();
@@ -60,6 +60,7 @@ app.get('/health', async (req, res) => {
     database: config.databaseUrl ? 'postgres' : 'sqlite',
     users,
     stream: config.hasStreamCredentials ? 'configured' : 'missing',
+    rateLimits: storeName,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });

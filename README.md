@@ -218,7 +218,7 @@ All routes are under `/auth` unless noted.
 
 | Method | Path | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/health` | — | Status: env, database, user count, Stream config |
+| `GET` | `/health` | — | Status: env, database, user count, Stream config, rate-limit store |
 | `POST` | `/auth/signup` | — | Create account, Stream user and session |
 | `POST` | `/auth/login` | — | Verify credentials, issue session |
 | `GET` | `/auth/session` | Cookie | Restore the current session |
