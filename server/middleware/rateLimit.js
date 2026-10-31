@@ -1,40 +1,52 @@
 /**
- * A small in-process sliding-window rate limiter.
+ * Small in-process rate limiter.
  *
- * Deliberately dependency-free and in-memory: this service runs as a single
- * instance on Render. If it is ever scaled horizontally, swap the `hits` map
- * for a shared store (Redis) - the interface stays the same.
+ * This service currently runs as a single Render instance, so counters live in
+ * memory. Every store is registered so the sweep timer can drop expired entries
+ * instead of letting unique IPs/accounts grow the maps forever. If the API is
+ * ever scaled horizontally or moved to serverless, replace the maps with a
+ * shared store (Neon or Redis) behind the same interface.
  */
 const { config } = require('../config');
 
-const hits = new Map();
+/** All maps created by limiters, so the sweep can clean every one. */
+const stores = new Set();
+
+const registerStore = (store) => {
+  stores.add(store);
+  return store;
+};
 
 const sweep = () => {
   const now = Date.now();
-  for (const [key, entry] of hits) {
-    if (entry.resetAt <= now) hits.delete(key);
+  for (const store of stores) {
+    for (const [key, entry] of store) {
+      if (entry.resetAt <= now) store.delete(key);
+    }
   }
 };
 
 const timer = setInterval(sweep, 60_000);
 if (typeof timer.unref === 'function') timer.unref();
 
+/**
+ * Prefer Express's resolved `req.ip` (which respects `trust proxy`) over a raw
+ * `X-Forwarded-For` value. Reading the first header entry directly lets a
+ * caller choose their own rate-limit bucket when the proxy appends rather than
+ * replaces the header.
+ */
 const clientKey = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length) {
-    return forwarded.split(',')[0].trim();
-  }
   return req.ip || req.socket?.remoteAddress || 'unknown';
 };
 
 /**
  * @param {object} options
- * @param {number} options.windowMs Sliding window length in milliseconds.
+ * @param {number} options.windowMs Window length in milliseconds.
  * @param {number} options.max Requests allowed per window per client.
  * @param {string} options.name Bucket name, used in the response headers.
  */
 const createRateLimiter = ({ windowMs = config.rateLimit.windowMs, max = config.rateLimit.max, name = 'global' } = {}) => {
-  const bucket = new Map();
+  const bucket = registerStore(new Map());
 
   const limiter = (req, res, next) => {
     if (!config.rateLimit.enabled) return next();
@@ -83,7 +95,7 @@ const createAuthLimiter = () => {
     name: 'auth',
   });
 
-  const failures = new Map();
+  const failures = registerStore(new Map());
 
   limiter.recordFailure = (key) => {
     const now = Date.now();
@@ -113,7 +125,7 @@ const createAuthLimiter = () => {
 };
 
 const resetAll = () => {
-  hits.clear();
+  for (const store of stores) store.clear();
 };
 
 module.exports = { createRateLimiter, createAuthLimiter, clientKey, resetAll };

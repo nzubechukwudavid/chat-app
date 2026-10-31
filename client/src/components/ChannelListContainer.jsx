@@ -209,7 +209,6 @@ const ChannelListContainer = ({
   onBroadcast,
   onUpdateProfile,
   onChangePassword,
-  onDeleteAccount,
   onUploadAvatar,
   notify,
 }) => {
@@ -390,7 +389,6 @@ const ChannelListContainer = ({
         user={user}
         onUpdateProfile={onUpdateProfile}
         onChangePassword={onChangePassword}
-        onDeleteAccount={onDeleteAccount}
         onUploadAvatar={onUploadAvatar}
         notify={notify}
       />

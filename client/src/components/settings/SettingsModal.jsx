@@ -6,7 +6,6 @@ import { CloseIcon } from '../ui/icons';
 const TABS = [
   { id: 'profile', label: 'Profile' },
   { id: 'security', label: 'Security' },
-  { id: 'account', label: 'Account' },
 ];
 
 const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
@@ -144,50 +143,7 @@ const PasswordForm = ({ onChangePassword, notify }) => {
   );
 };
 
-const DangerZone = ({ onDeleteAccount, notify }) => {
-  const [confirmText, setConfirmText] = useState('');
-  const [password, setPassword] = useState('');
-  const [deleting, setDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    if (confirmText !== 'DELETE') {
-      notify?.({ type: 'error', message: 'Type DELETE to confirm.' });
-      return;
-    }
-    setDeleting(true);
-    const res = await onDeleteAccount({ confirm: true, password: password || undefined });
-    setDeleting(false);
-    if (res?.ok) {
-      notify?.({ type: 'success', message: res.message || 'Account deleted.' });
-    } else if (res?.error) {
-      notify?.({ type: 'error', message: res.error });
-    }
-  };
-
-  return (
-    <div className="settings-form">
-      <div className="settings-danger">
-        <h3>Delete account</h3>
-        <p>This action is irreversible. All your data will be removed.</p>
-        <label className="settings-field">
-          <span>Type DELETE to confirm</span>
-          <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="DELETE" />
-        </label>
-        <label className="settings-field">
-          <span>Password (optional)</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <div className="settings-actions">
-          <button type="button" className="settings-btn settings-btn--danger" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'Deleting...' : 'Delete account'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword, onDeleteAccount, onUploadAvatar, notify }) => {
+const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword, onUploadAvatar, notify }) => {
   const [tab, setTab] = useState('profile');
 
   if (!open) return null;
@@ -218,7 +174,6 @@ const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword,
         <div className="settings-content">
           {tab === 'profile' && <ProfileForm user={user} onUpdateProfile={onUpdateProfile} onUploadAvatar={onUploadAvatar} notify={notify} />}
           {tab === 'security' && <PasswordForm onChangePassword={onChangePassword} notify={notify} />}
-          {tab === 'account' && <DangerZone onDeleteAccount={onDeleteAccount} notify={notify} />}
         </div>
       </div>
     </div>

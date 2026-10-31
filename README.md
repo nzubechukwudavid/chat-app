@@ -37,14 +37,19 @@ all-station broadcasts — wrapped in an executive dark‑emerald design system.
 
 ### Account & profile
 - Signup, login, logout and persistent sessions.
-- **Settings modal** with three tabs:
+- **Settings modal** with two tabs:
   - **Profile** — full name, phone and avatar (upload a JPG/PNG/GIF/WebP up to
     2 MB, or paste an image URL). Changes sync to Stream.
   - **Security** — change password (current password required, bcrypt 12 rounds).
-  - **Account** — permanent account deletion with a typed `DELETE` confirmation.
-- Avatar uploads are stored under `server/uploads` and served from `/uploads`.
+- Avatar uploads are stored on Stream CDN and served via Stream's image URL.
 - Friendly validation and conflict errors (duplicate handle, wrong password,
   expired session).
+- Session cookies are `httpOnly`; in production they are `Secure` and `SameSite=None`.
+- Login is limited per IP and per account (failed attempts only), with a short lockout after repeated failures.
+- Request bodies are capped at 256 KB and avatars at 2 MB; uploads are limited to image MIME types.
+- Security headers, CORS allow-listing, input trimming and length validation applied on the server.
+- Session revocation: password changes sign out other devices; session cookie carries `sv` version that is checked against DB.
+- Session TTL is 7 days (configurable); `/auth/session` returns a fresh Stream token on each request.
 
 ### UX
 - Dark and light themes, remembered across reloads.
@@ -91,7 +96,7 @@ chat-app/
 │       ├── lib/                     # API client, Stream helpers, directory
 │       └── styles/                  # Tokens + per-surface stylesheets
 └── server/                          # Express REST API
-    ├── controllers/auth.js          # Auth, profile, password, delete, avatar
+    ├── controllers/auth.js          # Auth, profile, password, avatar
     ├── routes/auth.js               # /auth routes + rate limiting
     ├── middleware/                  # requireAuth, validation, upload, security
     ├── services/session.js          # Session issuance helpers
@@ -180,8 +185,11 @@ The app opens at `http://localhost:3000`.
 | `STREAM_API_KEY` | — | **Required.** Stream app key |
 | `STREAM_API_SECRET` | — | **Required.** Signs user tokens |
 | `STREAM_APP_ID` | — | Stream app id (dashboard) |
-| `VERCEL_FRONTEND_URL` | — | Allowed CORS origin in production |
+| `VERCEL_FRONTEND_URL` | — | Primary allowed CORS origin in production |
+| `CORS_ORIGINS` | empty | Comma-separated extra origins (for example Vercel previews) |
+| `TRUST_PROXY` | `1` | Reverse-proxy hops Express trusts when resolving `req.ip` |
 | `DATABASE_URL` | empty | PostgreSQL URL; empty → SQLite |
+| `SESSION_SECRET` | Stream secret | Signs session cookies; set a dedicated random value |
 | `SESSION_TTL_HOURS` | `168` | Session cookie lifetime (7 days) |
 | `SESSION_COOKIE_NAME` | `railhub_session` | Cookie name |
 | `BCRYPT_ROUNDS` | `12` | Password hashing cost |
@@ -216,13 +224,16 @@ All routes are under `/auth` unless noted.
 | `GET` | `/auth/me` | Cookie | Current profile |
 | `PATCH`/`PUT` | `/auth/me` | Cookie | Update full name, phone, avatar URL |
 | `PUT` | `/auth/password` | Cookie | Change password (current password required) |
-| `DELETE` | `/auth/me` | Cookie | Delete account (also removes Stream user) |
 | `POST` | `/auth/upload/avatar` | Cookie | Multipart avatar upload (`avatar` field) |
 | `POST` | `/auth/logout` | Cookie | Clear the session |
 
-Sessions are stateless: a signed Stream JWT is stored in an `httpOnly` cookie.
-Database user ids are generated at signup and **equal the Stream user id**, so
-restoring an account means reusing that id rather than creating a new random one.
+Sessions are stateless: a server-issued session JWT is stored in an `httpOnly`
+cookie. The short-lived Stream token that the browser SDK needs is created
+separately and handed to the client over `/auth/session`. Password changes
+bump the `token_version` so existing cookies become invalid.
+
+Database user ids are generated at signup and **equal the Stream user id**,
+so restoring an account means reusing that id rather than creating a new random one.
 
 ### Database schema
 
@@ -234,6 +245,7 @@ CREATE TABLE users (
   phone_number  VARCHAR(50),
   avatar_url    TEXT,
   password_hash TEXT NOT NULL,
+  token_version INTEGER NOT NULL DEFAULT 0,  -- version of the session cookie
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -246,7 +258,10 @@ idempotent, so both fresh and existing databases work.
 ## 🧪 Testing
 
 ```bash
-cd client
+cd server
+npm test                              # session tokens, password rules, rate limiter
+
+cd ../client
 CI=true npm test -- --watchAll=false   # unit tests (railway event hooks)
 CI=true npm run build                  # production build (warnings are errors)
 ```
@@ -254,31 +269,29 @@ CI=true npm run build                  # production build (warnings are errors)
 The main flows were also exercised end to end in a real browser: signup, login,
 wrong-password and duplicate-handle errors, session restore, line creation,
 DMs, realtime delivery and unread badges, broadcast console, station board,
-profile save, avatar upload, password change, account deletion, dark/light
-themes, mobile drawer and the offline banner.
-
----
+profile save, avatar upload, password change, dark/light themes, mobile drawer
+and the offline banner.
 
 ## 🚢 Deployment
 
 1. **Client → Vercel.** Build `client/`, set `REACT_APP_STREAM_API_KEY`. The
    `/api` rewrite in `client/vercel.json` points at the API service.
 2. **API → Render.** Set `NODE_ENV=production`, `STREAM_API_KEY`,
-   `STREAM_API_SECRET`, `STREAM_APP_ID`, `VERCEL_FRONTEND_URL` and a durable
-   `DATABASE_URL`.
+   `STREAM_API_SECRET`, `STREAM_APP_ID`, `SESSION_SECRET`,
+   `VERCEL_FRONTEND_URL` and a durable `DATABASE_URL`.
 
 Important production notes:
 - **Always set `DATABASE_URL`.** Without it the API creates `server/users.db` on
   local disk; a free Render instance loses that file on redeploy, so users can
   no longer sign in even though their Stream accounts and messages survive.
-- **Avatar files are local.** `server/uploads` is not backed by object storage,
-  so uploaded images disappear on the same ephemeral hosts. Use a persistent
-  disk or S3-style storage before relying on uploads in production.
+- **Avatar files are on Stream CDN** and served through Stream's image upload
+  endpoint. No local disk storage is required in production. Stream's signed
+  URLs expire after about 14 days; `/auth/session` and `/auth/me` refresh the
+  stored URL from Stream before returning the profile.
 - SMS/Twilio notifications were removed; there is no Stream webhook endpoint.
   Any webhook left in the Stream dashboard can be deleted.
-- The avatar **URL** field accepts any `http(s)` URL, not only direct image
-  links. A page URL (for example a Freepik detail page) saves successfully but
-  renders as initials.
+- The avatar **URL** field only accepts an `https://` link. It does not verify
+  that the link is a direct image, so a page URL can save but render as initials.
 
 ---
 
@@ -294,20 +307,35 @@ Important production notes:
   to image MIME types and safe extensions.
 - Security headers, CORS allow-listing, input trimming and length validation are
   applied on the server; channel names and handles are normalized before use.
+- Session revocation: password changes sign out other devices; session cookies carry `sv` version that is checked against DB.
+- Session TTL is 7 days (configurable); `/auth/session` returns a fresh Stream token on each request.
+
+---
+
+## 📝 Notable QA outcomes (Phase 0/1 complete)
+
+- **Session revocation:** Password changes sign out other devices; old session cookies become invalid after a version bump.
+- **Avatar storage:** Uploaded images are stored on Stream CDN and served via Stream's image URL. Avatar URL validation requires an `https://` link.
+- **Account deletion:** Removed from the UI and API as per user request.
+- **Rate limits:** In-memory for now; they reset when the single Render instance restarts (see Phase 3).
+- **Notifications:** In-app toasts for messages in non-active channels are implemented (Phase 4).
+- **Directory cleanup:** `server/scripts/audit-users.js` is a read-only audit. Approved IDs can then be passed to `cleanup-users.js`; nothing is deleted automatically.
+- **Tests:** Client railway-hook tests and server unit tests pass; a full server integration suite is still a gap.
 
 ---
 
 ## ⚠️ Known gaps
 
-- **Uploaded avatars are not durable** on ephemeral hosting (see Deployment).
-- **Avatar URL validation is permissive**; non-image URLs save but show initials.
+- **Avatar URL validation is shallow**; it checks `https://` but not that the
+  link is a direct image, so a page URL can save but show initials.
 - **Directory cleanup**: test accounts and duplicate people can appear in search
-  and member pickers because the directory mirrors Stream users. Remove stray
-  Stream users to clean this up.
+  and member pickers because the directory mirrors Stream users. Run the audit
+  and remove only the IDs you explicitly approve.
 - **Failed-login lockout and rate limits are in-memory**; they reset whenever
   the API restarts and are not shared across multiple instances.
 - **No pagination UI** for very large channel histories beyond the SDK default.
-- **No automated server test suite**; only the client railway hooks have tests.
+- **No server integration test suite** yet; server tests currently cover tokens,
+  password rules and the rate limiter.
 
 ---
 

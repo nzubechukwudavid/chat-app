@@ -12,15 +12,22 @@ const toInt = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const normalizeOrigin = (value) => String(value || '').trim().replace(/\/+$/, '');
+
 const corsOrigins = [
   'http://localhost:3000',
   process.env.VERCEL_FRONTEND_URL,
-].filter(Boolean);
+  ...(process.env.CORS_ORIGINS || '').split(','),
+].map(normalizeOrigin).filter(Boolean);
 
 const config = {
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   port: toInt(process.env.PORT, 5000),
+
+  // Number of reverse-proxy hops Express should trust when resolving req.ip.
+  // Vercel -> Render is one hop from the API's point of view.
+  trustProxy: toInt(process.env.TRUST_PROXY, 1),
 
   paths: {
     root: path.resolve(__dirname, '..'),
@@ -48,6 +55,12 @@ const config = {
     passwordMaxLength: 200,
     sessionTtlMs: toInt(process.env.SESSION_TTL_HOURS, 24 * 7) * 60 * 60 * 1000,
     cookieName: process.env.SESSION_COOKIE_NAME || 'railhub_session',
+    /**
+     * Signs the server-side session cookie. A dedicated secret is better, but
+     * falling back to the Stream secret keeps existing deployments working.
+     * Rotating this value signs everyone out.
+     */
+    sessionSecret: process.env.SESSION_SECRET || process.env.STREAM_API_SECRET || '',
   },
 
   rateLimit: {
@@ -70,6 +83,9 @@ const assertUsable = () => {
   const problems = [];
   if (!config.hasStreamCredentials) {
     problems.push('STREAM_API_KEY and STREAM_API_SECRET are required');
+  }
+  if (!config.auth.sessionSecret) {
+    problems.push('SESSION_SECRET (or STREAM_API_SECRET as a fallback) is required');
   }
   if (problems.length) {
     throw new Error(`[config] Invalid configuration:\n  - ${problems.join('\n  - ')}`);

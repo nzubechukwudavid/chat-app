@@ -3,28 +3,39 @@ const jwt = require('jsonwebtoken');
 const { config } = require('../config');
 
 /**
- * Stream user tokens are HS256 JWTs signed with the API secret and carry a
- * single meaningful claim: `user_id`.
+ * The browser session is a server-issued JWT, not the Stream token. That lets
+ * us revoke every device by bumping `users.token_version`: old cookies carry
+ * the previous version and stop verifying immediately.
  *
- * We verify the signature locally instead of trusting the cookie blindly, so
- * a tampered session cookie cannot be used to impersonate another officer.
+ * The short-lived Stream token the browser SDK needs is created separately and
+ * handed to the client over `/auth/session`.
  */
-const verifyUserToken = (token) => {
+const sessionTtlSeconds = Math.max(60, Math.floor(config.auth.sessionTtlMs / 1000));
+
+const signSessionToken = (userId, tokenVersion = 0) =>
+  jwt.sign(
+    { sub: userId, sv: Number(tokenVersion) || 0 },
+    config.auth.sessionSecret,
+    { algorithm: 'HS256', expiresIn: sessionTtlSeconds },
+  );
+
+const verifySessionToken = (token) => {
   if (!token || typeof token !== 'string') return null;
 
   try {
-    const decoded = jwt.verify(token, config.stream.apiSecret, {
+    const decoded = jwt.verify(token, config.auth.sessionSecret, {
       algorithms: ['HS256'],
-      // Stream issues tokens without a timestamp by default, so there is no
-      // `exp` to validate here. The session cookie carries the real TTL.
-      ignoreExpiration: true,
     });
 
-    const userId = decoded?.user_id;
-    return typeof userId === 'string' && userId ? userId : null;
+    if (typeof decoded?.sub !== 'string' || !decoded.sub) return null;
+
+    return {
+      userId: decoded.sub,
+      tokenVersion: Number(decoded.sv) || 0,
+    };
   } catch {
     return null;
   }
 };
 
-module.exports = { verifyUserToken };
+module.exports = { signSessionToken, verifySessionToken };

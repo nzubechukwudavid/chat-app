@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Chat } from 'stream-chat-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Chat, useChatContext } from 'stream-chat-react';
 
 import ChannelContainer from './ChannelContainer';
 import ChannelListContainer from './ChannelListContainer';
@@ -36,13 +36,76 @@ const StreamUser = (user) => ({
 let mountedWorkspaces = 0;
 
 /**
+ * In-app notification for messages that arrive outside the channel currently
+ * on screen. Stream already updates unread badges; this adds a short toast so
+ * a dispatcher notices a message in another line without switching tabs.
+ */
+const MessageNotifications = ({ notify }) => {
+  const { client, channel, setActiveChannel } = useChatContext();
+  const activeCidRef = useRef(channel?.cid || null);
+
+  useEffect(() => {
+    activeCidRef.current = channel?.cid || null;
+  }, [channel]);
+
+  useEffect(() => {
+    if (!client) return undefined;
+
+    const handleNewMessage = (event) => {
+      const message = event?.message;
+      if (!message || !event.cid) return;
+      if (message.user?.id === client.userID) return;
+      if (event.cid === activeCidRef.current) return;
+
+      const muted = (client.mutedChannels || []).some(
+        (entry) => (entry?.channel?.cid || entry?.cid) === event.cid,
+      );
+      if (muted) return;
+
+      const sender = message.user?.name || message.user?.id || 'Someone';
+      const channelName = event.channel?.name;
+      const text = (message.text || '').trim();
+      const preview = text
+        ? `${text.slice(0, 90)}${text.length > 90 ? '…' : ''}`
+        : 'Sent an attachment';
+
+      notify({
+        variant: 'info',
+        title: channelName ? `${sender} in ${channelName}` : sender,
+        description: preview,
+        duration: 6000,
+        action: {
+          label: 'Open',
+          onClick: () => {
+            try {
+              const target = client.channel(event.channel_type, event.channel_id);
+              setActiveChannel?.(target);
+            } catch (openError) {
+              console.error('[RailHub] Could not open notified channel:', openError);
+            }
+          },
+        },
+      });
+    };
+
+    client.on('message.new', handleNewMessage);
+
+    return () => {
+      client.off('message.new', handleNewMessage);
+    };
+  }, [client, notify, setActiveChannel]);
+
+  return null;
+};
+
+/**
  * The authenticated shell.
  *
  * Kept in its own lazily-loaded module so the sign-in screen never pays for
  * the Stream SDK bundle, and the socket connection starts at the same moment
  * the workspace code arrives.
  */
-const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', updateProfile, changePassword, deleteAccount, uploadAvatar }) => {
+const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', updateProfile, changePassword, uploadAvatar }) => {
   const { notify } = useToast();
   const [status, setStatus] = useState(() =>
     isChatConnected(user.id) ? 'ready' : 'connecting',
@@ -236,6 +299,8 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
       />
 
       <Chat client={chatClient} theme={theme === 'light' ? 'messenger light' : 'messenger dark'}>
+        <MessageNotifications notify={notify} />
+
         <ChannelListContainer
           user={user}
           isCreating={isCreating}
@@ -248,7 +313,6 @@ const Workspace = ({ user, token, onSignOut, onSessionExpired, theme = 'dark', u
           onBroadcast={openBroadcast}
           onUpdateProfile={updateProfile}
           onChangePassword={changePassword}
-          onDeleteAccount={deleteAccount}
           onUploadAvatar={uploadAvatar}
           notify={notify}
         />

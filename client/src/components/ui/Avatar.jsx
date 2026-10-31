@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { initials } from '../../lib/format';
 
@@ -10,6 +10,12 @@ const Avatar = ({ name, image, size = 34, online = false, className = '', title 
   const [broken, setBroken] = useState(false);
   const label = name || 'User';
   const showImage = Boolean(image) && !broken;
+
+  // A refreshed Stream CDN URL should get another chance to load. Without this
+  // reset, one expired link leaves the avatar stuck on initials forever.
+  useEffect(() => {
+    setBroken(false);
+  }, [image]);
 
   return (
     <span

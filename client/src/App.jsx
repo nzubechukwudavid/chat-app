@@ -18,7 +18,7 @@ import { useTheme } from './hooks/useTheme';
 const Workspace = lazy(() => import('./components/Workspace'));
 
 const App = () => {
-  const { user, token, isAuthenticated, isLoading, restore, signIn, signUp, signOut, updateProfile, changePassword, deleteAccount, uploadAvatar } = useSession();
+  const { user, token, isAuthenticated, isLoading, restore, signIn, signUp, signOut, updateProfile, changePassword, uploadAvatar } = useSession();
   const { notify } = useToast();
   const { theme } = useTheme();
 
@@ -78,7 +78,6 @@ const App = () => {
           theme={theme}
           updateProfile={updateProfile}
           changePassword={changePassword}
-          deleteAccount={deleteAccount}
           uploadAvatar={uploadAvatar}
         />
       </Suspense>

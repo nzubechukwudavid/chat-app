@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const { config, assertUsable } = require('./config');
 const authRoutes = require('./routes/auth.js');
@@ -24,13 +23,15 @@ const corsOptions = {
 };
 
 app.disable('x-powered-by');
-app.set('trust proxy', 1);
+// API responses (especially `/auth/session`, which contains a fresh Stream
+// token) must never be answered with a cached 304.
+app.disable('etag');
+app.set('trust proxy', config.trustProxy);
 
 app.use(securityHeaders);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: true, limit: '256kb' }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Compact request log - enough to spot abuse, cheap enough to leave on.
 app.use((req, res, next) => {
@@ -73,6 +74,9 @@ app.get('/', (req, res) => {
 });
 
 // Per-route throttling for the auth endpoints lives in `routes/auth.js`.
+// This broader limiter covers `/auth/session`, `/auth/me` and anything else
+// under `/auth` that does not have its own tighter bucket.
+app.use('/auth', apiLimiter);
 app.use('/auth', authRoutes);
 
 // 404 for unmatched API routes.

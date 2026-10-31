@@ -4,9 +4,9 @@ const crypto = require('crypto');
 
 const { config } = require('../config');
 const db = require('../db');
-const { validateSignupPayload, sanitizeText } = require('../middleware/validate');
+const { validateSignupPayload, sanitizeText, validatePassword } = require('../middleware/validate');
 const { setSessionCookie, clearSessionCookie, readSessionCookie } = require('../services/session');
-const { verifyUserToken } = require('../utils/token');
+const { signSessionToken, verifySessionToken } = require('../utils/token');
 
 /**
  * A valid bcrypt hash of a throwaway string. Comparing against it when the
@@ -20,8 +20,8 @@ const GENERIC_LOGIN_FAILURE = 'Invalid username or password.';
 
 /**
  * Single Stream server client for every privileged operation: issuing user
- * tokens, upserting profiles and deleting accounts. Using one SDK avoids the
- * v2/v3 API drift that previously made profile updates silently no-op.
+ * tokens and upserting profiles. Using one SDK avoids the v2/v3 API drift that
+ * previously made profile updates silently no-op.
  */
 let streamClient = null;
 const getStreamClient = () => {
@@ -42,6 +42,37 @@ const publicUser = (user) => ({
   phoneNumber: user.phone_number ?? user.phoneNumber ?? '',
   avatarURL: user.avatar_url ?? user.avatarURL ?? '',
 });
+
+/** Signs a cookie the server can revoke and returns it. */
+const issueSession = (res, user) => {
+  const token = signSessionToken(user.id, user.token_version);
+  setSessionCookie(res, token);
+  return token;
+};
+
+/**
+ * Stream CDN links are signed and expire after 14 days. Stream re-signs the
+ * URL when the user object is fetched, so refresh it before handing the
+ * profile to the browser and persist the fresh link for the next boot.
+ * Non-Stream URLs (a direct image link) are left untouched.
+ */
+const refreshStreamAvatar = async (user) => {
+  if (!user?.avatar_url || !/stream-io-cdn\.com/i.test(user.avatar_url)) return user;
+
+  try {
+    const result = await getStreamClient().queryUsers({ id: user.id }, {}, { limit: 1 });
+    const freshImage = result?.users?.[0]?.image;
+    if (freshImage && freshImage !== user.avatar_url) {
+      await db.updateUser(user.id, { avatar_url: freshImage });
+      user.avatar_url = freshImage;
+    }
+  } catch (streamErr) {
+    // An avatar refresh must never block sign-in or profile loads.
+    console.error('[STREAM] Failed to refresh avatar URL:', streamErr.message);
+  }
+
+  return user;
+};
 
 const upsertToStream = async ({ id, username, fullName, avatarURL }) => {
   const client = getStreamClient();
@@ -85,10 +116,19 @@ const signup = async (req, res) => {
       passwordHash: hashedPassword,
     });
 
-    await upsertToStream({ id: userID, username, fullName, avatarURL });
+    try {
+      await upsertToStream({ id: userID, username, fullName, avatarURL });
+    } catch (streamError) {
+      // Stream is a separate system, so compensate instead of leaving a
+      // database account whose username can never be used again.
+      await db.deleteUser(userID).catch((cleanupError) => {
+        console.error('Signup rollback error:', cleanupError.message);
+      });
+      console.error('Signup Stream upsert error:', streamError.message);
+      return res.status(503).json({ message: 'Chat service is unavailable. Please try again shortly.' });
+    }
 
-    const token = getStreamClient().createToken(userID);
-    setSessionCookie(res, token);
+    issueSession(res, { id: userID, token_version: 0 });
 
     return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: avatarURL }) });
   } catch (error) {
@@ -115,8 +155,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: GENERIC_LOGIN_FAILURE });
     }
 
-    const token = getStreamClient().createToken(user.id);
-    setSessionCookie(res, token);
+    issueSession(res, user);
 
     return res.status(200).json({ user: publicUser(user) });
   } catch (error) {
@@ -132,26 +171,40 @@ const login = async (req, res) => {
  */
 const session = async (req, res) => {
   try {
+    // This response contains a freshly minted Stream token, so it must never
+    // be served from the browser cache or answered with a 304.
+    res.set('Cache-Control', 'no-store');
+
     const token = readSessionCookie(req);
     if (!token) {
       return res.status(401).json({ message: 'No active session.' });
     }
 
-    let userId = verifyUserToken(token);
-
-    if (!userId) {
+    const sessionData = verifySessionToken(token);
+    if (!sessionData) {
       clearSessionCookie(res);
       return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
     }
 
-    const user = await db.findUserById(userId);
+    const user = await db.getUserById(sessionData.userId);
     if (!user) {
       clearSessionCookie(res);
       return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
     }
 
+    if ((Number(user.token_version) || 0) !== sessionData.tokenVersion) {
+      clearSessionCookie(res);
+      return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+    }
+
+    await refreshStreamAvatar(user);
+
+    // Sliding expiry keeps active users signed in. Revocation does not depend
+    // on this: a password change bumps `token_version`, and every older cookie
+    // is rejected even if it was refreshed recently.
+    issueSession(res, user);
+
     const freshToken = getStreamClient().createToken(user.id);
-    setSessionCookie(res, freshToken);
 
     return res.status(200).json({ user: publicUser(user), token: freshToken });
   } catch (error) {
@@ -168,13 +221,26 @@ const logout = async (req, res) => {
 
 const uploadAvatar = async (req, res) => {
   try {
-    if (!req.file) {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+    if (!req.file?.buffer?.length) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const avatarUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
-    return res.status(200).json({ avatarURL: avatarUrl });
+
+    const result = await getStreamClient().uploadImage(
+      req.file.buffer,
+      req.file.originalname || 'avatar',
+      req.file.mimetype,
+      { id: userId },
+    );
+
+    if (!result?.file) {
+      return res.status(502).json({ message: 'The image service did not return a URL.' });
+    }
+
+    return res.status(200).json({ avatarURL: result.file });
   } catch (error) {
     console.error('UploadAvatar error:', error);
     return res.status(500).json({ message: 'We could not upload the avatar.' });
@@ -191,6 +257,8 @@ const getMe = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
+    await refreshStreamAvatar(user);
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({ user: publicUser(user) });
   } catch (error) {
     console.error('GetMe error:', error);
@@ -198,10 +266,12 @@ const getMe = async (req, res) => {
   }
 };
 
-const isValidHttpUrl = (value) => {
+const isValidAvatarUrl = (value) => {
   try {
     const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    // Stream CDN links are HTTPS; mixed-content URLs would silently fail in
+    // the browser, so keep signup and profile updates on the same rule.
+    return url.protocol === 'https:';
   } catch {
     return false;
   }
@@ -239,8 +309,8 @@ const updateMe = async (req, res) => {
     const nextAvatar = avatarURL !== undefined ? avatarURL : avatar_url;
     if (nextAvatar !== undefined) {
       const sanitized = sanitizeText(nextAvatar, 512);
-      if (sanitized !== '' && !isValidHttpUrl(sanitized)) {
-        return res.status(400).json({ message: 'Avatar URL must be a valid http(s) link.' });
+      if (sanitized !== '' && !isValidAvatarUrl(sanitized)) {
+        return res.status(400).json({ message: 'Avatar URL must be a valid https:// link.' });
       }
       updates.avatar_url = sanitized === '' ? null : sanitized;
     }
@@ -286,8 +356,9 @@ const changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Enter your current and new password.' });
     }
-    if (String(newPassword).length < 8) {
-      return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+    const passwordCheck = validatePassword(String(newPassword));
+    if (!passwordCheck.ok) {
+      return res.status(400).json({ message: passwordCheck.message });
     }
 
     const user = await db.getUserById(userId);
@@ -300,9 +371,12 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Current password is incorrect.' });
     }
 
-    const salt = await bcrypt.genSalt(12);
-    const hash = await bcrypt.hash(String(newPassword), salt);
-    await db.updatePassword(userId, hash);
+    const hash = await bcrypt.hash(String(newPassword), config.auth.bcryptRounds);
+    const tokenVersion = await db.updatePassword(userId, hash);
+
+    // Keep this device signed in with the new version while every other
+    // cookie (which still carries the old version) is now invalid.
+    issueSession(res, { id: userId, token_version: tokenVersion });
 
     return res.status(200).json({ message: 'Password updated.' });
   } catch (error) {
@@ -311,45 +385,4 @@ const changePassword = async (req, res) => {
   }
 };
 
-const deleteMe = async (req, res) => {
-  try {
-    const userId = req.userId || req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Not authenticated.' });
-    }
-
-    const { confirm, password } = req.body || {};
-    if (confirm !== true && confirm !== 'true') {
-      return res.status(400).json({ message: 'Please confirm account deletion.' });
-    }
-
-    const user = await db.getUserById(userId);
-    if (!user) {
-      clearSessionCookie(res);
-      return res.status(200).json({ message: 'Account deleted.' });
-    }
-
-    if (password) {
-      const match = await bcrypt.compare(String(password), user.password_hash || '');
-      if (!match) {
-        return res.status(400).json({ message: 'Password is incorrect.' });
-      }
-    }
-
-    await db.deleteUser(userId);
-    try {
-      const serverClient = getStreamClient();
-      await serverClient.deleteUser(userId, { hard_delete: true });
-    } catch (streamErr) {
-      console.error('[STREAM] Failed to delete user:', streamErr.message);
-    }
-
-    clearSessionCookie(res);
-    return res.status(200).json({ message: 'Account deleted.' });
-  } catch (error) {
-    console.error('DeleteMe error:', error);
-    return res.status(500).json({ message: 'We could not delete your account.' });
-  }
-};
-
-module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, deleteMe, uploadAvatar };
+module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, uploadAvatar };

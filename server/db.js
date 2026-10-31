@@ -33,9 +33,16 @@ async function doInit() {
         phone_number VARCHAR(50),
         avatar_url TEXT,
         password_hash TEXT NOT NULL,
+        token_version INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Existing deployments predate session revocation, so add the column in
+    // place rather than requiring a manual migration.
+    await pool.query(
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0',
+    );
 
     dbClient = pool;
     console.log('[DB] Connected to PostgreSQL via DATABASE_URL');
@@ -54,9 +61,16 @@ async function doInit() {
       phone_number TEXT,
       avatar_url TEXT,
       password_hash TEXT NOT NULL,
+      token_version INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // SQLite has no `ADD COLUMN IF NOT EXISTS`, so probe the table first.
+  const columns = db.prepare('PRAGMA table_info(users)').all();
+  if (!columns.some((column) => column.name === 'token_version')) {
+    db.exec('ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0');
+  }
 
   dbClient = db;
   console.log(`[DB] Using local SQLite database at ${config.paths.sqliteFile}`);
@@ -171,6 +185,26 @@ async function countUsers() {
   return stmt.get()?.count ?? 0;
 }
 
+/**
+ * Full directory snapshot for the cleanup audit. Returns only the fields the
+ * audit needs; password hashes never leave the database.
+ */
+async function listUsers() {
+  await ensureDb();
+
+  if (dbType === 'postgres') {
+    const res = await dbClient.query(
+      'SELECT id, username, full_name, avatar_url, created_at FROM users ORDER BY created_at ASC',
+    );
+    return res.rows;
+  }
+
+  const stmt = dbClient.prepare(
+    'SELECT id, username, full_name, avatar_url, created_at FROM users ORDER BY created_at ASC',
+  );
+  return stmt.all();
+}
+
 async function closeDb() {
   if (!dbClient) return;
   try {
@@ -195,6 +229,7 @@ const getUserById = async (id) => {
       phone_number: row.phone_number,
       avatar_url: row.avatar_url,
       password_hash: row.password_hash,
+      token_version: Number(row.token_version) || 0,
       created_at: row.created_at,
     };
   }
@@ -212,6 +247,7 @@ const getUserByUsername = async (username) => {
       phone_number: row.phone_number,
       avatar_url: row.avatar_url,
       password_hash: row.password_hash,
+      token_version: Number(row.token_version) || 0,
       created_at: row.created_at,
     };
   }
@@ -265,11 +301,18 @@ const updateUser = async (id, updates = {}) => {
 const updatePassword = async (id, passwordHash) => {
   await ensureDb();
   if (dbType === 'postgres') {
-    await dbClient.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, id]);
-    return;
+    const res = await dbClient.query(
+      'UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2 RETURNING token_version',
+      [passwordHash, id],
+    );
+    return Number(res.rows[0]?.token_version) || 0;
   }
-  const stmt = dbClient.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
-  stmt.run(passwordHash, id);
+  const update = dbClient.prepare(
+    'UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?',
+  );
+  update.run(passwordHash, id);
+  const row = dbClient.prepare('SELECT token_version FROM users WHERE id = ?').get(id);
+  return Number(row?.token_version) || 0;
 };
 
 const deleteUser = async (id) => {
@@ -291,6 +334,7 @@ module.exports = {
   usernameExists,
   createUser,
   countUsers,
+  listUsers,
   closeDb,
   getUserById,
   getUserByUsername,

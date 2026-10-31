@@ -98,15 +98,6 @@ export const changePassword = async (payload) => {
   }
 };
 
-export const deleteMe = async (payload = {}) => {
-  try {
-    const res = await api.delete('/auth/me', { data: payload });
-    return { ok: true, message: res.data?.message || 'Account deleted.' };
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
-};
-
 export const uploadAvatar = async (file) => {
   try {
     const formData = new FormData();

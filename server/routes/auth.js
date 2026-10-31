@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { signup, login, session, logout, getMe, updateMe, changePassword, deleteMe, uploadAvatar } = require('../controllers/auth.js');
+const { signup, login, session, logout, getMe, updateMe, changePassword, uploadAvatar } = require('../controllers/auth.js');
 const { createRateLimiter, createAuthLimiter, clientKey } = require('../middleware/rateLimit');
 const { config } = require('../config');
 const { requireAuth } = require('../middleware/auth');
@@ -41,8 +41,9 @@ router.post('/signup', ipLimiter, guard, signup);
 router.post('/login', ipLimiter, guard, (req, res, next) => {
   const originalJson = res.json.bind(res);
   res.json = (payload) => {
-    if (res.statusCode >= 400 && req.__accountKey) {
-      accountLimiter.recordFailure(req.__accountKey);
+    if (req.__accountKey) {
+      if (res.statusCode >= 400) accountLimiter.recordFailure(req.__accountKey);
+      else accountLimiter.clearFailures(req.__accountKey);
     }
     return originalJson(payload);
   };
@@ -56,8 +57,14 @@ router.patch('/me', requireAuth, sensitiveLimiter, updateMe);
 router.put('/me', requireAuth, sensitiveLimiter, updateMe);
 router.put('/password', requireAuth, sensitiveLimiter, changePassword);
 router.post('/change-password', requireAuth, sensitiveLimiter, changePassword);
-router.delete('/me', requireAuth, sensitiveLimiter, deleteMe);
-router.post('/upload/avatar', requireAuth, sensitiveLimiter, upload.single('avatar'), uploadAvatar);
+router.post('/upload/avatar', requireAuth, sensitiveLimiter, (req, res, next) => {
+  upload.single('avatar')(req, res, (error) => {
+    if (error) {
+      return res.status(400).json({ message: error.message || 'That image could not be uploaded.' });
+    }
+    return next();
+  });
+}, uploadAvatar);
 
 module.exports = router;
 module.exports.clientKey = clientKey;

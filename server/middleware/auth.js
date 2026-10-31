@@ -1,5 +1,5 @@
-const { readSessionCookie } = require('../services/session');
-const { verifyUserToken } = require('../utils/token');
+const { readSessionCookie, clearSessionCookie } = require('../services/session');
+const { verifySessionToken } = require('../utils/token');
 const db = require('../db');
 
 const requireAuth = async (req, res, next) => {
@@ -9,16 +9,22 @@ const requireAuth = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
-    // `verifyUserToken` returns the Stream user id itself (a string), not the
-    // decoded JWT payload. Treating it as `payload.userId` made every
-    // authenticated route answer 401.
-    const userId = verifyUserToken(token);
-    if (!userId) {
+    const session = verifySessionToken(token);
+    if (!session) {
+      clearSessionCookie(res);
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
-    const user = await db.getUserById(userId);
+    const user = await db.getUserById(session.userId);
     if (!user) {
+      clearSessionCookie(res);
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+
+    // A password change bumps the stored version, so every older cookie is
+    // rejected even though its signature and `exp` are still valid.
+    if ((Number(user.token_version) || 0) !== session.tokenVersion) {
+      clearSessionCookie(res);
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
