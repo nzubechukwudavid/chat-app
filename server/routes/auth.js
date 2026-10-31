@@ -20,13 +20,21 @@ const ipLimiter = createRateLimiter({
  */
 const accountLimiter = createAuthLimiter();
 
-const guard = (req, res, next) => {
+const guard = async (req, res, next) => {
   const key = String(req.body?.username || '').trim().toLowerCase();
-  if (key && accountLimiter.isBlocked(key)) {
-    return res.status(429).json({
-      message: 'Too many failed attempts for this account. Please wait a few minutes and try again.',
-    });
+
+  if (key) {
+    try {
+      if (await accountLimiter.isBlocked(key)) {
+        return res.status(429).json({
+          message: 'Too many failed attempts for this account. Please wait a few minutes and try again.',
+        });
+      }
+    } catch (error) {
+      console.error('[rate-limit] account check failed, allowing request:', error.message);
+    }
   }
+
   req.__accountKey = key;
   return next();
 };
@@ -41,11 +49,21 @@ router.post('/signup', ipLimiter, guard, signup);
 router.post('/login', ipLimiter, guard, (req, res, next) => {
   const originalJson = res.json.bind(res);
   res.json = (payload) => {
-    if (req.__accountKey) {
-      if (res.statusCode >= 400) accountLimiter.recordFailure(req.__accountKey);
-      else accountLimiter.clearFailures(req.__accountKey);
-    }
-    return originalJson(payload);
+    if (!req.__accountKey) return originalJson(payload);
+
+    const update = res.statusCode >= 400
+      ? accountLimiter.recordFailure(req.__accountKey)
+      : accountLimiter.clearFailures(req.__accountKey);
+
+    // Wait for the shared counter update before releasing the response, so a
+    // retry cannot race the write. A store failure is logged and ignored.
+    update
+      .catch((error) => {
+        console.error('[rate-limit] failed-login update failed:', error.message);
+      })
+      .then(() => originalJson(payload));
+
+    return res;
   };
   return login(req, res, next);
 });

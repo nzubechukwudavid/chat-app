@@ -44,6 +44,19 @@ async function doInit() {
       'ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0',
     );
 
+    // Shared rate-limit counters. Keeping them in Neon means every Render
+    // instance (and every restart) sees the same limits.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rate_limits (
+        key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL,
+        reset_at TIMESTAMPTZ NOT NULL
+      );
+    `);
+    await pool.query(
+      'CREATE INDEX IF NOT EXISTS rate_limits_reset_at_idx ON rate_limits (reset_at)',
+    );
+
     dbClient = pool;
     console.log('[DB] Connected to PostgreSQL via DATABASE_URL');
     return pool;

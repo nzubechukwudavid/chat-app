@@ -194,6 +194,7 @@ The app opens at `http://localhost:3000`.
 | `SESSION_COOKIE_NAME` | `railhub_session` | Cookie name |
 | `BCRYPT_ROUNDS` | `12` | Password hashing cost |
 | `RATE_LIMIT_ENABLED` | `true` | Global/per-route throttling |
+| `RATE_LIMIT_STORE` | auto | `postgres` when `DATABASE_URL` is set, otherwise `memory` |
 | `RATE_LIMIT_MAX` | `300` | Requests per window per IP |
 | `RATE_LIMIT_AUTH_MAX` | `30` | Auth requests per 10-minute window |
 | `RATE_LIMIT_ACCOUNT_MAX_FAILURES` | `6` | Failed logins before a temporary account lock |
@@ -253,6 +254,19 @@ CREATE TABLE users (
 SQLite uses the same shape (with `TEXT` affinity). Schema creation is
 idempotent, so both fresh and existing databases work.
 
+In PostgreSQL a second table holds shared rate-limit counters:
+
+```sql
+CREATE TABLE rate_limits (
+  key       TEXT PRIMARY KEY,
+  count     INTEGER NOT NULL,
+  reset_at  TIMESTAMPTZ NOT NULL
+);
+```
+
+Counters are updated with one atomic upsert, so multiple API instances see the
+same limit. Local development uses an in-memory store instead.
+
 ---
 
 ## 🧪 Testing
@@ -302,7 +316,9 @@ Important production notes:
 - Session cookies are `httpOnly`; in production they are `Secure` and
   `SameSite=None` so the same-origin proxy works.
 - Login is limited per IP and per account (failed attempts only), with a
-  short lockout after repeated failures.
+  short lockout after repeated failures. In production those counters live in
+  the shared Postgres/Neon table, so they survive restarts and are shared by
+  every API instance.
 - Request bodies are capped at 256 KB and avatars at 2 MB; uploads are limited
   to image MIME types and safe extensions.
 - Security headers, CORS allow-listing, input trimming and length validation are
@@ -317,7 +333,7 @@ Important production notes:
 - **Session revocation:** Password changes sign out other devices; old session cookies become invalid after a version bump.
 - **Avatar storage:** Uploaded images are stored on Stream CDN and served via Stream's image URL. Avatar URL validation requires an `https://` link.
 - **Account deletion:** Removed from the UI and API as per user request.
-- **Rate limits:** In-memory for now; they reset when the single Render instance restarts (see Phase 3).
+- **Rate limits:** Shared Postgres/Neon counters in production; in-memory locally.
 - **Notifications:** In-app toasts for messages in non-active channels are implemented (Phase 4).
 - **Directory cleanup:** `server/scripts/audit-users.js` is a read-only audit. Approved IDs can then be passed to `cleanup-users.js`; nothing is deleted automatically.
 - **Tests:** Client railway-hook tests and server unit tests pass; a full server integration suite is still a gap.
@@ -331,8 +347,9 @@ Important production notes:
 - **Directory cleanup**: test accounts and duplicate people can appear in search
   and member pickers because the directory mirrors Stream users. Run the audit
   and remove only the IDs you explicitly approve.
-- **Failed-login lockout and rate limits are in-memory**; they reset whenever
-  the API restarts and are not shared across multiple instances.
+- **Rate limiting fails open** if the shared database is unavailable; the
+  outage is logged, but throttling is temporarily skipped rather than taking
+  authentication down.
 - **No pagination UI** for very large channel histories beyond the SDK default.
 - **No server integration test suite** yet; server tests currently cover tokens,
   password rules and the rate limiter.

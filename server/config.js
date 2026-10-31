@@ -65,6 +65,12 @@ const config = {
 
   rateLimit: {
     enabled: toBool(process.env.RATE_LIMIT_ENABLED, true),
+    /**
+     * `postgres` shares counters across API instances through the existing
+     * Neon database. `memory` is the local-development fallback. By default
+     * production (where DATABASE_URL is set) uses Postgres.
+     */
+    store: String(process.env.RATE_LIMIT_STORE || (process.env.DATABASE_URL ? 'postgres' : 'memory')).toLowerCase(),
     windowMs: toInt(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     max: toInt(process.env.RATE_LIMIT_MAX, 300),
     authMax: toInt(process.env.RATE_LIMIT_AUTH_MAX, 30),
