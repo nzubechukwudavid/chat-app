@@ -31,7 +31,11 @@ const config = {
 
   paths: {
     root: path.resolve(__dirname, '..'),
-    sqliteFile: path.join(__dirname, 'users.db'),
+    // `SQLITE_FILE` lets the integration tests point at a throwaway database
+    // instead of the developer's real users.db.
+    sqliteFile: process.env.SQLITE_FILE
+      ? path.resolve(process.env.SQLITE_FILE)
+      : path.join(__dirname, 'users.db'),
   },
 
   cors: {

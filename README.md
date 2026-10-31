@@ -273,18 +273,28 @@ same limit. Local development uses an in-memory store instead.
 
 ```bash
 cd server
-npm test                              # session tokens, password rules, rate limiter
+npm test                              # unit + HTTP integration tests
 
 cd ../client
 CI=true npm test -- --watchAll=false   # unit tests (railway event hooks)
 CI=true npm run build                  # production build (warnings are errors)
 ```
 
+The server suite now includes real HTTP integration tests. They boot the
+Express app on a random port, point `SQLITE_FILE` at a throwaway database and
+stub the Stream SDK, so they need no network access and never touch production
+data. Covered flows: signup validation and duplicate handles, login/session
+cookies, profile updates, avatar upload validation, password change with cookie
+revocation, logout, per-IP throttling and per-account failed-login lockout.
+
 The main flows were also exercised end to end in a real browser: signup, login,
 wrong-password and duplicate-handle errors, session restore, line creation,
 DMs, realtime delivery and unread badges, broadcast console, station board,
 profile save, avatar upload, password change, dark/light themes, mobile drawer
-and the offline banner.
+and the offline banner. Phase 5 re-checked login, settings validation, theme
+switching, sign-out and the settings dialog keyboard behaviour in the in-app
+browser; that harness cannot emulate a phone viewport, so the responsive
+breakpoints were reviewed in CSS instead.
 
 ## 🚢 Deployment
 
@@ -328,7 +338,7 @@ Important production notes:
 
 ---
 
-## 📝 Notable QA outcomes (Phase 0/1 complete)
+## 📝 Notable QA outcomes (Phase 0/1 complete, Phase 5 automated)
 
 - **Session revocation:** Password changes sign out other devices; old session cookies become invalid after a version bump.
 - **Avatar storage:** Uploaded images are stored on Stream CDN and served via Stream's image URL. Avatar URL validation requires an `https://` link.
@@ -336,7 +346,8 @@ Important production notes:
 - **Rate limits:** Shared Postgres/Neon counters in production; in-memory locally.
 - **Notifications:** In-app toasts for messages in non-active channels are implemented (Phase 4).
 - **Directory cleanup:** `server/scripts/audit-users.js` is a read-only audit. Approved IDs can then be passed to `cleanup-users.js`; nothing is deleted automatically.
-- **Tests:** Client railway-hook tests and server unit tests pass; a full server integration suite is still a gap.
+- **Tests:** Client railway-hook tests and server unit + HTTP integration tests pass. The Postgres/Neon code path is covered in production but not in the local suite.
+- **Accessibility:** Lighthouse scores 100 for accessibility and best practices on both the sign-in screen and the workspace. The settings dialog now traps focus, closes on Escape, restores focus to the trigger, and labels its tabs; channel rows expose their visible text to screen readers.
 
 ---
 
@@ -351,8 +362,9 @@ Important production notes:
   outage is logged, but throttling is temporarily skipped rather than taking
   authentication down.
 - **No pagination UI** for very large channel histories beyond the SDK default.
-- **No server integration test suite** yet; server tests currently cover tokens,
-  password rules and the rate limiter.
+- **The Postgres/Neon path is not integration-tested locally**; server tests use
+  SQLite plus a stubbed Stream client, and the Neon store is verified in
+  production through `/health` and rate-limit headers.
 
 ---
 

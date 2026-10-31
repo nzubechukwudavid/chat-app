@@ -61,7 +61,7 @@
 .station-clock__zone {
   font-size: 9px;
   letter-spacing: 0.16em;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 @keyframes station-blink {

@@ -117,7 +117,7 @@ const Auth = ({ signIn, signUp }) => {
     ) : null;
 
   return (
-    <div className="auth">
+    <main className="auth">
       {/* ---------------------------------------------------------------- */}
       {/* Hero                                                              */}
       {/* ---------------------------------------------------------------- */}
@@ -411,7 +411,7 @@ const Auth = ({ signIn, signUp }) => {
           </p>
         </div>
       </section>
-    </div>
+    </main>
   );
 };
 

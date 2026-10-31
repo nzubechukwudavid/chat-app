@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Avatar from '../ui/Avatar';
 import { CloseIcon } from '../ui/icons';
@@ -145,25 +145,76 @@ const PasswordForm = ({ onChangePassword, notify }) => {
 
 const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword, onUploadAvatar, notify }) => {
   const [tab, setTab] = useState('profile');
+  const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousFocus = document.activeElement;
+    const modal = modalRef.current;
+    const focusable = () => Array.from(
+      modal?.querySelectorAll('button, input, select, textarea, a[href]') || [],
+    ).filter((element) => !element.disabled && element.getClientRects().length > 0);
+
+    const initialFocus = window.setTimeout(() => modal?.focus(), 0);
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        onCloseRef.current?.();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const items = focusable();
+      if (items.length === 0) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+
+    return () => {
+      window.clearTimeout(initialFocus);
+      document.removeEventListener('keydown', handleKeyDown, true);
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="settings-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={onClose}>
+      <div className="settings-modal" ref={modalRef} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <header className="settings-header">
-          <h2>Settings</h2>
+          <h2 id="settings-title">Settings</h2>
           <button type="button" className="settings-close" onClick={onClose} aria-label="Close settings">
             <CloseIcon size={18} />
           </button>
         </header>
 
-        <div className="settings-tabs">
+        <div className="settings-tabs" role="group" aria-label="Settings sections">
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               className={`settings-tab${tab === t.id ? ' settings-tab--active' : ''}`}
+              aria-pressed={tab === t.id}
               onClick={() => setTab(t.id)}
             >
               {t.label}

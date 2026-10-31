@@ -63,10 +63,10 @@ const TeamChannelPreview = ({ channel, active, type, onCloseDrawer }) => {
       }${unread ? ' channel-preview__wrapper--unread' : ''}`}
       onClick={select}
       aria-current={active ? 'true' : undefined}
-      aria-label={`${isDirect ? 'DM with' : 'Line'} ${label}${
-        unread ? `, ${unread} unread` : ''
-      }`}
     >
+      <span className="visually-hidden">
+        {`${isDirect ? 'Direct message with' : 'Line'} ${label}${unread ? `, ${unread} unread` : ''}. `}
+      </span>
       <span className="channel-preview__item">
         {isDirect ? (
           <span className="channel-preview__identity">
