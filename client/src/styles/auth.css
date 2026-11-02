@@ -312,6 +312,14 @@
   letter-spacing: var(--tracking-wide);
 }
 
+/* Quiet note under the signup fields - avatars are uploaded after sign-in */
+.auth__hint {
+  margin: 0;
+  font-size: var(--font-size-2xs);
+  color: var(--text-muted);
+  line-height: var(--line-height-snug);
+}
+
 .auth__field-hint {
   font-size: var(--font-size-xs);
   color: var(--text-subtle);

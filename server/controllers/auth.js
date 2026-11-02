@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { config } = require('../config');
 const db = require('../db');
 const { validateSignupPayload, sanitizeText, validatePassword } = require('../middleware/validate');
+const { isSupportedImage } = require('../middleware/upload');
 const { setSessionCookie, clearSessionCookie, readSessionCookie } = require('../services/session');
 const { signSessionToken, verifySessionToken } = require('../utils/token');
 
@@ -94,7 +95,7 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: parsed.message });
     }
 
-    const { username, password, fullName, phoneNumber, avatarURL } = parsed.value;
+    const { username, password, fullName, phoneNumber } = parsed.value;
 
     if (await db.usernameExists(username)) {
       return res.status(409).json({ message: 'That station handle is already taken. Please choose another.' });
@@ -112,12 +113,12 @@ const signup = async (req, res) => {
       username,
       fullName,
       phoneNumber,
-      avatarURL,
+      avatarURL: '',
       passwordHash: hashedPassword,
     });
 
     try {
-      await upsertToStream({ id: userID, username, fullName, avatarURL });
+      await upsertToStream({ id: userID, username, fullName, avatarURL: '' });
     } catch (streamError) {
       // Stream is a separate system, so compensate instead of leaving a
       // database account whose username can never be used again.
@@ -130,7 +131,7 @@ const signup = async (req, res) => {
 
     issueSession(res, { id: userID, token_version: 0 });
 
-    return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: avatarURL }) });
+    return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: '' }) });
   } catch (error) {
     console.error('Signup error:', error);
     return res.status(500).json({ message: 'We could not create your account. Please try again.' });
@@ -229,6 +230,12 @@ const uploadAvatar = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
 
+    // The multipart Content-Type is attacker-controlled, so trust the bytes
+    // themselves before anything is stored or forwarded to Stream.
+    if (!isSupportedImage(req.file.buffer)) {
+      return res.status(400).json({ message: 'Only JPG, PNG, GIF or WebP images are allowed.' });
+    }
+
     const result = await getStreamClient().uploadImage(
       req.file.buffer,
       req.file.originalname || 'avatar',
@@ -240,7 +247,27 @@ const uploadAvatar = async (req, res) => {
       return res.status(502).json({ message: 'The image service did not return a URL.' });
     }
 
-    return res.status(200).json({ avatarURL: result.file });
+    // Persist the URL before returning it, so the stored profile and the CDN
+    // never disagree if the browser closes mid-request.
+    const updated = await db.updateUser(userId, { avatar_url: result.file });
+    if (!updated) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    try {
+      await getStreamClient().upsertUser({
+        id: updated.id,
+        role: 'user',
+        name: updated.full_name || updated.username,
+        image: result.file,
+      });
+    } catch (streamErr) {
+      // The image is already reachable on the CDN; a failed profile mirror is
+      // recoverable on the next session refresh, so do not fail the upload.
+      console.error('[STREAM] Failed to upsert avatar:', streamErr.message);
+    }
+
+    return res.status(200).json({ avatarURL: result.file, user: publicUser(updated) });
   } catch (error) {
     console.error('UploadAvatar error:', error);
     return res.status(500).json({ message: 'We could not upload the avatar.' });
@@ -266,17 +293,6 @@ const getMe = async (req, res) => {
   }
 };
 
-const isValidAvatarUrl = (value) => {
-  try {
-    const url = new URL(value);
-    // Stream CDN links are HTTPS; mixed-content URLs would silently fail in
-    // the browser, so keep signup and profile updates on the same rule.
-    return url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
-
 const updateMe = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -286,6 +302,12 @@ const updateMe = async (req, res) => {
 
     const { fullName, full_name, phoneNumber, phone_number, avatarURL, avatar_url } = req.body || {};
     const updates = {};
+
+    // Avatars are uploads only. Reject the field instead of ignoring it, so a
+    // stale client cannot quietly believe it changed something.
+    if (avatarURL !== undefined || avatar_url !== undefined) {
+      return res.status(400).json({ message: 'Avatars are uploaded from Settings, not set by URL.' });
+    }
 
     const nextFullName = fullName !== undefined ? fullName : full_name;
     if (nextFullName !== undefined) {
@@ -304,15 +326,6 @@ const updateMe = async (req, res) => {
         return res.status(400).json({ message: 'Enter a valid phone number.' });
       }
       updates.phone_number = sanitized === '' ? null : sanitized;
-    }
-
-    const nextAvatar = avatarURL !== undefined ? avatarURL : avatar_url;
-    if (nextAvatar !== undefined) {
-      const sanitized = sanitizeText(nextAvatar, 512);
-      if (sanitized !== '' && !isValidAvatarUrl(sanitized)) {
-        return res.status(400).json({ message: 'Avatar URL must be a valid https:// link.' });
-      }
-      updates.avatar_url = sanitized === '' ? null : sanitized;
     }
 
     if (Object.keys(updates).length === 0) {

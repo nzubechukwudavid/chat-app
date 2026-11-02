@@ -87,7 +87,12 @@ export const useSession = () => {
   }, []);
 
   const uploadAvatar = useCallback(async (file) => {
-    return apiUploadAvatar(file);
+    const res = await apiUploadAvatar(file);
+    if (!mounted.current) return res;
+    if (res.ok && res.user) {
+      setState((prev) => (prev.status === 'authenticated' ? { ...prev, user: res.user, error: '' } : prev));
+    }
+    return res;
   }, []);
 
   return {

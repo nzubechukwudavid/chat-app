@@ -77,8 +77,10 @@ const PlatformRow = ({ line, direct = false, number, typing, onOpen }) => {
         type="button"
         className={`platform platform--${status}${direct ? ' platform--bay' : ''}`}
         onClick={() => onOpen(line.channel)}
-        aria-label={`${group} ${number}, ${title}${activity}`}
       >
+        <span className="visually-hidden">
+          {`${group} ${number}, ${title}${activity}. `}
+        </span>
         <span className="platform__number" aria-hidden="true">
           <small>{direct ? 'DM' : 'LINE'}</small>
           <strong>{number}</strong>

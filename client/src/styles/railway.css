@@ -827,7 +827,7 @@
   font-size: 6.5px;
   line-height: 1;
   letter-spacing: 0.12em;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .platform__number strong {
@@ -924,7 +924,7 @@
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.07em;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 .platform__dispatch {
@@ -1017,7 +1017,7 @@
   font-size: 9px;
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .platform__badge {
@@ -1040,7 +1040,7 @@
   font-size: 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .platform__arrow {

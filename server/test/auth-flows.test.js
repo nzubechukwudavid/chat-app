@@ -15,6 +15,13 @@ const USERNAME = 'morah_test';
 const PASSWORD = 'CorrectPass123';
 const NEW_PASSWORD = 'NewCorrectPass456';
 
+// Smallest thing that passes the server's magic-byte check: the 8-byte PNG
+// signature followed by a plausible IHDR chunk header.
+const PNG_BYTES = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+]);
+
 describe('auth API integration', () => {
   let ctx;
   let cookie;
@@ -42,8 +49,7 @@ describe('auth API integration', () => {
       { username: 'ab', password: PASSWORD },
       { username: 'valid_handle', password: 'short1' },
       { username: 'valid_handle2', password: 'letters-only' },
-      { username: 'valid_handle3', password: PASSWORD, avatarURL: 'http://example.com/a.png' },
-      { username: 'valid_handle4', password: PASSWORD, phoneNumber: 'not-a-number' },
+      { username: 'valid_handle3', password: PASSWORD, phoneNumber: 'not-a-number' },
     ];
 
     for (const body of cases) {
@@ -62,7 +68,6 @@ describe('auth API integration', () => {
         password: PASSWORD,
         fullName: 'Morah Test',
         phoneNumber: '08012345678',
-        avatarURL: 'https://example.com/morah.png',
       },
     });
 
@@ -70,7 +75,7 @@ describe('auth API integration', () => {
     assert.equal(response.data.user.username, USERNAME);
     assert.equal(response.data.user.fullName, 'Morah Test');
     assert.equal(response.data.user.phoneNumber, '08012345678');
-    assert.equal(response.data.user.avatarURL, 'https://example.com/morah.png');
+    assert.equal(response.data.user.avatarURL, '', 'avatars are uploads only');
     assert.equal('password_hash' in response.data.user, false, 'hash must never be returned');
     assert.equal('passwordHash' in response.data.user, false, 'hash must never be returned');
 
@@ -163,20 +168,14 @@ describe('auth API integration', () => {
 
     const badAvatar = await request(ctx, 'PATCH', '/auth/me', {
       cookie,
-      body: { avatarURL: 'http://example.com/insecure.png' },
-    });
-    assert.equal(badAvatar.status, 400);
-
-    const newAvatar = await request(ctx, 'PATCH', '/auth/me', {
-      cookie,
       body: { avatarURL: 'https://example.com/new-avatar.png' },
     });
-    assert.equal(newAvatar.status, 200);
-    assert.equal(newAvatar.data.user.avatarURL, 'https://example.com/new-avatar.png');
+    assert.equal(badAvatar.status, 400, 'avatar URLs must be rejected');
+    assert.match(badAvatar.data.message, /upload/i);
 
     const reread = await request(ctx, 'GET', '/auth/me', { cookie });
     assert.equal(reread.data.user.fullName, 'Morah Updated');
-    assert.equal(reread.data.user.avatarURL, 'https://example.com/new-avatar.png');
+    assert.equal(reread.data.user.avatarURL, '');
   });
 
   it('changes the password, revokes older cookies, and rotates the current one', async () => {
@@ -234,34 +233,51 @@ describe('auth API integration', () => {
   });
 
   it('rejects non-image avatar uploads', async () => {
-    const form = new FormData();
-    form.append('avatar', new Blob(['plain text'], { type: 'text/plain' }), 'notes.txt');
+    const textFile = new FormData();
+    textFile.append('avatar', new Blob(['plain text'], { type: 'text/plain' }), 'notes.txt');
 
-    const response = await request(ctx, 'POST', '/auth/upload/avatar', { cookie, form });
+    const wrongType = await request(ctx, 'POST', '/auth/upload/avatar', { cookie, form: textFile });
 
-    assert.equal(response.status, 400);
-    assert.match(response.data.message, /JPG|PNG|image/i);
+    assert.equal(wrongType.status, 400);
+    assert.match(wrongType.data.message, /JPG|PNG|image/i);
+
+    // A caller can declare any Content-Type, so the server must inspect the
+    // bytes instead of trusting the multipart header.
+    const spoofed = new FormData();
+    spoofed.append('avatar', new Blob(['not really a png'], { type: 'image/png' }), 'avatar.png');
+
+    const spoofedResponse = await request(ctx, 'POST', '/auth/upload/avatar', {
+      cookie,
+      form: spoofed,
+    });
+
+    assert.equal(spoofedResponse.status, 400);
+    assert.match(spoofedResponse.data.message, /JPG|PNG|image/i);
   });
 
-  it('uploads an image to Stream and returns its CDN URL', async () => {
+  it('uploads an image to Stream, persists it, and mirrors it to the profile', async () => {
     resetStreamCalls();
 
     const form = new FormData();
-    form.append(
-      'avatar',
-      new Blob([Buffer.from([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' }),
-      'avatar.png',
-    );
+    form.append('avatar', new Blob([PNG_BYTES], { type: 'image/png' }), 'avatar.png');
 
     const response = await request(ctx, 'POST', '/auth/upload/avatar', { cookie, form });
 
     assert.equal(response.status, 200);
     assert.equal(response.data.avatarURL, 'https://example.com/uploaded-avatar.png');
+    assert.equal(response.data.user.avatarURL, 'https://example.com/uploaded-avatar.png');
 
     const upload = streamCalls.find((call) => call.method === 'uploadImage');
     assert.ok(upload);
     assert.equal(upload.userId, userId);
     assert.equal(upload.mimetype, 'image/png');
+
+    const upsert = streamCalls.find((call) => call.method === 'upsertUser');
+    assert.ok(upsert, 'the Stream user profile should carry the new image');
+    assert.equal(upsert.user.image, 'https://example.com/uploaded-avatar.png');
+
+    const reread = await request(ctx, 'GET', '/auth/me', { cookie });
+    assert.equal(reread.data.user.avatarURL, 'https://example.com/uploaded-avatar.png');
   });
 
   it('clears the session cookie on logout', async () => {

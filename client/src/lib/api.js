@@ -105,7 +105,7 @@ export const uploadAvatar = async (file) => {
     const res = await api.post('/auth/upload/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return { ok: true, avatarURL: res.data?.avatarURL || null };
+    return { ok: true, avatarURL: res.data?.avatarURL || null, user: res.data?.user || null };
   } catch (error) {
     return { ok: false, error: errorMessage(error) };
   }

@@ -15,10 +15,16 @@ const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // A successful session update re-renders this form with the new user, so
+  // keep the preview in step with the avatar the server actually stored.
+  useEffect(() => {
+    if (user?.avatarURL) setAvatarURL(user.avatarURL);
+  }, [user?.avatarURL]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const res = await onUpdateProfile({ fullName, phoneNumber, avatarURL });
+    const res = await onUpdateProfile({ fullName, phoneNumber });
     setSaving(false);
     if (res?.ok) {
       notify?.({ type: 'success', message: 'Profile updated.' });
@@ -36,7 +42,7 @@ const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
     setUploading(false);
     if (res?.ok && res.avatarURL) {
       setAvatarURL(res.avatarURL);
-      notify?.({ type: 'success', message: 'Avatar uploaded. Save to apply.' });
+      notify?.({ type: 'success', message: 'Avatar updated.' });
     } else if (res?.error) {
       notify?.({ type: 'error', message: res.error });
     }
@@ -72,11 +78,6 @@ const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
       <label className="settings-field">
         <span>Phone number</span>
         <input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1234567890" maxLength={20} />
-      </label>
-
-      <label className="settings-field">
-        <span>Avatar URL</span>
-        <input value={avatarURL} onChange={(e) => setAvatarURL(e.target.value)} placeholder="https://..." maxLength={512} />
       </label>
 
       <div className="settings-actions">

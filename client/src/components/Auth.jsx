@@ -12,7 +12,6 @@ const EMPTY = {
   password: '',
   confirmPassword: '',
   phoneNumber: '',
-  avatarURL: '',
 };
 
 const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/;
@@ -44,10 +43,6 @@ const validate = (form, isSignup) => {
 
   if (isSignup && form.phoneNumber.trim() && !/^\+?[0-9]{7,15}$/.test(form.phoneNumber.trim())) {
     errors.phoneNumber = 'Use 7-15 digits, optionally starting with +.';
-  }
-
-  if (isSignup && form.avatarURL.trim() && !/^https:\/\/\S+$/i.test(form.avatarURL.trim())) {
-    errors.avatarURL = 'Avatar must be a valid https:// URL.';
   }
 
   return errors;
@@ -97,7 +92,6 @@ const Auth = ({ signIn, signUp }) => {
           password: form.password,
           fullName: form.fullName.trim() || undefined,
           phoneNumber: form.phoneNumber.trim() || undefined,
-          avatarURL: form.avatarURL.trim() || undefined,
         });
       } else {
         await signIn({ username: form.username.trim(), password: form.password });
@@ -299,25 +293,9 @@ const Auth = ({ signIn, signUp }) => {
             )}
 
             {isSignup && (
-              <div className="auth__field">
-                <label className="auth__field-label" htmlFor="auth-avatarURL">
-                  <span>Avatar URL</span>
-                  <span className="auth__field-optional">Optional</span>
-                </label>
-                <input
-                  className="input"
-                  id="auth-avatarURL"
-                  name="avatarURL"
-                  type="url"
-                  autoComplete="photo"
-                  placeholder="https://…"
-                  value={form.avatarURL}
-                  onChange={update}
-                  aria-invalid={Boolean(errors.avatarURL) || undefined}
-                  aria-describedby={errors.avatarURL ? 'auth-avatarURL-error' : undefined}
-                />
-                {fieldError('avatarURL')}
-              </div>
+              <p className="auth__hint">
+                You can add a profile photo from Settings once you are signed in.
+              </p>
             )}
 
             <div className="auth__field">

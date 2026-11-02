@@ -223,7 +223,7 @@ All routes are under `/auth` unless noted.
 | `POST` | `/auth/login` | — | Verify credentials, issue session |
 | `GET` | `/auth/session` | Cookie | Restore the current session |
 | `GET` | `/auth/me` | Cookie | Current profile |
-| `PATCH`/`PUT` | `/auth/me` | Cookie | Update full name, phone, avatar URL |
+| `PATCH`/`PUT` | `/auth/me` | Cookie | Update full name and phone (avatar fields are rejected) |
 | `PUT` | `/auth/password` | Cookie | Change password (current password required) |
 | `POST` | `/auth/upload/avatar` | Cookie | Multipart avatar upload (`avatar` field) |
 | `POST` | `/auth/logout` | Cookie | Clear the session |
@@ -341,20 +341,21 @@ Important production notes:
 ## 📝 Notable QA outcomes (Phase 0/1 complete, Phase 5 automated)
 
 - **Session revocation:** Password changes sign out other devices; old session cookies become invalid after a version bump.
-- **Avatar storage:** Uploaded images are stored on Stream CDN and served via Stream's image URL. Avatar URL validation requires an `https://` link.
+- **Avatar storage:** Avatars are uploads only. The browser sends a file to `/auth/upload/avatar`, the server verifies the file signature (JPG, PNG, GIF or WebP), stores the image on Stream's CDN, and saves the returned CDN URL. There is no avatar-URL field on signup or in Settings.
 - **Account deletion:** Removed from the UI and API as per user request.
 - **Rate limits:** Shared Postgres/Neon counters in production; in-memory locally.
 - **Notifications:** In-app toasts for messages in non-active channels are implemented (Phase 4).
 - **Directory cleanup:** `server/scripts/audit-users.js` is a read-only audit. Approved IDs can then be passed to `cleanup-users.js`; nothing is deleted automatically.
 - **Tests:** Client railway-hook tests and server unit + HTTP integration tests pass. The Postgres/Neon code path is covered in production but not in the local suite.
-- **Accessibility:** Lighthouse scores 100 for accessibility and best practices on both the sign-in screen and the workspace. The settings dialog now traps focus, closes on Escape, restores focus to the trigger, and labels its tabs; channel rows expose their visible text to screen readers.
+- **Accessibility:** Lighthouse scores 100 for accessibility and best practices on the sign-in screen, the workspace and the station board. The settings dialog traps focus, closes on Escape, restores focus to the trigger, and labels its tabs; channel and platform rows expose their visible text to screen readers.
 
 ---
 
 ## ⚠️ Known gaps
 
-- **Avatar URL validation is shallow**; it checks `https://` but not that the
-  link is a direct image, so a page URL can save but show initials.
+- **Avatars are uploads only.** The browser sends a file to `/auth/upload/avatar`,
+  the server verifies its magic bytes (not just the declared MIME type), and the
+  image is stored on Stream's CDN. There is no avatar-URL field anywhere.
 - **Directory cleanup**: test accounts and duplicate people can appear in search
   and member pickers because the directory mirrors Stream users. Run the audit
   and remove only the IDs you explicitly approve.

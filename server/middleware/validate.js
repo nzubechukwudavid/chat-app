@@ -3,7 +3,6 @@ const { config } = require('../config');
 const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/;
 const FULL_NAME_PATTERN = /^[\p{L}][\p{L}\p{M}\p{N}\s'.-]{0,99}$/u;
 const PHONE_PATTERN = /^\+?[0-9]{7,15}$/;
-const AVATAR_PATTERN = /^https:\/\/[^\s]+$/i;
 
 const TRIMMED_COMMON_PASSWORDS = new Set([
   'password',
@@ -64,15 +63,6 @@ const validatePhone = (raw) => {
   return { ok: true, value };
 };
 
-const validateAvatar = (raw) => {
-  const value = sanitizeText(raw, 2048);
-  if (!value) return { ok: true, value: '' };
-  if (!AVATAR_PATTERN.test(value)) {
-    return { ok: false, message: 'Avatar must be a valid https:// URL.' };
-  }
-  return { ok: true, value };
-};
-
 const validatePassword = (raw) => {
   if (typeof raw !== 'string' || !raw.length) {
     return { ok: false, message: 'Password is required.' };
@@ -115,9 +105,6 @@ const validateSignupPayload = (body = {}) => {
   const phoneNumber = validatePhone(body.phoneNumber);
   if (!phoneNumber.ok) return phoneNumber;
 
-  const avatarURL = validateAvatar(body.avatarURL);
-  if (!avatarURL.ok) return avatarURL;
-
   return {
     ok: true,
     value: {
@@ -125,7 +112,6 @@ const validateSignupPayload = (body = {}) => {
       password: password.value,
       fullName: fullName.value || username.value,
       phoneNumber: phoneNumber.value,
-      avatarURL: avatarURL.value,
     },
   };
 };
@@ -135,7 +121,6 @@ module.exports = {
   validateUsername,
   validateFullName,
   validatePhone,
-  validateAvatar,
   validatePassword,
   validateSignupPayload,
   USERNAME_PATTERN,
