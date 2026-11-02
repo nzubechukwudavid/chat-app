@@ -314,8 +314,9 @@ Important production notes:
   stored URL from Stream before returning the profile.
 - SMS/Twilio notifications were removed; there is no Stream webhook endpoint.
   Any webhook left in the Stream dashboard can be deleted.
-- The avatar **URL** field only accepts an `https://` link. It does not verify
-  that the link is a direct image, so a page URL can save but render as initials.
+- **Avatars are uploads only.** There is no avatar-URL field; the server checks
+  the uploaded file's signature (JPG, PNG, GIF, WebP) and stores it on Stream's
+  CDN. A renamed non-image file is rejected.
 
 ---
 
@@ -329,8 +330,8 @@ Important production notes:
   short lockout after repeated failures. In production those counters live in
   the shared Postgres/Neon table, so they survive restarts and are shared by
   every API instance.
-- Request bodies are capped at 256 KB and avatars at 2 MB; uploads are limited
-  to image MIME types and safe extensions.
+- Request bodies are capped at 256 KB and avatars at 2 MB; uploads are checked
+  against their file signature, not just the declared MIME type.
 - Security headers, CORS allow-listing, input trimming and length validation are
   applied on the server; channel names and handles are normalized before use.
 - Session revocation: password changes sign out other devices; session cookies carry `sv` version that is checked against DB.
