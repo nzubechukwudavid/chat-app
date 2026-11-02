@@ -20,6 +20,9 @@ yarn-error.log*
 # Uploaded avatars (runtime data, not source)
 /server/uploads/
 
+# Local exports of production data (may contain password hashes)
+/server/backups/
+
 # Production build outputs
 /client/build
 /dist
