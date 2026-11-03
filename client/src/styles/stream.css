@@ -113,6 +113,18 @@
    Main panel & message list
    -------------------------------------------------------------------------- */
 .str-chat__main-panel {
+  /* A quiet route map sits behind the transcript: a survey grid, a pair of
+     diagonal running lines, and station beads. Everything is drawn with
+     gradients so it follows the theme without shipping a second image. */
+  --chat-map-grid: rgba(148, 163, 184, 0.035);
+  --chat-map-route: rgba(52, 211, 153, 0.055);
+  --chat-map-node: rgba(52, 211, 153, 0.2);
+  --chat-map-node-ring: rgba(52, 211, 153, 0.07);
+  --chat-map-gold: rgba(245, 158, 11, 0.16);
+  --chat-map-gold-ring: rgba(245, 158, 11, 0.06);
+  --chat-map-glow-green: rgba(16, 185, 129, 0.11);
+  --chat-map-glow-gold: rgba(245, 158, 11, 0.055);
+
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
@@ -122,7 +134,18 @@
   min-width: 0 !important;
   overflow: hidden !important;
   padding: 0 !important;
-  background: var(--bg-canvas) !important;
+  background-color: var(--bg-canvas) !important;
+  background-image:
+    radial-gradient(ellipse 720px 440px at 88% -12%, var(--chat-map-glow-green), transparent 64%),
+    radial-gradient(ellipse 620px 420px at -10% 108%, var(--chat-map-glow-gold), transparent 66%),
+    radial-gradient(circle at 18% 24%, var(--chat-map-node) 0 1.5px, var(--chat-map-node-ring) 2px 5px, transparent 5.5px),
+    radial-gradient(circle at 76% 58%, var(--chat-map-gold) 0 1.5px, var(--chat-map-gold-ring) 2px 5px, transparent 5.5px),
+    radial-gradient(circle at 42% 84%, var(--chat-map-node) 0 1.5px, var(--chat-map-node-ring) 2px 5px, transparent 5.5px),
+    repeating-linear-gradient(90deg, transparent 0 79px, var(--chat-map-grid) 79px 80px),
+    repeating-linear-gradient(0deg, transparent 0 79px, var(--chat-map-grid) 79px 80px),
+    repeating-linear-gradient(118deg, transparent 0 214px, var(--chat-map-route) 214px 215px, transparent 215px 222px, var(--chat-map-route) 222px 223px, transparent 223px 428px);
+  background-size: auto, auto, auto, auto, auto, 80px 80px, 80px 80px, auto;
+  background-position: center;
   position: relative !important;
 }
 
@@ -140,7 +163,8 @@
 .str-chat__message-list,
 .str-chat__message-list-scroll {
   padding: var(--space-4) var(--space-6) !important;
-  background: var(--bg-canvas) !important;
+  /* Let the route-map canvas on the panel show through the transcript. */
+  background: transparent !important;
 }
 
 .str-chat__message-list {
@@ -697,6 +721,23 @@
   z-index: 20 !important;
 }
 
+/* A dashed platform edge echoes the header rule above the composer. */
+.str-chat__message-input::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--nrc-green-500) 0 14px,
+    transparent 14px 30px
+  );
+  opacity: 0.18;
+}
+
 .str-chat__message-input-inner {
   display: flex !important;
   align-items: center !important;
@@ -919,6 +960,17 @@
   background: #ffffff !important;
   border-color: rgba(15, 23, 42, 0.09) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root[data-theme='light'] .str-chat__main-panel {
+  --chat-map-grid: rgba(15, 23, 42, 0.045);
+  --chat-map-route: rgba(0, 115, 62, 0.06);
+  --chat-map-node: rgba(0, 115, 62, 0.18);
+  --chat-map-node-ring: rgba(0, 115, 62, 0.06);
+  --chat-map-gold: rgba(180, 83, 9, 0.14);
+  --chat-map-gold-ring: rgba(180, 83, 9, 0.05);
+  --chat-map-glow-green: rgba(16, 185, 129, 0.07);
+  --chat-map-glow-gold: rgba(245, 158, 11, 0.05);
 }
 
 :root[data-theme='light'] .str-chat__message-input {
