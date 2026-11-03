@@ -1,58 +1,51 @@
-# Rail Hub - Real-Time Chat Application
+# Rail Hub client
 
-A feature-rich, real-time chat application built with React and Stream Chat. This project provides a complete messaging experience, including user authentication, team channels, direct messaging, and more
+React 18 single-page app for Rail Hub, built with Create React App and
+`stream-chat-react`. See the [root README](../README.md) for the full project
+overview, server setup and deployment notes.
 
----
+## Run locally
 
-## ✨ Features
+From this directory:
 
-- **User Authentication**: Secure sign-up and sign-in functionality.
-- **Real-Time Messaging**: Instant message delivery and updates.
-- **Channel Management**:
-  - **Team Channels**: Public group conversations.
-  - **Direct Messages**: Private one-on-one or small group chats.
-- **Giphy Integration**: Send GIFs directly in chat using the `/giphy` slash command.
-- **Channel Creation & Editing**: Users can create new channels and edit existing ones.
-- **Custom UI**: A unique green and yellow theme applied across the application.
-- **Online Status**: See how many users are currently online in a channel.
+```bash
+npm install
+cp .env.example .env
+npm start
+```
 
----
+`client/.env` needs:
 
-## 🛠️ Tech Stack
+```env
+REACT_APP_API_URL=http://localhost:5000
+REACT_APP_STREAM_API_KEY=your_stream_api_key
+```
 
-- **Frontend**:
-  - React
-  - Stream Chat React
-  - Axios for API requests
-  - universal-cookie for session management
-- **Backend**:
-  - Node.js & Express
-  - Stream Chat API
+The Stream key must match the server's key. The app opens at
+`http://localhost:3000`.
 
----
+## Scripts
 
-## 🚀 Getting Started
+| Command | Purpose |
+| :--- | :--- |
+| `npm start` | Development server with hot reload |
+| `npm run build` | Production build in `build/` |
+| `npm test` | Jest test runner |
+| `npm run eject` | Eject CRA configuration (irreversible) |
 
-To get a local copy up and running, follow these simple steps.
+## Structure
 
-### Prerequisites
+- `src/components/` - auth, workspace, channel list, message pane, settings, UI
+- `src/features/railway/` - station board scene and train event hooks
+- `src/hooks/` - session, theme, online status and UI state
+- `src/lib/` - API client, Stream helpers and the cached directory
+- `src/styles/` - design tokens and per-surface stylesheets
+- `public/` - HTML shell, icons, manifest and service worker
 
-- Node.js and npm installed on your machine.
-- A running instance of the backend server for this project.
+## Notes
 
-### Installation & Setup
-
-1. Navigate to the `client` directory.
-2. Install NPM packages:
-
-   ```sh
-   npm install
-   ```
-
-3. Start the development server:
-
-   ```sh
-   npm start
-   ```
-
-The application will open in your browser at `http://localhost:3000`.
+- In production the client calls `/api`, which `vercel.json` rewrites to the
+  Render API. `REACT_APP_API_URL` is only used for local development.
+- The service worker is registered in production only (`src/index.js`).
+- Icons and the manifest live in `public/`; bump the service-worker cache name
+  when replacing them so installed clients pick up the change.

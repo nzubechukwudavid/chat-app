@@ -1,8 +1,13 @@
-# Extended Robust Plan: Profile Management & UX Improvements
+# Profile Management & UX Improvements (archived)
+
+> **Archived.** This was the working plan for the profile and settings work. It
+> has been implemented and is kept for history. Account deletion was later
+> removed at the user's request, and avatars are now uploads only. See the
+> [root README](../../README.md) for the current behaviour.
 
 Last updated: 2026-10-28
 Repo: nzubechukwudavid/chat-app (main at 83f4db1)
-Production: https://nrc-chat.vercel.app (serves older bundles; latest commits not deployed due to prior build failure)
+Production: https://nrc-chat.vercel.app
 
 ## 1) Current State (Verified)
 
