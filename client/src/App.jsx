@@ -7,6 +7,7 @@ import 'stream-chat-react/dist/css/v2/index.css';
 import './styles/index.css';
 
 import Auth from './components/Auth';
+import ResetPassword from './components/ResetPassword';
 import SplashScreen from './components/ui/SplashScreen';
 import ThemeToggle from './components/ui/ThemeToggle';
 import { useToast } from './components/ui/Toast';
@@ -47,6 +48,20 @@ const App = () => {
   const handleSessionExpired = useCallback(() => {
     handleSignOut({ expired: true });
   }, [handleSignOut]);
+
+  // Recovery links land here with `?token=...`. This screen is shown whether
+  // or not a session exists, because anyone holding the link may reset.
+  const isResetRoute = /^\/reset-password\/?$/.test(window.location.pathname);
+
+  if (isResetRoute) {
+    return (
+      <>
+        <ThemeToggle className="theme-toggle--floating" />
+        <ResetPassword />
+        <Analytics />
+      </>
+    );
+  }
 
   if (isLoading) {
     return (

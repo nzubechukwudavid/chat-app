@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { errorMessage } from '../lib/api';
+import { errorMessage, requestPasswordReset } from '../lib/api';
 import { passwordLabel, passwordScore } from '../lib/format';
 import { AlertIcon, BoltIcon, ShieldIcon, TrainIcon } from './ui/icons';
 import PasswordField from './ui/PasswordField';
@@ -9,12 +9,15 @@ import StationClock from './ui/StationClock';
 const EMPTY = {
   fullName: '',
   username: '',
+  email: '',
   password: '',
   confirmPassword: '',
   phoneNumber: '',
+  identifier: '',
 };
 
 const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /** Client-side checks that mirror the server's rules, so most mistakes are caught before a round trip. */
 const validate = (form, isSignup) => {
@@ -25,6 +28,10 @@ const validate = (form, isSignup) => {
     errors.username = 'Enter your station handle.';
   } else if (isSignup && !USERNAME_PATTERN.test(username)) {
     errors.username = '3-32 characters: letters, numbers, dots, dashes or underscores.';
+  }
+
+  if (isSignup && form.email.trim() && !EMAIL_PATTERN.test(form.email.trim())) {
+    errors.email = 'Enter a valid email address.';
   }
 
   if (!form.password) {
@@ -49,11 +56,15 @@ const validate = (form, isSignup) => {
 };
 
 const Auth = ({ signIn, signUp }) => {
-  const [isSignup, setIsSignup] = useState(false);
+  const [mode, setMode] = useState('signin');
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const isSignup = mode === 'signup';
+  const isForgot = mode === 'forgot';
 
   const score = useMemo(() => passwordScore(form.password), [form.password]);
 
@@ -64,15 +75,37 @@ const Auth = ({ signIn, signUp }) => {
     setServerError('');
   };
 
-  const switchMode = (nextIsSignup) => {
+  const switchMode = (nextMode) => {
     setErrors({});
     setServerError('');
-    setIsSignup(nextIsSignup);
+    setResetSent(false);
+    setMode(nextMode);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setServerError('');
+
+    if (isForgot) {
+      const identifier = form.identifier.trim();
+      if (!identifier) {
+        setErrors({ identifier: 'Enter your station handle or email.' });
+        document.getElementById('auth-identifier')?.focus();
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        // The response is intentionally identical for every identifier.
+        await requestPasswordReset(identifier);
+        setResetSent(true);
+      } catch (error) {
+        setServerError(errorMessage(error, 'Unable to send the reset link. Please try again.'));
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     const nextErrors = validate(form, isSignup);
     setErrors(nextErrors);
@@ -92,6 +125,7 @@ const Auth = ({ signIn, signUp }) => {
           password: form.password,
           fullName: form.fullName.trim() || undefined,
           phoneNumber: form.phoneNumber.trim() || undefined,
+          email: form.email.trim() || undefined,
         });
       } else {
         await signIn({ username: form.username.trim(), password: form.password });
@@ -185,33 +219,47 @@ const Auth = ({ signIn, signUp }) => {
       {/* ---------------------------------------------------------------- */}
       <section className="auth__form-container_fields" aria-label="Sign in or create an account">
         <div className="auth__form-container_fields-content">
-          <div className="auth__mode-switch" role="tablist" aria-label="Authentication mode">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={!isSignup}
-              className={`auth__mode-btn ${!isSignup ? 'active' : ''}`}
-              onClick={() => switchMode(false)}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={isSignup}
-              className={`auth__mode-btn ${isSignup ? 'active' : ''}`}
-              onClick={() => switchMode(true)}
-            >
-              Create Account
-            </button>
-          </div>
+          {!isForgot && (
+            <div className="auth__mode-switch" role="tablist" aria-label="Authentication mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!isSignup}
+                className={`auth__mode-btn ${!isSignup ? 'active' : ''}`}
+                onClick={() => switchMode('signin')}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isSignup}
+                className={`auth__mode-btn ${isSignup ? 'active' : ''}`}
+                onClick={() => switchMode('signup')}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
           <div className="auth__form-header">
-            <h2>{isSignup ? 'Register officer profile' : 'Welcome back'}</h2>
+            <h2>
+              {isForgot
+                ? resetSent
+                  ? 'Check your inbox'
+                  : 'Recover your account'
+                : isSignup
+                  ? 'Register officer profile'
+                  : 'Welcome back'}
+            </h2>
             <p>
-              {isSignup
-                ? 'Set up your station identity to join the network.'
-                : 'Enter your credentials to access operations.'}
+              {isForgot
+                ? resetSent
+                  ? 'We have processed your request.'
+                  : 'Enter your station handle or email and we will send a one-time reset link.'
+                : isSignup
+                  ? 'Set up your station identity to join the network.'
+                  : 'Enter your credentials to access operations.'}
             </p>
           </div>
 
@@ -224,164 +272,270 @@ const Auth = ({ signIn, signUp }) => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate>
-            {isSignup && (
-              <div className="auth__field">
-                <label className="auth__field-label" htmlFor="auth-fullName">
-                  <span>Full name</span>
-                  <span className="auth__field-optional">Optional</span>
-                </label>
-                <input
-                  className="input"
-                  id="auth-fullName"
-                  name="fullName"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="e.g. David Okafor"
-                  value={form.fullName}
-                  onChange={update}
-                  maxLength={100}
-                />
-              </div>
-            )}
-
-            <div className="auth__field">
-              <label className="auth__field-label" htmlFor="auth-username">
-                <span>Station handle</span>
-              </label>
-              <input
-                className="input"
-                id="auth-username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck="false"
-                placeholder="e.g. david_station"
-                value={form.username}
-                onChange={update}
-                aria-invalid={Boolean(errors.username) || undefined}
-                aria-describedby={errors.username ? 'auth-username-error' : undefined}
-                maxLength={32}
-                required
-              />
-              {fieldError('username')}
-            </div>
-
-            {isSignup && (
-              <div className="auth__field">
-                <label className="auth__field-label" htmlFor="auth-phoneNumber">
-                  <span>Phone number</span>
-                  <span className="auth__field-optional">Optional</span>
-                </label>
-                <input
-                  className="input"
-                  id="auth-phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  placeholder="+234 800 000 0000"
-                  value={form.phoneNumber}
-                  onChange={update}
-                  aria-invalid={Boolean(errors.phoneNumber) || undefined}
-                  aria-describedby={errors.phoneNumber ? 'auth-phoneNumber-error' : undefined}
-                />
-                {fieldError('phoneNumber')}
-              </div>
-            )}
-
-            {isSignup && (
-              <p className="auth__hint">
-                You can add a profile photo from Settings once you are signed in.
+          {isForgot && resetSent ? (
+            <div className="auth__notice" role="status">
+              <span className="auth__notice-title">Reset link requested</span>
+              <p>
+                If an account matches, a reset link is on its way. Check your inbox and spam
+                folder. The link expires in 30 minutes and works once.
               </p>
-            )}
-
-            <div className="auth__field">
-              <label className="auth__field-label" htmlFor="auth-password">
-                <span>Password</span>
-                {isSignup && <span className="auth__field-optional">8+ chars</span>}
-              </label>
-
-              <PasswordField
-                id="auth-password"
-                name="password"
-                value={form.password}
-                onChange={update}
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
-                invalid={Boolean(errors.password)}
-                describedBy={errors.password ? 'auth-password-error' : undefined}
-                required
-              />
-
-              {isSignup && form.password ? (
+              <p className="auth__notice-hint">
+                No email on file? Ask an administrator to issue a recovery link for your station
+                handle.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate>
+              {isForgot ? (
+                <div className="auth__field">
+                  <label className="auth__field-label" htmlFor="auth-identifier">
+                    <span>Station handle or email</span>
+                  </label>
+                  <input
+                    className="input"
+                    id="auth-identifier"
+                    name="identifier"
+                    type="text"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    placeholder="e.g. david_station or you@example.com"
+                    value={form.identifier}
+                    onChange={update}
+                    aria-invalid={Boolean(errors.identifier) || undefined}
+                    aria-describedby={errors.identifier ? 'auth-identifier-error' : undefined}
+                    maxLength={254}
+                    required
+                  />
+                  {fieldError('identifier')}
+                </div>
+              ) : (
                 <>
-                  <div className="strength" aria-hidden="true">
-                    {[1, 2, 3, 4].map((segment) => {
-                      const tier =
-                        score >= 4 ? 'strong' : score === 3 ? 'good' : score === 2 ? 'fair' : 'weak';
-                      return (
-                        <span
-                          key={segment}
-                          className={`strength__segment ${
-                            segment <= score ? `strength__segment--${tier}` : ''
-                          }`}
-                        />
-                      );
-                    })}
+                  {isSignup && (
+                    <div className="auth__field">
+                      <label className="auth__field-label" htmlFor="auth-fullName">
+                        <span>Full name</span>
+                        <span className="auth__field-optional">Optional</span>
+                      </label>
+                      <input
+                        className="input"
+                        id="auth-fullName"
+                        name="fullName"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="e.g. David Okafor"
+                        value={form.fullName}
+                        onChange={update}
+                        maxLength={100}
+                      />
+                    </div>
+                  )}
+
+                  <div className="auth__field">
+                    <label className="auth__field-label" htmlFor="auth-username">
+                      <span>Station handle</span>
+                    </label>
+                    <input
+                      className="input"
+                      id="auth-username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      placeholder="e.g. david_station"
+                      value={form.username}
+                      onChange={update}
+                      aria-invalid={Boolean(errors.username) || undefined}
+                      aria-describedby={errors.username ? 'auth-username-error' : undefined}
+                      maxLength={32}
+                      required
+                    />
+                    {fieldError('username')}
                   </div>
-                  <span className="strength__label" aria-live="polite">
-                    Password strength: {passwordLabel(score)}
-                  </span>
+
+                  {isSignup && (
+                    <div className="auth__field">
+                      <label className="auth__field-label" htmlFor="auth-phoneNumber">
+                        <span>Phone number</span>
+                        <span className="auth__field-optional">Optional</span>
+                      </label>
+                      <input
+                        className="input"
+                        id="auth-phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        autoComplete="tel"
+                        inputMode="tel"
+                        placeholder="+234 800 000 0000"
+                        value={form.phoneNumber}
+                        onChange={update}
+                        aria-invalid={Boolean(errors.phoneNumber) || undefined}
+                        aria-describedby={errors.phoneNumber ? 'auth-phoneNumber-error' : undefined}
+                      />
+                      {fieldError('phoneNumber')}
+                    </div>
+                  )}
+
+                  {isSignup && (
+                    <div className="auth__field">
+                      <label className="auth__field-label" htmlFor="auth-email">
+                        <span>Email</span>
+                        <span className="auth__field-optional">Optional</span>
+                      </label>
+                      <input
+                        className="input"
+                        id="auth-email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        placeholder="you@example.com"
+                        value={form.email}
+                        onChange={update}
+                        aria-invalid={Boolean(errors.email) || undefined}
+                        aria-describedby={errors.email ? 'auth-email-error' : undefined}
+                        maxLength={254}
+                      />
+                      <span className="auth__field-hint">Used only for password recovery.</span>
+                      {fieldError('email')}
+                    </div>
+                  )}
+
+                  {isSignup && (
+                    <p className="auth__hint">
+                      You can add a profile photo from Settings once you are signed in.
+                    </p>
+                  )}
+
+                  <div className="auth__field">
+                    <label className="auth__field-label" htmlFor="auth-password">
+                      <span>Password</span>
+                      {isSignup && <span className="auth__field-optional">8+ chars</span>}
+                    </label>
+
+                    <PasswordField
+                      id="auth-password"
+                      name="password"
+                      value={form.password}
+                      onChange={update}
+                      autoComplete={isSignup ? 'new-password' : 'current-password'}
+                      invalid={Boolean(errors.password)}
+                      describedBy={errors.password ? 'auth-password-error' : undefined}
+                      required
+                    />
+
+                    {isSignup && form.password ? (
+                      <>
+                        <div className="strength" aria-hidden="true">
+                          {[1, 2, 3, 4].map((segment) => {
+                            const tier =
+                              score >= 4 ? 'strong' : score === 3 ? 'good' : score === 2 ? 'fair' : 'weak';
+                            return (
+                              <span
+                                key={segment}
+                                className={`strength__segment ${
+                                  segment <= score ? `strength__segment--${tier}` : ''
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <span className="strength__label" aria-live="polite">
+                          Password strength: {passwordLabel(score)}
+                        </span>
+                      </>
+                    ) : null}
+
+                    {fieldError('password')}
+                  </div>
+
+                  {isSignup && (
+                    <div className="auth__field">
+                      <label className="auth__field-label" htmlFor="auth-confirmPassword">
+                        <span>Confirm password</span>
+                      </label>
+                      <PasswordField
+                        id="auth-confirmPassword"
+                        name="confirmPassword"
+                        value={form.confirmPassword}
+                        onChange={update}
+                        autoComplete="new-password"
+                        invalid={Boolean(errors.confirmPassword)}
+                        describedBy={errors.confirmPassword ? 'auth-confirmPassword-error' : undefined}
+                        required
+                      />
+                      {fieldError('confirmPassword')}
+                    </div>
+                  )}
                 </>
-              ) : null}
+              )}
 
-              {fieldError('password')}
-            </div>
-
-            {isSignup && (
-              <div className="auth__field">
-                <label className="auth__field-label" htmlFor="auth-confirmPassword">
-                  <span>Confirm password</span>
-                </label>
-                <PasswordField
-                  id="auth-confirmPassword"
-                  name="confirmPassword"
-                  value={form.confirmPassword}
-                  onChange={update}
-                  autoComplete="new-password"
-                  invalid={Boolean(errors.confirmPassword)}
-                  describedBy={errors.confirmPassword ? 'auth-confirmPassword-error' : undefined}
-                  required
-                />
-                {fieldError('confirmPassword')}
+              <div className="auth__submit-row">
+                <button type="submit" className="auth__submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <span className="btn__spinner" aria-hidden="true" />
+                      <span>
+                        {isForgot ? 'Sending…' : isSignup ? 'Registering…' : 'Signing in…'}
+                      </span>
+                    </>
+                  ) : (
+                    <span>
+                      {isForgot
+                        ? 'Send reset link'
+                        : isSignup
+                          ? 'Create station account'
+                          : 'Sign in to Rail Hub'}
+                    </span>
+                  )}
+                </button>
               </div>
-            )}
-
-            <div className="auth__submit-row">
-              <button type="submit" className="auth__submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <span className="btn__spinner" aria-hidden="true" />
-                    <span>{isSignup ? 'Registering…' : 'Signing in…'}</span>
-                  </>
-                ) : (
-                  <span>{isSignup ? 'Create station account' : 'Sign in to Rail Hub'}</span>
-                )}
-              </button>
-            </div>
-          </form>
+            </form>
+          )}
 
           <p className="auth__meta">
-            {isSignup ? 'Already have an account?' : 'Need a station account?'}{' '}
-            <button
-              type="button"
-              className="auth__meta-link"
-              onClick={() => switchMode(!isSignup)}
-            >
-              {isSignup ? 'Sign in instead' : 'Register now'}
-            </button>
+            {isForgot ? (
+              <>
+                Remembered it?{' '}
+                <button
+                  type="button"
+                  className="auth__meta-link"
+                  onClick={() => switchMode('signin')}
+                >
+                  Back to sign in
+                </button>
+              </>
+            ) : (
+              <>
+                {isSignup ? 'Already have an account?' : 'Need a station account?'}{' '}
+                <button
+                  type="button"
+                  className="auth__meta-link"
+                  onClick={() => switchMode(isSignup ? 'signin' : 'signup')}
+                >
+                  {isSignup ? 'Sign in instead' : 'Register now'}
+                </button>
+                {!isSignup && (
+                  <>
+                    <span className="auth__meta-sep" aria-hidden="true">
+                      ·
+                    </span>
+                    <button
+                      type="button"
+                      className="auth__meta-link"
+                      onClick={() => switchMode('forgot')}
+                    >
+                      Forgot password?
+                    </button>
+                  </>
+                )}
+              </>
+            )}
           </p>
 
           <p className="auth__legal">

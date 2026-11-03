@@ -5,7 +5,7 @@ const { config, assertUsable } = require('./config');
 const authRoutes = require('./routes/auth.js');
 const { securityHeaders } = require('./middleware/security.js');
 const { createRateLimiter, storeName } = require('./middleware/rateLimit');
-const { initDb, countUsers, closeDb } = require('./db.js');
+const { initDb, countUsers, closeDb, deleteExpiredPasswordResets } = require('./db.js');
 
 const app = express();
 
@@ -70,7 +70,15 @@ app.get('/', (req, res) => {
   res.json({
     name: 'Rail Hub API',
     version: '2.0.0',
-    endpoints: ['/health', '/auth/signup', '/auth/login', '/auth/session', '/auth/logout'],
+    endpoints: [
+      '/health',
+      '/auth/signup',
+      '/auth/login',
+      '/auth/session',
+      '/auth/logout',
+      '/auth/password/forgot',
+      '/auth/password/reset',
+    ],
   });
 });
 
@@ -97,6 +105,15 @@ app.use((err, req, res, next) => {
 const start = async () => {
   assertUsable();
   await initDb();
+
+  // Recovery links are short-lived; clear expired rows hourly so the table
+  // stays small without a separate job runner.
+  const resetSweep = setInterval(() => {
+    deleteExpiredPasswordResets().catch((error) => {
+      console.error('[password-reset] sweep failed:', error.message);
+    });
+  }, 60 * 60 * 1000);
+  if (typeof resetSweep.unref === 'function') resetSweep.unref();
 
   const server = app.listen(config.port, () => {
     console.log(`[server] Rail Hub API listening on port ${config.port} (${config.env})`);

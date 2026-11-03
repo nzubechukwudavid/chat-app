@@ -157,13 +157,24 @@ const clientKey = (req) => {
  * @param {number} options.windowMs Window length in milliseconds.
  * @param {number} options.max Requests allowed per window per client.
  * @param {string} options.name Bucket name, used in response headers and keys.
+ * @param {(req: import('express').Request) => string | null} [options.key]
+ *   Optional key builder for limits that are not per-IP. Returning an empty
+ *   value skips the bucket for that request.
  */
-const createRateLimiter = ({ windowMs = config.rateLimit.windowMs, max = config.rateLimit.max, name = 'global' } = {}) => {
+const createRateLimiter = ({
+  windowMs = config.rateLimit.windowMs,
+  max = config.rateLimit.max,
+  name = 'global',
+  key: keyBuilder,
+} = {}) => {
   const limiter = async (req, res, next) => {
     if (!config.rateLimit.enabled) return next();
 
+    const bucketKey = keyBuilder ? keyBuilder(req) : clientKey(req);
+    if (!bucketKey) return next();
+
     try {
-      const entry = await store.increment(`${name}:${clientKey(req)}`, windowMs);
+      const entry = await store.increment(`${name}:${bucketKey}`, windowMs);
       const remaining = Math.max(0, max - entry.count);
 
       res.setHeader('X-RateLimit-Limit', max);

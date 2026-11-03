@@ -37,9 +37,14 @@ all-station broadcasts — wrapped in an executive dark‑emerald design system.
 
 ### Account & profile
 - Signup, login, logout and persistent sessions.
+- **Password recovery** — request a one-time link by station handle or email,
+  set a new password, and have every older session revoked. Links expire after
+  30 minutes and are stored only as hashes. Accounts without an email can use
+  `scripts/issue-reset.js` as an admin fallback.
 - **Settings modal** with two tabs:
-  - **Profile** — full name, phone and avatar (upload a JPG/PNG/GIF/WebP up to
-    2 MB, or paste an image URL). Changes sync to Stream.
+  - **Profile** — full name, phone, recovery email and avatar (upload a
+    JPG/PNG/GIF/WebP up to 2 MB). Changing the email requires the current
+    password. Changes sync to Stream.
   - **Security** — change password (current password required, bcrypt 12 rounds).
 - Avatar uploads are stored on Stream CDN and served via Stream's image URL.
 - Friendly validation and conflict errors (duplicate handle, wrong password,
@@ -198,6 +203,13 @@ The app opens at `http://localhost:3000`.
 | `RATE_LIMIT_MAX` | `300` | Requests per window per IP |
 | `RATE_LIMIT_AUTH_MAX` | `30` | Auth requests per 10-minute window |
 | `RATE_LIMIT_ACCOUNT_MAX_FAILURES` | `6` | Failed logins before a temporary account lock |
+| `PUBLIC_APP_URL` | `VERCEL_FRONTEND_URL` | Base URL used in password reset links |
+| `PASSWORD_RESET_TTL_MINUTES` | `30` | Recovery link lifetime |
+| `PASSWORD_RESET_FORGOT_MAX` | `3` | Recovery requests per identifier per window |
+| `PASSWORD_RESET_FORGOT_WINDOW_MS` | `900000` | Recovery request window (15 minutes) |
+| `MAIL_PROVIDER` | `none` | `brevo` to send recovery email; `none` disables delivery |
+| `MAIL_API_KEY` | — | Brevo API key (server-only) |
+| `MAIL_FROM` | — | Verified sender, e.g. `Rail Hub <no-reply@example.com>` |
 
 ### Client (`client/.env`)
 
@@ -221,9 +233,11 @@ All routes are under `/auth` unless noted.
 | `GET` | `/health` | — | Status: env, database, user count, Stream config, rate-limit store |
 | `POST` | `/auth/signup` | — | Create account, Stream user and session |
 | `POST` | `/auth/login` | — | Verify credentials, issue session |
+| `POST` | `/auth/password/forgot` | — | Request a reset link (always the same response) |
+| `POST` | `/auth/password/reset` | — | Consume a token and set a new password |
 | `GET` | `/auth/session` | Cookie | Restore the current session |
 | `GET` | `/auth/me` | Cookie | Current profile |
-| `PATCH`/`PUT` | `/auth/me` | Cookie | Update full name and phone (avatar fields are rejected) |
+| `PATCH`/`PUT` | `/auth/me` | Cookie | Update full name, phone and email (avatar fields are rejected; email changes need the current password) |
 | `PUT` | `/auth/password` | Cookie | Change password (current password required) |
 | `POST` | `/auth/upload/avatar` | Cookie | Multipart avatar upload (`avatar` field) |
 | `POST` | `/auth/logout` | Cookie | Clear the session |
@@ -245,14 +259,31 @@ CREATE TABLE users (
   full_name     VARCHAR(255),
   phone_number  VARCHAR(50),
   avatar_url    TEXT,
+  email         TEXT,                        -- optional recovery address
   password_hash TEXT NOT NULL,
   token_version INTEGER NOT NULL DEFAULT 0,  -- version of the session cookie
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-SQLite uses the same shape (with `TEXT` affinity). Schema creation is
-idempotent, so both fresh and existing databases work.
+Recovery tokens are kept separately. Only the SHA-256 hash is stored, so the
+raw link exists solely in the email (or the admin script's output):
+
+```sql
+CREATE TABLE password_resets (
+  id           TEXT PRIMARY KEY,
+  user_id      VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash   TEXT NOT NULL UNIQUE,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  used_at      TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  requested_ip TEXT
+);
+```
+
+A unique index on `LOWER(email)` keeps one account per inbox. SQLite uses the
+same shape (with `TEXT` timestamps). Schema creation is idempotent, so both
+fresh and existing databases work.
 
 In PostgreSQL a second table holds shared rate-limit counters:
 
@@ -317,6 +348,13 @@ Important production notes:
 - **Avatars are uploads only.** There is no avatar-URL field; the server checks
   the uploaded file's signature (JPG, PNG, GIF, WebP) and stores it on Stream's
   CDN. A renamed non-image file is rejected.
+- **Password reset email** needs `PUBLIC_APP_URL` plus a Brevo API key and a
+  sender address verified in the Brevo dashboard. Without those,
+  `/auth/password/forgot` still answers normally but sends nothing; issue a link
+  manually with `server/scripts/issue-reset.js <username>`. Never commit
+  `MAIL_API_KEY`.
+- **Existing users must add an email** in Settings before they can self-serve a
+  reset. Accounts without one can still be recovered through the admin script.
 
 ---
 
@@ -336,6 +374,11 @@ Important production notes:
   applied on the server; channel names and handles are normalized before use.
 - Session revocation: password changes sign out other devices; session cookies carry `sv` version that is checked against DB.
 - Session TTL is 7 days (configurable); `/auth/session` returns a fresh Stream token on each request.
+- Password reset tokens are 256-bit, stored only as SHA-256 hashes, expire in 30
+  minutes, work once, and are consumed only when the new password is submitted.
+  The reset endpoint revokes every existing session and clears the account's
+  failed-login lockout. Forgot-password responses are identical and time-floored
+  so they cannot be used to discover which accounts exist.
 
 ---
 

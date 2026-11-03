@@ -396,6 +396,63 @@
   line-height: var(--line-height-snug);
 }
 
+/* --------------------------------------------------------------------------
+   Password recovery
+   -------------------------------------------------------------------------- */
+.auth__meta-sep {
+  margin: 0 var(--space-2);
+  color: var(--text-faint);
+}
+
+.auth__notice {
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-main);
+  line-height: var(--line-height-snug);
+}
+
+.auth__notice-title {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--nrc-green-300);
+}
+
+.auth__notice p {
+  margin: 0;
+}
+
+.auth__notice-hint {
+  margin-top: var(--space-3) !important;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.auth__reset-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth__brand--reset {
+  margin-bottom: var(--space-2);
+}
+
+.auth__submit--link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-top: var(--space-2);
+}
+
+.auth__reset-card .alert {
+  margin: 0;
+}
+
 /* Password reveal toggle sits inside the input group */
 .auth__reveal {
   color: var(--text-subtle);

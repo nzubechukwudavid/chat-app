@@ -3,6 +3,7 @@ const { config } = require('../config');
 const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/;
 const FULL_NAME_PATTERN = /^[\p{L}][\p{L}\p{M}\p{N}\s'.-]{0,99}$/u;
 const PHONE_PATTERN = /^\+?[0-9]{7,15}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const TRIMMED_COMMON_PASSWORDS = new Set([
   'password',
@@ -63,6 +64,20 @@ const validatePhone = (raw) => {
   return { ok: true, value };
 };
 
+/**
+ * Email is an optional recovery address, so an empty value is valid and means
+ * "clear it". Stored lower-case so the unique index is effectively
+ * case-insensitive without relying on Postgres collation.
+ */
+const validateEmail = (raw) => {
+  const value = sanitizeText(raw, 254).toLowerCase();
+  if (!value) return { ok: true, value: '' };
+  if (!EMAIL_PATTERN.test(value)) {
+    return { ok: false, message: 'Enter a valid email address.' };
+  }
+  return { ok: true, value };
+};
+
 const validatePassword = (raw) => {
   if (typeof raw !== 'string' || !raw.length) {
     return { ok: false, message: 'Password is required.' };
@@ -105,6 +120,9 @@ const validateSignupPayload = (body = {}) => {
   const phoneNumber = validatePhone(body.phoneNumber);
   if (!phoneNumber.ok) return phoneNumber;
 
+  const email = validateEmail(body.email);
+  if (!email.ok) return email;
+
   return {
     ok: true,
     value: {
@@ -112,6 +130,7 @@ const validateSignupPayload = (body = {}) => {
       password: password.value,
       fullName: fullName.value || username.value,
       phoneNumber: phoneNumber.value,
+      email: email.value,
     },
   };
 };
@@ -121,6 +140,7 @@ module.exports = {
   validateUsername,
   validateFullName,
   validatePhone,
+  validateEmail,
   validatePassword,
   validateSignupPayload,
   USERNAME_PATTERN,

@@ -67,6 +67,29 @@ const config = {
     sessionSecret: process.env.SESSION_SECRET || process.env.STREAM_API_SECRET || '',
   },
 
+  passwordReset: {
+    /** How long a recovery link stays usable. Short by design. */
+    ttlMs: toInt(process.env.PASSWORD_RESET_TTL_MINUTES, 30) * 60 * 1000,
+    /** Base URL used to build the link that goes into the email. */
+    publicAppUrl: normalizeOrigin(
+      process.env.PUBLIC_APP_URL || process.env.VERCEL_FRONTEND_URL || 'http://localhost:3000',
+    ),
+    /** Per-account ceiling for "forgot password" requests. */
+    forgotMaxPerAccount: toInt(process.env.PASSWORD_RESET_FORGOT_MAX, 3),
+    forgotWindowMs: toInt(process.env.PASSWORD_RESET_FORGOT_WINDOW_MS, 15 * 60 * 1000),
+  },
+
+  mail: {
+    /**
+     * `none` disables delivery (the admin script still works), `brevo` sends
+     * through Brevo, and `memory` is the test transport. Unknown values are
+     * treated as `none` by the mailer.
+     */
+    provider: String(process.env.MAIL_PROVIDER || 'none').trim().toLowerCase(),
+    apiKey: process.env.MAIL_API_KEY || '',
+    from: process.env.MAIL_FROM || '',
+  },
+
   rateLimit: {
     enabled: toBool(process.env.RATE_LIMIT_ENABLED, true),
     /**

@@ -27,6 +27,9 @@ process.env.STREAM_API_SECRET = process.env.STREAM_API_SECRET || 'test-stream-se
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-session-secret';
 process.env.RATE_LIMIT_STORE = process.env.RATE_LIMIT_STORE || 'memory';
 process.env.RATE_LIMIT_ENABLED = process.env.RATE_LIMIT_ENABLED || 'true';
+// Recovery mail is captured in-process instead of being sent.
+process.env.MAIL_PROVIDER = 'memory';
+process.env.PUBLIC_APP_URL = process.env.PUBLIC_APP_URL || 'http://localhost:3000';
 // bcrypt cost is deliberately low here: these tests exercise routing and
 // state, not hashing strength, and cost 12 would add ~300ms per login.
 process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS || '4';
@@ -68,6 +71,7 @@ require.cache[streamChatPath] = streamChatModule;
 
 const { app } = require('../index');
 const db = require('../db');
+const mailer = require('../services/mailer');
 
 const getSessionCookie = (response) => {
   const cookies = typeof response.headers.getSetCookie === 'function'
@@ -149,11 +153,16 @@ const resetStreamCalls = () => {
   streamCalls.length = 0;
 };
 
+const getMailOutbox = () => mailer.getOutbox();
+const clearMailOutbox = () => mailer.clearOutbox();
+
 module.exports = {
   COOKIE_NAME,
   dbFile,
   fakeStreamClient,
   getSessionCookie,
+  getMailOutbox,
+  clearMailOutbox,
   request,
   resetStreamCalls,
   startTestServer,

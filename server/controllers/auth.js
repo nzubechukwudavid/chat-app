@@ -4,9 +4,17 @@ const crypto = require('crypto');
 
 const { config } = require('../config');
 const db = require('../db');
-const { validateSignupPayload, sanitizeText, validatePassword } = require('../middleware/validate');
+const {
+  validateSignupPayload,
+  sanitizeText,
+  validateEmail,
+  validatePassword,
+} = require('../middleware/validate');
 const { isSupportedImage } = require('../middleware/upload');
+const { createAuthLimiter } = require('../middleware/rateLimit');
 const { setSessionCookie, clearSessionCookie, readSessionCookie } = require('../services/session');
+const { sendPasswordReset } = require('../services/mailer');
+const { issueResetToken, hashToken } = require('../services/passwordReset');
 const { signSessionToken, verifySessionToken } = require('../utils/token');
 
 /**
@@ -18,6 +26,27 @@ const { signSessionToken, verifySessionToken } = require('../utils/token');
 const TIMING_EQUALIZER_HASH = '$2b$12$S/PwA.EDR5tjfl72sKcF1eBzZYPbmUOK8Y/GKtEIq4c4ph30TGk3u';
 
 const GENERIC_LOGIN_FAILURE = 'Invalid username or password.';
+
+/**
+ * The forgot-password response never varies, and the endpoint waits at least
+ * this long so a hit and a miss cannot be told apart by response time.
+ */
+const FORGOT_MESSAGE = 'If an account matches, a reset link is on its way. Check your inbox.';
+const FORGOT_MIN_RESPONSE_MS = 400;
+const INVALID_RESET_MESSAGE = 'This reset link is invalid or has expired.';
+
+const waitForMinimumDuration = async (startedAt, minimumMs) => {
+  const remaining = minimumMs - (Date.now() - startedAt);
+  if (remaining > 0) {
+    await new Promise((resolve) => setTimeout(resolve, remaining));
+  }
+};
+
+/**
+ * Used to release the per-account lockout after a successful reset. Login
+ * records failures under the lower-cased handle, so clear the same key.
+ */
+const resetAccountLimiter = createAuthLimiter();
 
 /**
  * Single Stream server client for every privileged operation: issuing user
@@ -42,6 +71,7 @@ const publicUser = (user) => ({
   fullName: user.full_name ?? user.fullName ?? user.username,
   phoneNumber: user.phone_number ?? user.phoneNumber ?? '',
   avatarURL: user.avatar_url ?? user.avatarURL ?? '',
+  email: user.email ?? '',
 });
 
 /** Signs a cookie the server can revoke and returns it. */
@@ -95,10 +125,17 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: parsed.message });
     }
 
-    const { username, password, fullName, phoneNumber } = parsed.value;
+    const { username, password, fullName, phoneNumber, email } = parsed.value;
 
     if (await db.usernameExists(username)) {
       return res.status(409).json({ message: 'That station handle is already taken. Please choose another.' });
+    }
+
+    if (email) {
+      const existingEmail = await db.findUserByEmail(email);
+      if (existingEmail) {
+        return res.status(409).json({ message: 'That email is already linked to another account.' });
+      }
     }
 
     if (!config.hasStreamCredentials) {
@@ -108,14 +145,24 @@ const signup = async (req, res) => {
     const userID = crypto.randomBytes(16).toString('hex');
     const hashedPassword = await bcrypt.hash(password, config.auth.bcryptRounds);
 
-    await db.createUser({
-      id: userID,
-      username,
-      fullName,
-      phoneNumber,
-      avatarURL: '',
-      passwordHash: hashedPassword,
-    });
+    try {
+      await db.createUser({
+        id: userID,
+        username,
+        fullName,
+        phoneNumber,
+        avatarURL: '',
+        email,
+        passwordHash: hashedPassword,
+      });
+    } catch (error) {
+      // The pre-check above closes the common case; the unique index closes the
+      // race between two simultaneous signups claiming the same address.
+      if (db.isUniqueViolation(error)) {
+        return res.status(409).json({ message: 'That station handle or email is already in use.' });
+      }
+      throw error;
+    }
 
     try {
       await upsertToStream({ id: userID, username, fullName, avatarURL: '' });
@@ -131,7 +178,7 @@ const signup = async (req, res) => {
 
     issueSession(res, { id: userID, token_version: 0 });
 
-    return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: '' }) });
+    return res.status(201).json({ user: publicUser({ id: userID, username, full_name: fullName, phone_number: phoneNumber, avatar_url: '', email }) });
   } catch (error) {
     console.error('Signup error:', error);
     return res.status(500).json({ message: 'We could not create your account. Please try again.' });
@@ -300,7 +347,7 @@ const updateMe = async (req, res) => {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
-    const { fullName, full_name, phoneNumber, phone_number, avatarURL, avatar_url } = req.body || {};
+    const { fullName, full_name, phoneNumber, phone_number, avatarURL, avatar_url, email, currentPassword } = req.body || {};
     const updates = {};
 
     // Avatars are uploads only. Reject the field instead of ignoring it, so a
@@ -328,17 +375,60 @@ const updateMe = async (req, res) => {
       updates.phone_number = sanitized === '' ? null : sanitized;
     }
 
+    // Email is a recovery address, so changing it is treated like changing a
+    // password: a stolen session must not be able to quietly redirect future
+    // reset links to another inbox.
+    if (email !== undefined) {
+      const parsedEmail = validateEmail(email);
+      if (!parsedEmail.ok) {
+        return res.status(400).json({ message: parsedEmail.message });
+      }
+
+      const user = await db.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found.' });
+      }
+
+      const currentEmail = String(user.email || '').toLowerCase();
+      if (parsedEmail.value !== currentEmail) {
+        if (!currentPassword) {
+          return res.status(400).json({ message: 'Enter your current password to change your email.' });
+        }
+
+        const match = await bcrypt.compare(String(currentPassword), user.password_hash || '');
+        if (!match) {
+          return res.status(400).json({ message: 'Current password is incorrect.' });
+        }
+
+        if (parsedEmail.value) {
+          const owner = await db.findUserByEmail(parsedEmail.value);
+          if (owner && owner.id !== userId) {
+            return res.status(409).json({ message: 'That email is already linked to another account.' });
+          }
+        }
+
+        updates.email = parsedEmail.value || null;
+      }
+    }
+
     if (Object.keys(updates).length === 0) {
       const user = await db.getUserById(userId);
       if (!user) return res.status(404).json({ message: 'User not found.' });
       return res.status(200).json({ user: publicUser(user) });
     }
 
-    const updated = await db.updateUser(userId, updates);
+    let updated;
+    try {
+      updated = await db.updateUser(userId, updates);
+    } catch (error) {
+      if (db.isUniqueViolation(error)) {
+        return res.status(409).json({ message: 'That email is already linked to another account.' });
+      }
+      throw error;
+    }
     if (!updated) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
     try {
       const serverClient = getStreamClient();
       await serverClient.upsertUser({
@@ -387,6 +477,11 @@ const changePassword = async (req, res) => {
     const hash = await bcrypt.hash(String(newPassword), config.auth.bcryptRounds);
     const tokenVersion = await db.updatePassword(userId, hash);
 
+    // A password change makes any outstanding recovery link obsolete.
+    await db.deletePasswordResetsForUser(userId).catch((error) => {
+      console.error('[password-reset] failed to clear tokens:', error.message);
+    });
+
     // Keep this device signed in with the new version while every other
     // cookie (which still carries the old version) is now invalid.
     issueSession(res, { id: userId, token_version: tokenVersion });
@@ -398,4 +493,102 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, session, logout, publicUser, getMe, updateMe, changePassword, uploadAvatar };
+/**
+ * Starts the recovery flow.
+ *
+ * Always answers with the same message and roughly the same timing: whether
+ * the identifier exists, has an email, or was throttled must not be
+ * observable. Delivery failures are logged, never returned.
+ */
+const forgotPassword = async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const identifier = sanitizeText(req.body?.identifier, 254);
+    if (!identifier) {
+      return res.status(400).json({ message: 'Enter your station handle or email.' });
+    }
+
+    const user = await db.findUserByIdentifier(identifier);
+
+    if (user?.email) {
+      try {
+        const { resetUrl } = await issueResetToken({ userId: user.id, ip: req.ip });
+        const delivery = await sendPasswordReset({
+          to: user.email,
+          username: user.username,
+          resetUrl,
+        });
+        if (!delivery.ok) {
+          console.error('[mail] password reset delivery failed:', delivery.error);
+        }
+      } catch (error) {
+        console.error('[password-reset] issue failed:', error.message);
+      }
+    }
+  } catch (error) {
+    console.error('ForgotPassword error:', error);
+  }
+
+  await waitForMinimumDuration(startedAt, FORGOT_MIN_RESPONSE_MS);
+  return res.status(200).json({ message: FORGOT_MESSAGE });
+};
+
+/**
+ * Completes the recovery flow. The token is only consumed here - never on a
+ * GET - so mail scanners that prefetch links cannot burn a user's link.
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    if (!token) {
+      return res.status(400).json({ message: INVALID_RESET_MESSAGE });
+    }
+
+    const passwordCheck = validatePassword(req.body?.newPassword);
+    if (!passwordCheck.ok) {
+      return res.status(400).json({ message: passwordCheck.message });
+    }
+
+    const hash = await bcrypt.hash(String(req.body.newPassword), config.auth.bcryptRounds);
+    const result = await db.consumePasswordReset({
+      tokenHash: hashToken(token),
+      passwordHash: hash,
+    });
+
+    if (!result) {
+      return res.status(400).json({ message: INVALID_RESET_MESSAGE });
+    }
+
+    // The reset screen is unauthenticated; clearing the cookie also signs out
+    // any session that happened to share this browser.
+    clearSessionCookie(res);
+
+    // A successful reset must also release a failed-login lockout, otherwise
+    // the user could set a password and still be blocked from using it.
+    if (result.username) {
+      await resetAccountLimiter.clearFailures(result.username.toLowerCase()).catch((error) => {
+        console.error('[rate-limit] failed to clear lockout after reset:', error.message);
+      });
+    }
+
+    return res.status(200).json({ message: 'Password updated. Sign in with your new password.' });
+  } catch (error) {
+    console.error('ResetPassword error:', error);
+    return res.status(500).json({ message: 'We could not reset your password. Please try again.' });
+  }
+};
+
+module.exports = {
+  signup,
+  login,
+  session,
+  logout,
+  publicUser,
+  getMe,
+  updateMe,
+  changePassword,
+  uploadAvatar,
+  forgotPassword,
+  resetPassword,
+};

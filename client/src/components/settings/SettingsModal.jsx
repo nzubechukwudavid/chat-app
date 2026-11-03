@@ -8,9 +8,14 @@ const TABS = [
   { id: 'security', label: 'Security' },
 ];
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [formError, setFormError] = useState('');
   const [avatarURL, setAvatarURL] = useState(user?.avatarURL || '');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -21,14 +26,46 @@ const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
     if (user?.avatarURL) setAvatarURL(user.avatarURL);
   }, [user?.avatarURL]);
 
+  useEffect(() => {
+    setEmail(user?.email || '');
+  }, [user?.email]);
+
+  const savedEmail = String(user?.email || '').toLowerCase();
+  const nextEmail = email.trim().toLowerCase();
+  const emailChanged = nextEmail !== savedEmail;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (nextEmail && !EMAIL_PATTERN.test(nextEmail)) {
+      setFormError('Enter a valid email address.');
+      return;
+    }
+
+    // Changing where recovery mail goes is sensitive, so it needs the current
+    // password even though the rest of the profile does not.
+    if (emailChanged && !currentPassword) {
+      setFormError('Enter your current password to change your email.');
+      return;
+    }
+
+    setFormError('');
     setSaving(true);
-    const res = await onUpdateProfile({ fullName, phoneNumber });
+
+    const payload = { fullName, phoneNumber };
+    if (emailChanged) {
+      payload.email = nextEmail;
+      payload.currentPassword = currentPassword;
+    }
+
+    const res = await onUpdateProfile(payload);
     setSaving(false);
+
     if (res?.ok) {
+      setCurrentPassword('');
       notify?.({ type: 'success', message: 'Profile updated.' });
     } else if (res?.error) {
+      setFormError(res.error);
       notify?.({ type: 'error', message: res.error });
     }
   };
@@ -79,6 +116,48 @@ const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
         <span>Phone number</span>
         <input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1234567890" maxLength={20} />
       </label>
+
+      <label className="settings-field">
+        <span>Email</span>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setFormError('');
+          }}
+          placeholder="you@example.com"
+          autoComplete="email"
+          maxLength={254}
+        />
+      </label>
+
+      <p className="settings-hint">
+        Used only for password recovery.
+        {!savedEmail ? ' Add an email so you can reset your password yourself.' : ''}
+      </p>
+
+      {emailChanged && (
+        <label className="settings-field">
+          <span>Current password</span>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => {
+              setCurrentPassword(e.target.value);
+              setFormError('');
+            }}
+            autoComplete="current-password"
+            placeholder="Required to change your email"
+          />
+        </label>
+      )}
+
+      {formError && (
+        <p className="settings-error" role="alert">
+          {formError}
+        </p>
+      )}
 
       <div className="settings-actions">
         <button type="submit" className="settings-btn settings-btn--primary" disabled={saving}>

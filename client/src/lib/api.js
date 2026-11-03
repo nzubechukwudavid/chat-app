@@ -110,3 +110,30 @@ export const uploadAvatar = async (file) => {
     return { ok: false, error: errorMessage(error) };
   }
 };
+
+/**
+ * Recovery requests always get the same answer from the server, whether or not
+ * the account exists, so the client simply relays that message.
+ */
+export const requestPasswordReset = async (identifier) => {
+  try {
+    const res = await api.post('/auth/password/forgot', { identifier });
+    return {
+      ok: true,
+      message:
+        res.data?.message ||
+        'If an account matches, a reset link is on its way. Check your inbox.',
+    };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
+
+export const resetPassword = async ({ token, newPassword }) => {
+  try {
+    const res = await api.post('/auth/password/reset', { token, newPassword });
+    return { ok: true, message: res.data?.message || 'Password updated.' };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+};
