@@ -519,7 +519,7 @@ const forgotPassword = async (req, res) => {
           username: user.username,
           resetUrl,
         });
-        if (!delivery.ok) {
+        if (!delivery.ok && !delivery.skipped) {
           console.error('[mail] password reset delivery failed:', delivery.error);
         }
       } catch (error) {

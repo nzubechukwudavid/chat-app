@@ -132,7 +132,13 @@ const sendPasswordReset = async ({ to, username, resetUrl }) => {
   }
 
   if (!isConfigured()) {
-    return { ok: false, error: `Mail provider "${config.mail.provider}" is not configured.` };
+    // A deliberate `none` is not an error worth logging on every request; the
+    // controller distinguishes this from a real delivery failure.
+    return {
+      ok: false,
+      skipped: true,
+      error: `Mail provider "${config.mail.provider}" is not configured.`,
+    };
   }
 
   try {

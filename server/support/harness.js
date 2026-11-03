@@ -20,6 +20,10 @@ const dbFile = path.join(
   `railhub-test-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.db`,
 );
 
+// A test run must never reach a real database, even if the developer's shell
+// or .env still holds production credentials.
+delete process.env.DATABASE_URL;
+
 process.env.NODE_ENV = 'test';
 process.env.SQLITE_FILE = dbFile;
 process.env.STREAM_API_KEY = process.env.STREAM_API_KEY || 'test-stream-key';

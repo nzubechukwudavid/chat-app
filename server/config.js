@@ -72,7 +72,9 @@ const config = {
     ttlMs: toInt(process.env.PASSWORD_RESET_TTL_MINUTES, 30) * 60 * 1000,
     /** Base URL used to build the link that goes into the email. */
     publicAppUrl: normalizeOrigin(
-      process.env.PUBLIC_APP_URL || process.env.VERCEL_FRONTEND_URL || 'http://localhost:3000',
+      process.env.PUBLIC_APP_URL
+        || (process.env.NODE_ENV === 'production' ? process.env.VERCEL_FRONTEND_URL : '')
+        || 'http://localhost:3000',
     ),
     /** Per-account ceiling for "forgot password" requests. */
     forgotMaxPerAccount: toInt(process.env.PASSWORD_RESET_FORGOT_MAX, 3),
