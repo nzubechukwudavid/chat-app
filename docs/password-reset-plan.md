@@ -1,7 +1,9 @@
 # Password Reset — Implementation Plan
 
-Status: **implemented locally** (server, client, admin fallback, tests). Remaining
-work is deployment: configure Brevo on Render and run a real-inbox check.
+Status: **deployed and verified in production** (2026-11-03). Brevo delivery,
+real-inbox reset, replay rejection, and session revocation were all confirmed.
+Remaining: add an email to the second production account when its owner is ready;
+accounts without one keep using the admin script.
 
 ## 0. What was built
 
@@ -268,14 +270,17 @@ Client: password confirmation and invalid-token error state.
 
 ## 11. Rollout
 
-1. Deploy server with the schema changes and mailer disabled (`MAIL_PROVIDER=none`).
-2. Add provider credentials and `PUBLIC_APP_URL` on Render; redeploy.
-3. Deploy the client.
-4. Each existing user sets an email in Settings (2 users today).
-5. End-to-end check with a real inbox: request, receive, reset, confirm old
-   password and old sessions fail.
-6. Re-run Lighthouse on the forgot and reset screens.
-7. Confirm no raw tokens appear in logs.
+1. [x] Deploy server with the schema changes and mailer disabled (`MAIL_PROVIDER=none`).
+2. [x] Add provider credentials and `PUBLIC_APP_URL` on Render; redeploy.
+3. [x] Deploy the client.
+4. Users set an email in Settings. One of two accounts has one; the other
+   remains on the admin-script path until its owner adds one.
+5. [x] End-to-end check with a real inbox: request, receive, reset, confirm the
+   used link is rejected on replay, and confirm older sessions are signed out.
+6. [x] Lighthouse on the forgot and reset screens (100 for accessibility, best
+   practices, and SEO).
+7. [x] Token handling reviewed: the API never logs the raw token or reset URL,
+   and the client strips the token from the address bar on load.
 
 ## 12. Effort
 
