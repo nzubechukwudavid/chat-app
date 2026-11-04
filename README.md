@@ -443,6 +443,7 @@ Important production notes:
 - [docs/README.md](docs/README.md) - documentation index
 - [docs/model-railway-plan.md](docs/model-railway-plan.md) - station board design and phases
 - [docs/password-reset-plan.md](docs/password-reset-plan.md) - reset flow and production verification
+- [docs/vite-migration-plan.md](docs/vite-migration-plan.md) - planned CRA to Vite migration
 - [docs/archive/profile-and-features-plan.md](docs/archive/profile-and-features-plan.md) - historical profile/settings plan
 
 ---
