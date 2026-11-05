@@ -1,7 +1,7 @@
 # CRA to Vite Migration Plan
 
-Status: implemented, verified locally; Vercel preview pending
-Branch: `chore/vite-migration`
+Status: implemented and deployed to production (2026-11-05)
+Branch: `chore/vite-migration` (merged)
 Base: `main` at `036cdac` (2026-11-04)
 Last updated: 2026-11-05
 
@@ -493,6 +493,29 @@ that message, dark/light theme switching and persistence across reload, and a
 clean console/network log. The dev server does not register the service worker
 (production only); that path is checked in `npm run preview` and on the Vercel
 preview.
+
+The Vercel preview built successfully and served the app, its static assets,
+manifest, service worker (`nrc-rail-hub-v3`) and the SPA fallback. Its `/api`
+rewrite reached the Render API, but sign-in was blocked by the API's exact-origin
+CORS allow-list (`Origin not allowed.`), because the preview hostname is not in
+`VERCEL_FRONTEND_URL` or `CORS_ORIGINS`. The exact production bundle was
+therefore also exercised against the production API through a temporary local
+proxy that sent the allowed origin.
+
+Production (`https://nrc-chat.vercel.app`) was verified after the merge:
+
+- The served HTML references `/assets/index-*.js` (Vite build).
+- Login and session restore work, and the station board renders.
+- Dark/light themes and the settings dialog render correctly.
+- `/api/health` returns `200` with `database: postgres` and `env: production`.
+- A non-root URL (`/station-board`) serves the SPA.
+- `/manifest.json`, `/service-worker.js`, `/favicon.svg` and the touch icon all
+  return `200`; the v3 service worker is activated and controlling the page.
+- The console shows no errors beyond the expected `401` from the initial
+  `/auth/session` probe before login.
+
+A test message created during local verification was removed from the shared
+Stream app.
 
 ## 8. Verification matrix
 
