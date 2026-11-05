@@ -1,5 +1,5 @@
 // NRC Rail Hub - Progressive Web App Service Worker
-const CACHE_NAME = 'nrc-rail-hub-v2';
+const CACHE_NAME = 'nrc-rail-hub-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

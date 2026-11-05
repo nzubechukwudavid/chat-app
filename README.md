@@ -86,7 +86,7 @@ Production: [nrc-chat.vercel.app](https://nrc-chat.vercel.app)
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React 18.3 (Create React App 5), `stream-chat-react` 11, vanilla CSS design system, Inter |
+| **Frontend** | React 18.3 (Vite 8), `stream-chat-react` 11, vanilla CSS design system, Inter |
 | **Backend** | Node.js 22+, Express 5, `stream-chat` server SDK 9, bcrypt, multer, jsonwebtoken |
 | **Database** | PostgreSQL (`pg`) in production, `node:sqlite` locally when `DATABASE_URL` is unset |
 | **Chat transport** | Stream Chat (websocket + REST), server-issued user tokens |
@@ -98,9 +98,11 @@ Production: [nrc-chat.vercel.app](https://nrc-chat.vercel.app)
 
 ```text
 chat-app/
-|-- client/                          # React single-page app
-|   |-- public/                      # HTML shell, icons, manifest, service worker
+|-- client/                          # React single-page app (Vite)
+|   |-- index.html                   # Vite HTML shell
+|   |-- public/                      # Icons, manifest, service worker
 |   |-- src/
+|   |   |-- main.jsx                 # React entry; service-worker registration
 |   |   |-- App.jsx                  # Session lifecycle, theme, auth shell
 |   |   |-- config.js                # API URL + Stream key from env
 |   |   |-- components/              # Auth, workspace, channels, settings, UI
@@ -128,7 +130,8 @@ chat-app/
 
 ### Prerequisites
 
-- **Node.js 22 or newer** (`node:sqlite` is required for the local fallback)
+- **Node.js 22.12 or newer** (`node:sqlite` is required for the local fallback
+  and Vite 8 requires Node 22.12+)
 - npm
 - A Stream Chat application (API key, secret and app id)
 
@@ -176,12 +179,12 @@ cp .env.example .env
 ```
 
 ```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_STREAM_API_KEY=your_stream_api_key
+VITE_API_URL=http://localhost:5000
+VITE_STREAM_API_KEY=your_stream_api_key
 ```
 
 ```bash
-npm start
+npm start        # Vite dev server; npm run dev is equivalent
 ```
 
 The app opens at `http://localhost:3000`.
@@ -227,12 +230,12 @@ The app opens at `http://localhost:3000`.
 
 | Variable | Purpose |
 | :--- | :--- |
-| `REACT_APP_API_URL` | API base URL for local development (`http://localhost:5000`) |
-| `REACT_APP_STREAM_API_KEY` | Stream app key (public) |
+| `VITE_API_URL` | API base URL for local development (`http://localhost:5000`) |
+| `VITE_STREAM_API_KEY` | Stream app key (public) |
 
 In production the client calls `/api` and `client/vercel.json` rewrites that to
-the Render service, keeping cookies first-party. `REACT_APP_API_URL` is only
-used locally.
+the Render service, keeping cookies first-party. `VITE_API_URL` is only
+used locally. Vite exposes only variables prefixed with `VITE_`.
 
 ---
 
@@ -319,8 +322,9 @@ cd server
 npm test                              # unit + HTTP integration tests
 
 cd ../client
-CI=true npm test -- --watchAll=false   # unit tests (railway event hooks)
-CI=true npm run build                  # production build (warnings are errors)
+npm test                              # Vitest unit tests (railway event hooks)
+npm run lint                          # ESLint flat config
+npm run build                         # Vite production build in dist/ (lint runs first)
 ```
 
 The server suite includes real HTTP integration tests. They boot the Express app
@@ -341,8 +345,10 @@ inbox, replay rejection and session revocation.
 
 ## Deployment
 
-1. **Client to Vercel.** Build `client/`, set `REACT_APP_STREAM_API_KEY`. The
-   `/api` rewrite in `client/vercel.json` points at the API service.
+1. **Client to Vercel.** Build `client/` with Vite and set
+   `VITE_STREAM_API_KEY`. The `/api` rewrite in `client/vercel.json` points at
+   the API service. The project must use the Vite preset and the `dist` output
+   directory.
 2. **API to Render.** Set `NODE_ENV=production`, `STREAM_API_KEY`,
    `STREAM_API_SECRET`, `STREAM_APP_ID`, `SESSION_SECRET`,
    `VERCEL_FRONTEND_URL` and a durable `DATABASE_URL`.
@@ -443,6 +449,7 @@ Important production notes:
 - [docs/README.md](docs/README.md) - documentation index
 - [docs/model-railway-plan.md](docs/model-railway-plan.md) - station board design and phases
 - [docs/password-reset-plan.md](docs/password-reset-plan.md) - reset flow and production verification
+- [docs/vite-migration-plan.md](docs/vite-migration-plan.md) - CRA to Vite migration plan and results
 - [docs/archive/profile-and-features-plan.md](docs/archive/profile-and-features-plan.md) - historical profile/settings plan
 
 ---

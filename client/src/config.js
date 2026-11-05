@@ -10,8 +10,9 @@
  * Local development still talks to the Express server directly so CORS and
  * cookies are exercised in their cross-origin form.
  */
-const DEV_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const DEV_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-export const API_URL = process.env.NODE_ENV === 'production' ? '/api' : DEV_API_URL;
+export const API_URL = import.meta.env.PROD ? '/api' : DEV_API_URL;
 
-export const STREAM_API_KEY = process.env.REACT_APP_STREAM_API_KEY || 'ye78kwjpxmh2';
+export const STREAM_API_KEY =
+  import.meta.env.VITE_STREAM_API_KEY || 'ye78kwjpxmh2';

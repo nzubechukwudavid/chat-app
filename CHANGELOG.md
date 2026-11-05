@@ -8,7 +8,22 @@ Dates are in `YYYY-MM-DD` format.
 
 ## Unreleased
 
-Nothing yet.
+### Changed
+
+- Migrated the client from Create React App (`react-scripts`) to Vite 8. The
+  React 18 app, styling, PWA and deployment topology are unchanged.
+  - Dev server and build now use Vite; output moved from `build/` to `dist/`
+    and `client/vercel.json` declares the Vite preset and output directory.
+  - Tests run on Vitest with jsdom; the railway hook suite still has 4 passing
+    tests. The test file is now `useTrainEvents.test.jsx` with explicit Vitest
+    imports.
+  - Lint uses an ESLint 9 flat config and runs before the production build.
+  - Client env vars are now `VITE_API_URL` and `VITE_STREAM_API_KEY`. The
+    Vercel project must define `VITE_STREAM_API_KEY` for Production and Preview.
+  - The entry point is `src/main.jsx` and the HTML shell moved to
+    `client/index.html`.
+  - Service-worker cache bumped to `nrc-rail-hub-v3`.
+  - `cssMinify: 'esbuild'` keeps the bundled CSS at ~386 KB instead of ~665 KB.
 
 ## 2026-11-03
 
