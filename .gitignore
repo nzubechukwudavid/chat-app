@@ -25,4 +25,5 @@ yarn-error.log*
 
 # Production build outputs
 /client/build
+/client/dist
 /dist

@@ -1,5 +1,6 @@
 import { act, render } from '@testing-library/react';
 import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTrainEvents } from './useTrainEvents';
 
@@ -9,11 +10,11 @@ const createClient = () => {
   return {
     userID: 'me',
     activeChannels: {},
-    on: jest.fn((event, handler) => {
+    on: vi.fn((event, handler) => {
       if (!handlers.has(event)) handlers.set(event, new Set());
       handlers.get(event).add(handler);
     }),
-    off: jest.fn((event, handler) => {
+    off: vi.fn((event, handler) => {
       handlers.get(event)?.delete(handler);
     }),
     emit: (event, payload) => {
@@ -46,12 +47,12 @@ const messageEvent = (overrides = {}) => ({
 
 describe('useTrainEvents', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   it('turns a received message into a named arrival and clears it', () => {
@@ -76,7 +77,7 @@ describe('useTrainEvents', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
     });
 
     expect(latest.current.journey).toBeNull();
@@ -139,7 +140,7 @@ describe('useTrainEvents', () => {
         channel_type: 'team',
         user: { id: 'other', name: 'Maya', fullName: 'Maya Okafor' },
       });
-      jest.advanceTimersByTime(7000);
+      vi.advanceTimersByTime(7000);
     });
     expect(latest.current.typingByLine['team:alpha']).toBeUndefined();
   });
@@ -153,7 +154,7 @@ describe('useTrainEvents', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       client.emit('message.new', messageEvent());
     });
 
