@@ -1,9 +1,9 @@
 # CRA to Vite Migration Plan
 
-Status: proposed
+Status: implemented, verified locally; Vercel preview pending
 Branch: `chore/vite-migration`
 Base: `main` at `036cdac` (2026-11-04)
-Last updated: 2026-11-04
+Last updated: 2026-11-05
 
 ## 1. Summary
 
@@ -66,15 +66,17 @@ webpack or Babel config, no image imports, and one test file.
 | ID | Decision | Rationale |
 | :--- | :--- | :--- |
 | D1 | Use Vite 8.3.x with `@vitejs/plugin-react` 6.2.x | Current stable line; Node 22.17 satisfies the engine requirement |
-| D2 | Use Vitest 5.1.x with jsdom 30.x | Closest replacement for CRA's Jest/jsdom setup |
+| D2 | Use Vitest 5.1.x with jsdom 29.1.x | Closest replacement for CRA's Jest/jsdom setup. jsdom 30 requires Node `^22.22.2`, so 29.1.1 keeps the current Node 22.17 toolchain working |
 | D3 | Keep React 18.3 and JavaScript/JSX | Avoid mixing a framework upgrade with a build migration |
 | D4 | Emit to `dist` and declare it in `client/vercel.json` | Vite default; explicit config avoids relying on dashboard guesses |
 | D5 | Keep the existing service worker | It already works; `vite-plugin-pwa` can be a later, separate change |
 | D6 | Rename the entry to `src/main.jsx` | The entry contains JSX; Vite does not transform JSX in `.js` by default |
 | D7 | Set `build.target` to `es2018` | Field devices may run older Android WebViews; revisit after device testing |
-| D8 | Add ESLint 10 with a flat config and an explicit `lint` script | CRA no longer lints during build, so the gate must be recreated |
+| D8 | Add ESLint 9.39 with a flat config and an explicit `lint` script | CRA no longer lints during build, so the gate must be recreated. ESLint 10 is not usable yet because `eslint-plugin-react` 7.37 declares a peer range ending at `^9.7` |
 | D9 | Rename env vars to `VITE_*` | Vite only exposes the `VITE_` prefix to client code |
 | D10 | Do not add `@vitejs/plugin-legacy` initially | Adds weight; only add if real devices fail |
+| D11 | Set `cssMinify: 'esbuild'` | Vite 8's default Lightning CSS expands logical selectors and inflated the CSS from ~386 KB to ~665 KB. esbuild restores the CRA-sized output |
+| D12 | Run lint from `prebuild` | Keeps local and Vercel builds consistent with CRA's "warnings are errors" gate |
 
 ## 6. File-by-file change map
 
@@ -82,15 +84,15 @@ webpack or Babel config, no image imports, and one test file.
 | :--- | :--- | :--- |
 | `client/package.json` | Change | Replace scripts and dependencies; add engines and dev dependencies |
 | `client/package-lock.json` | Regenerate | `npm install` after the dependency changes |
-| `client/vite.config.js` | Add | React plugin, dev port 3000, `dist` output, target |
-| `client/vitest.config.js` | Add | jsdom, globals, setup file |
+| `client/vite.config.js` | Add | React plugin, dev port 3000, `dist` output, target, esbuild CSS minifier |
+| `client/vitest.config.js` | Add | jsdom, setup file |
 | `client/eslint.config.js` | Add | Flat config replacing the `eslintConfig` block |
 | `client/index.html` | Move + edit | Move from `public/`, remove `%PUBLIC_URL%`, add module script |
 | `client/public/index.html` | Delete | Must not remain or it will overwrite the built HTML |
 | `client/src/config.js` | Edit | `import.meta.env.VITE_*`, `import.meta.env.PROD` |
 | `client/src/index.js` | Move + edit | Rename to `main.jsx`; use `import.meta.env.PROD` for service-worker registration |
-| `client/src/setupTests.js` | Add | Import `@testing-library/jest-dom` |
-| `client/src/features/railway/useTrainEvents.test.js` | Edit | `jest.fn` to `vi.fn` |
+| `client/src/setupTests.js` | Add | Import `@testing-library/jest-dom/vitest` |
+| `client/src/features/railway/useTrainEvents.test.js` | Move + edit | Rename to `.jsx`, `jest.fn` to `vi.fn`, explicit Vitest imports |
 | `client/.env.example` | Edit | Rename keys to `VITE_*` |
 | `client/vercel.json` | Edit | Declare Vite framework, build command and `dist` output |
 | `client/public/service-worker.js` | Edit | Bump cache name to `nrc-rail-hub-v3` |
@@ -131,10 +133,14 @@ Install the new toolchain:
 
 ```bash
 npm install -D vite@^8.3.5 @vitejs/plugin-react@^6.2.1
-npm install -D vitest@^5.1.0 jsdom@^30.1.3
-npm install -D eslint@^10.14.0 @eslint/js globals
+npm install -D vitest@^5.1.0 jsdom@^29.1.1
+npm install -D eslint@^9.39.5 @eslint/js globals
 npm install -D eslint-plugin-react eslint-plugin-react-hooks
+npm install -D esbuild
 ```
+
+`esbuild` is installed explicitly because Vite 8 does not bundle it and
+`cssMinify: 'esbuild'` needs it.
 
 Move the testing libraries to `devDependencies` if they are currently in
 `dependencies`.
@@ -146,6 +152,7 @@ Replace the scripts in `client/package.json`:
   "scripts": {
     "dev": "vite",
     "start": "vite",
+    "prebuild": "npm run lint",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -182,6 +189,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     target: 'es2018',
+    cssMinify: 'esbuild',
   },
 });
 ```
@@ -277,7 +285,6 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    globals: true,
     setupFiles: './src/setupTests.js',
     css: false,
   },
@@ -287,17 +294,22 @@ export default defineConfig({
 Add `client/src/setupTests.js`:
 
 ```js
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 ```
 
-Update the one test file:
+Rename the one test file so Vite transforms JSX, and use explicit imports:
+
+```bash
+git mv src/features/railway/useTrainEvents.test.js \
+  src/features/railway/useTrainEvents.test.jsx
+```
 
 ```js
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 ```
 
-Replace `jest.fn` with `vi.fn`. `describe`, `it` and `expect` remain globals
-because `globals: true` is set.
+Replace `jest.fn` with `vi.fn`. Explicit imports keep ESLint's `no-undef`
+happy without a separate test globals block.
 
 Run:
 
@@ -338,9 +350,10 @@ export default [
       react: { version: 'detect' },
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^React$' },
@@ -446,6 +459,40 @@ the preview passes:
 - [ ] Watch the production deployment.
 - [ ] Repeat the smoke checks on production.
 - [ ] Bump the service-worker cache if any asset changed during verification.
+
+## 7. Implementation results (2026-11-05)
+
+Local migration is complete and the quality gates pass:
+
+| Gate | Result |
+| :--- | :--- |
+| `npm run lint` | Passes (ESLint 9.39.5 flat config) |
+| `npm test` | 1 file, 4 tests pass (Vitest 5.1.0 + jsdom 29.1.1) |
+| `npm run build` | Passes; lint runs first via `prebuild` |
+| `npm run dev` | Serves the app on port 3000 with HMR |
+| `npm run preview` | Serves `dist/` on port 4173 |
+
+Build output compared with the CRA baseline:
+
+| Metric | CRA baseline | Vite build |
+| :--- | :--- | :--- |
+| JS raw / gzip | 2,267.7 KB / 582.6 KB | 2,546.3 KB / 629.6 KB |
+| CSS raw / gzip | 370.6 KB / 47.6 KB | 385.9 KB / 50.5 KB |
+| JS files | 6 | 7 |
+| CSS files | 1 | 1 |
+| Largest chunk | 1,409.3 KB | 1,422.4 KB (`Workspace`) |
+
+The small size increase comes from Vite emitting modern ESM chunks and a
+separate runtime; gzip growth is about 8% for JS and 6% for CSS. Keeping the
+default Lightning CSS minifier inflated CSS to ~665 KB, which is why
+`cssMinify: 'esbuild'` is set.
+
+Local browser verification covered sign-in, session restore, opening the
+`design-preview` line, sending a message, the live station board updating from
+that message, dark/light theme switching and persistence across reload, and a
+clean console/network log. The dev server does not register the service worker
+(production only); that path is checked in `npm run preview` and on the Vercel
+preview.
 
 ## 8. Verification matrix
 
