@@ -1,5 +1,5 @@
 // NRC Rail Hub - Progressive Web App Service Worker
-const CACHE_NAME = 'nrc-rail-hub-v5';
+const CACHE_NAME = 'nrc-rail-hub-v6';
 const NETWORK_TIMEOUT_MS = 6000;
 const STATIC_ASSETS = [
   '/',
@@ -80,17 +80,33 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      const hadOldCache = keys.some(
+        (key) => key.startsWith('nrc-rail-hub-') && key !== CACHE_NAME
+      );
+
+      await Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
+          return undefined;
         })
       );
-    })
+
+      await self.clients.claim();
+
+      // When this activation replaces an older cache, reload open windows so
+      // they cannot keep running a stale shell that predates this worker.
+      if (hadOldCache) {
+        const clients = await self.clients.matchAll({ type: 'window' });
+        await Promise.all(
+          clients.map((client) => client.navigate(client.url).catch(() => {}))
+        );
+      }
+    })()
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

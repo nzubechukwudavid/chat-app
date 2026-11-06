@@ -23,7 +23,7 @@ Dates are in `YYYY-MM-DD` format.
 - Removed the light/dark toggle from the workspace rail; it now lives in
   Settings → Appearance. The small toggle on the sign-in and password-reset
   screens remains, since Settings is unavailable there.
-- Service-worker cache bumped to `nrc-rail-hub-v5` so installed clients fetch
+- Service-worker cache bumped to `nrc-rail-hub-v6` so installed clients fetch
   the new icons and boot hardening.
 
 ### Fixed

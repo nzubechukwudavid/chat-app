@@ -39,7 +39,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js?v=5')
+      .register('/service-worker.js?v=6')
       .then((reg) => {
         console.log('[PWA] Service Worker active:', reg.scope);
       })
