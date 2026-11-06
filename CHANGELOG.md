@@ -23,13 +23,17 @@ Dates are in `YYYY-MM-DD` format.
 - Removed the light/dark toggle from the workspace rail; it now lives in
   Settings → Appearance. The small toggle on the sign-in and password-reset
   screens remains, since Settings is unavailable there.
-- Service-worker cache bumped to `nrc-rail-hub-v4` so installed clients fetch
-  the new icons.
+- Service-worker cache bumped to `nrc-rail-hub-v5` so installed clients fetch
+  the new icons and boot hardening.
 
 ### Fixed
 
 - Settings dialog now uses the real design tokens, so it renders correctly in
   light mode instead of forcing a dark panel.
+- Hardened the boot path against stalled networks. The service worker now
+  times out slow requests and falls back to cache, a newly activated worker
+  reloads the page once, and an inline recovery screen appears if the app shell
+  fails to start.
 
 ### Removed
 

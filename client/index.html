@@ -21,10 +21,107 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
     <link rel="manifest" href="/manifest.json" />
     <title>NRC Rail Hub | Nigerian Railway Corporation</title>
+    <style>
+      #boot-fallback[hidden] { display: none; }
+      #boot-fallback {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(circle at 50% 30%, #0d3826 0%, #071e14 55%, #040d09 100%);
+        color: #fff;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      #boot-fallback main { max-width: 380px; text-align: center; }
+      #boot-fallback h1 { margin: 0 0 8px; font-size: 21px; }
+      #boot-fallback p { margin: 0 0 20px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; font-size: 14px; }
+      #boot-fallback button {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 10px 20px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: #04120b;
+        background: #34d399;
+        cursor: pointer;
+      }
+      #boot-fallback button.secondary {
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      #boot-fallback .boot-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <div id="boot-fallback" hidden role="alert">
+      <main>
+        <h1>Rail Hub is taking longer than usual</h1>
+        <p>The app could not start. Reload, or clear the cached copy if this keeps happening.</p>
+        <div class="boot-actions">
+          <button type="button" id="boot-reload">Reload</button>
+          <button type="button" id="boot-reset" class="secondary">Clear cache &amp; reload</button>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      (function () {
+        var root = document.getElementById('root');
+        var fallback = document.getElementById('boot-fallback');
+        if (!root || !fallback) return;
+
+        var revealed = false;
+        var reveal = function () {
+          if (revealed || root.childElementCount > 0) return;
+          revealed = true;
+          fallback.hidden = false;
+        };
+        var timer = window.setTimeout(reveal, 8000);
+
+        var observer = new MutationObserver(function () {
+          if (root.childElementCount > 0) {
+            window.clearTimeout(timer);
+            fallback.hidden = true;
+            observer.disconnect();
+          }
+        });
+        observer.observe(root, { childList: true });
+
+        document.getElementById('boot-reload').addEventListener('click', function () {
+          window.location.reload();
+        });
+
+        document.getElementById('boot-reset').addEventListener('click', function () {
+          var tasks = [];
+          if ('serviceWorker' in navigator) {
+            tasks.push(
+              navigator.serviceWorker
+                .getRegistrations()
+                .then(function (regs) {
+                  return Promise.all(regs.map(function (reg) { return reg.unregister(); }));
+                })
+                .catch(function () {})
+            );
+          }
+          if ('caches' in window) {
+            tasks.push(
+              caches
+                .keys()
+                .then(function (keys) {
+                  return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+                })
+                .catch(function () {})
+            );
+          }
+          Promise.all(tasks).finally(function () { window.location.reload(); });
+        });
+      })();
+    </script>
   </body>
 </html>
