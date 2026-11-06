@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/).
 Dates are in `YYYY-MM-DD` format.
 
+## 2026-11-06
+
+### Removed
+
+- Unused `client/src/assets/` template components and images (about 2.3 MB) that
+  no longer had any imports.
+
+### Security
+
+- Updated `follow-redirects` from 1.16.1 to 1.16.2 in the client and server to
+  address `GHSA-mrwp-f3q8-3g9p`. The remaining `deepmerge` low advisory has no
+  published fix.
+
 ## 2026-11-05
 
 ### Changed

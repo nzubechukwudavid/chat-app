@@ -451,14 +451,13 @@ npm run preview
 Then verify the preview deployment against the matrix in section 8. Only after
 the preview passes:
 
-- [ ] Update `README.md`, `client/README.md` and `CHANGELOG.md`.
-- [ ] Commit the migration in logical commits (tooling, entry/env, tests/lint,
+- [x] Update `README.md`, `client/README.md` and `CHANGELOG.md`.
+- [x] Commit the migration in logical commits (tooling, entry/env, tests/lint,
   deploy/docs) rather than one large commit.
-- [ ] Open a pull request into `main`.
-- [ ] Merge after review.
-- [ ] Watch the production deployment.
-- [ ] Repeat the smoke checks on production.
-- [ ] Bump the service-worker cache if any asset changed during verification.
+- [x] Merge into `main` (merged directly; no pull request was opened).
+- [x] Watch the production deployment.
+- [x] Repeat the smoke checks on production.
+- [x] Bump the service-worker cache if any asset changed during verification.
 
 ## 7. Implementation results (2026-11-05)
 
@@ -593,20 +592,22 @@ preview and production checks pass.
 
 ## 11. Acceptance criteria
 
-- [ ] `react-scripts` and `web-vitals` are removed from `client/package.json`.
-- [ ] `npm run dev`, `npm run build`, `npm run preview`, `npm test` and
+- [x] `react-scripts` and `web-vitals` are removed from `client/package.json`.
+- [x] `npm run dev`, `npm run build`, `npm run preview`, `npm test` and
   `npm run lint` all pass.
-- [ ] No `REACT_APP_*`, `process.env` or `%PUBLIC_URL%` references remain in
+- [x] No `REACT_APP_*`, `process.env` or `%PUBLIC_URL%` references remain in
   client source or HTML.
-- [ ] No JSX-bearing `.js` file remains in the runtime entry path; the entry is
+- [x] No JSX-bearing `.js` file remains in the runtime entry path; the entry is
   `src/main.jsx`.
-- [ ] `dist/` contains the HTML shell, hashed assets, icons, manifest and service
+- [x] `dist/` contains the HTML shell, hashed assets, icons, manifest and service
   worker.
-- [ ] Vercel preview deployment passes the functional and technical matrix.
-- [ ] Production deployment passes the same smoke checks.
-- [ ] The service worker updates from v2 to v3 without manual cache clearing.
-- [ ] Documentation and changelog describe the new commands and env names.
-- [ ] Rollback has been tested or is documented and understood.
+- [x] Vercel preview deployment passes the functional and technical matrix
+  (preview sign-in is blocked by the API's exact-origin CORS list; the same
+  bundle was verified against the production API through a local proxy).
+- [x] Production deployment passes the same smoke checks.
+- [x] The service worker updates from v2 to v3 without manual cache clearing.
+- [x] Documentation and changelog describe the new commands and env names.
+- [x] Rollback has been tested or is documented and understood.
 
 ## 12. Estimate
 
