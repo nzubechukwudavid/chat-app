@@ -1,33 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Rail Hub">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0a2e1e" />
-      <stop offset="1" stop-color="#040d09" />
+      <stop offset="0" stop-color="#0b3524"/>
+      <stop offset="1" stop-color="#04120b"/>
     </linearGradient>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fde68a" />
-      <stop offset="1" stop-color="#f4c96b" />
+    <radialGradient id="glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="#10b981" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe7a3"/>
+      <stop offset="1" stop-color="#e9b84f"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3ce74"/>
+      <stop offset="1" stop-color="#c9963c"/>
     </linearGradient>
   </defs>
-
-  <rect width="512" height="512" rx="112" fill="url(#bg)" />
-  <rect x="20" y="20" width="472" height="472" rx="94" fill="none" stroke="#10b981" stroke-opacity=".2" stroke-width="4" />
-
-  <!-- Permanent way -->
-  <g stroke="#d2a84f" stroke-linecap="round">
-    <path d="M108 428h296M108 460h296" stroke-width="10" />
-    <path d="M144 418v52M200 418v52M256 418v52M312 418v52M368 418v52" stroke-width="8" opacity=".55" />
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="228" r="196" fill="url(#glow)"/>
+  <g stroke="#d8ab54" stroke-linecap="round">
+    <path d="M156 398h200" stroke-width="16"/>
+    <path d="M156 430h200" stroke-width="16"/>
+    <path d="M196 390v48M256 390v48M316 390v48" stroke-width="10" opacity=".45"/>
   </g>
-
-  <!-- Locomotive -->
-  <rect x="164" y="94" width="184" height="56" rx="26" fill="#d2a84f" stroke="#062b1c" stroke-width="10" />
-  <rect x="136" y="120" width="240" height="272" rx="46" fill="url(#body)" stroke="#062b1c" stroke-width="12" />
-  <rect x="168" y="178" width="86" height="106" rx="16" fill="#071e14" />
-  <rect x="258" y="178" width="86" height="106" rx="16" fill="#071e14" />
-  <circle cx="184" cy="328" r="20" fill="#fff7d6" stroke="#062b1c" stroke-width="8" />
-  <circle cx="328" cy="328" r="20" fill="#fff7d6" stroke="#062b1c" stroke-width="8" />
-  <rect x="156" y="356" width="200" height="36" rx="16" fill="#062b1c" />
-
-  <!-- Signal lamp -->
-  <circle cx="349" cy="109" r="15" fill="#34d399" stroke="#062b1c" stroke-width="6" />
+  <rect x="164" y="112" width="184" height="58" rx="28" fill="url(#roof)" stroke="#06251a" stroke-width="10"/>
+  <rect x="142" y="142" width="228" height="236" rx="46" fill="url(#gold)" stroke="#06251a" stroke-width="12"/>
+  <rect x="172" y="190" width="76" height="96" rx="14" fill="#06251a"/>
+  <rect x="264" y="190" width="76" height="96" rx="14" fill="#06251a"/>
+  <circle cx="188" cy="330" r="18" fill="#fff7d6" stroke="#06251a" stroke-width="8"/>
+  <circle cx="324" cy="330" r="18" fill="#fff7d6" stroke="#06251a" stroke-width="8"/>
+  <rect x="162" y="356" width="188" height="30" rx="15" fill="#06251a"/>
+  <circle cx="352" cy="128" r="14" fill="#34d399" stroke="#06251a" stroke-width="6"/>
 </svg>

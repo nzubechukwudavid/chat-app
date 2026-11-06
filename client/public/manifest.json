@@ -1,7 +1,17 @@
 {
+  "id": "/",
   "short_name": "Rail Hub",
   "name": "NRC Rail Hub - Operations",
   "description": "Internal operations communications platform for the Nigerian Railway Corporation.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#071e14",
+  "background_color": "#040d09",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "favicon.ico",
@@ -9,22 +19,28 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
-  ],
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#071e14",
-  "background_color": "#040d09"
+  ]
 }

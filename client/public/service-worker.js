@@ -1,5 +1,5 @@
 // NRC Rail Hub - Progressive Web App Service Worker
-const CACHE_NAME = 'nrc-rail-hub-v3';
+const CACHE_NAME = 'nrc-rail-hub-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,8 +7,10 @@ const STATIC_ASSETS = [
   '/favicon.ico',
   '/favicon.svg',
   '/apple-touch-icon.png',
-  '/logo192.png',
-  '/logo512.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-192.png',
+  '/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
