@@ -8,6 +8,29 @@ Dates are in `YYYY-MM-DD` format.
 
 ## 2026-11-06
 
+### Added
+
+- Appearance tab in Settings with explicit Night and Day options. The theme is
+  still applied immediately and remembered per device.
+- Dedicated maskable PWA icons for Android installs, plus manifest `id`, `lang`
+  and `categories` metadata.
+
+### Changed
+
+- Refreshed the app icon set: bolder locomotive mark with a full-bleed emerald
+  background and artwork kept inside the mask safe zone. Regenerated
+  `favicon.ico`, `favicon.svg`, `apple-touch-icon.png` and the 192/512 px icons.
+- Removed the light/dark toggle from the workspace rail; it now lives in
+  Settings → Appearance. The small toggle on the sign-in and password-reset
+  screens remains, since Settings is unavailable there.
+- Service-worker cache bumped to `nrc-rail-hub-v4` so installed clients fetch
+  the new icons.
+
+### Fixed
+
+- Settings dialog now uses the real design tokens, so it renders correctly in
+  light mode instead of forcing a dark panel.
+
 ### Removed
 
 - Unused `client/src/assets/` template components and images (about 2.3 MB) that

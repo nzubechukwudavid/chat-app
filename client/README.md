@@ -51,7 +51,9 @@ server's key. The app opens at `http://localhost:3000`.
 - In production the client calls `/api`, which `vercel.json` rewrites to the
   Render API. `VITE_API_URL` is only used for local development.
 - The service worker is registered in production only (`src/main.jsx`).
-- Icons and the manifest live in `public/`; bump the service-worker cache name
-  when replacing them so installed clients pick up the change.
+- Icons and the manifest live in `public/`. `icon-192.png`/`icon-512.png` are
+  the regular icons; `icon-maskable-*.png` keep the artwork inside Android's
+  install-mask safe zone. Bump the service-worker cache name and the `?v=` query
+  in `index.html` when replacing them so installed clients pick up the change.
 - `vercel.json` declares the Vite framework and the `dist` output directory, so
   the deployment does not depend on dashboard autodetection.

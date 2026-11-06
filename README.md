@@ -71,14 +71,16 @@ Production: [nrc-chat.vercel.app](https://nrc-chat.vercel.app)
 
 ### Interface
 
-- Dark and light themes, remembered across reloads.
+- Dark and light themes, remembered across reloads and switchable under
+  Settings → Appearance.
 - Responsive layout: desktop two-column workspace and a mobile off-canvas drawer
   dismissed via backdrop, `Esc` or breakpoint change.
 - Connection banner for browser offline and Stream socket reconnects.
 - Toast feedback for session, profile, password, broadcast and theme actions.
 - Skeleton loaders and accessible dialogs (`role="dialog"`, labelled controls,
   keyboard dismissal).
-- Installable PWA with a railway-themed icon set and a service worker.
+- Installable PWA with a railway-themed icon set (including maskable icons for
+  Android) and a service worker.
 
 ---
 
