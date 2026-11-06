@@ -1,14 +1,69 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import Avatar from '../ui/Avatar';
-import { CloseIcon } from '../ui/icons';
+import { CloseIcon, MoonIcon, SunIcon } from '../ui/icons';
+import { useTheme } from '../../hooks/useTheme';
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
   { id: 'security', label: 'Security' },
+  { id: 'appearance', label: 'Appearance' },
 ];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+const THEME_OPTIONS = [
+  {
+    id: 'dark',
+    label: 'Night',
+    description: 'Low-light operations palette',
+    icon: <MoonIcon size={18} />,
+  },
+  {
+    id: 'light',
+    label: 'Day',
+    description: 'Bright daylight palette',
+    icon: <SunIcon size={18} />,
+  },
+];
+
+const AppearancePanel = ({ notify }) => {
+  const { theme, setTheme } = useTheme();
+
+  const choose = (next) => {
+    if (next === theme) return;
+    setTheme(next);
+    notify?.({
+      type: 'success',
+      message: `${next === 'light' ? 'Day' : 'Night'} operations mode enabled.`,
+    });
+  };
+
+  return (
+    <div className="settings-appearance">
+      <div className="settings-theme-options" role="group" aria-label="Colour theme">
+        {THEME_OPTIONS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className={`settings-theme-option${theme === option.id ? ' settings-theme-option--active' : ''}`}
+            aria-pressed={theme === option.id}
+            onClick={() => choose(option.id)}
+          >
+            <span className="settings-theme-option__icon">{option.icon}</span>
+            <span className="settings-theme-option__text">
+              <strong>{option.label}</strong>
+              <span>{option.description}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="settings-hint">
+        Applies immediately and is remembered on this device.
+      </p>
+    </div>
+  );
+};
 
 const ProfileForm = ({ user, onUpdateProfile, onUploadAvatar, notify }) => {
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -305,6 +360,7 @@ const SettingsModal = ({ open, onClose, user, onUpdateProfile, onChangePassword,
         <div className="settings-content">
           {tab === 'profile' && <ProfileForm user={user} onUpdateProfile={onUpdateProfile} onUploadAvatar={onUploadAvatar} notify={notify} />}
           {tab === 'security' && <PasswordForm onChangePassword={onChangePassword} notify={notify} />}
+          {tab === 'appearance' && <AppearancePanel notify={notify} />}
         </div>
       </div>
     </div>

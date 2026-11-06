@@ -6,7 +6,6 @@ import TeamChannelList from './TeamChannelList';
 import TeamChannelPreview from './TeamChannelPreview';
 import Avatar from './ui/Avatar';
 import { ChannelListSkeleton } from './ui/Skeleton';
-import ThemeToggle from './ui/ThemeToggle';
 import SettingsModal from './settings/SettingsModal';
 import {
   BoardIcon,
@@ -119,8 +118,6 @@ const Rail = ({
     >
       <SettingsIcon size={19} />
     </button>
-
-    <ThemeToggle className="theme-switch--rail" />
 
     <button
       type="button"
